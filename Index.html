@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+
+  <style>
+    <?!= include('Styles'); ?>
+  </style>
+</head>
+
+<body>
+
+  <div
+    id="successToast"
+    class="success-toast"
+    role="status"
+    aria-live="polite"
+  >
+    Relatório gerado com sucesso!
+  </div>
+
+  <?!= include('Menu'); ?>
+  <?!= include('Operacional'); ?>
+  <?!= include('Historico'); ?>
+  <?!= include('Components'); ?>
+
+  <script>
+    const CONFIG = <?!= initialConfig ?>;
+
+    <?!= include('ScriptCore'); ?>
+    <?!= include('ScriptOperacional'); ?>
+    <?!= include('ScriptRelatorios'); ?>
+    <?!= include('ScriptHistorico'); ?>
+    <?!= include('ScriptUI'); ?>
+  </script>
+
+</body>
+</html>

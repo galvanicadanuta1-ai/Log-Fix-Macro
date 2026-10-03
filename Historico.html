@@ -1,0 +1,103 @@
+<!-- ==========================================================
+     HISTÓRICO
+     ========================================================== -->
+<div id="historyScreen" class="screen">
+  <div class="app">
+
+    <div class="system-header">
+      <div>
+        <button class="back-button" onclick="voltarMenuLogistica()">
+          ← Menu Logística
+        </button>
+      </div>
+
+      <div id="historyTitle" class="page-title">
+        Histórico Recebimento
+      </div>
+
+      <div></div>
+    </div>
+
+    <div class="history-toolbar">
+
+      <div class="history-filter-item">
+        <label for="historyStartDate">Data inicial</label>
+        <input type="date" id="historyStartDate">
+      </div>
+
+      <div class="history-filter-item">
+        <label for="historyEndDate">Data final</label>
+        <input type="date" id="historyEndDate">
+      </div>
+
+      <div class="history-filter-item search-item">
+        <label for="historySearch">Buscar por OP / Nota Fiscal / Nota Fiscal de Caixa</label>
+        <div class="history-search-wrap">
+          <input
+            id="historySearch"
+            class="history-search"
+            type="text"
+            autocomplete="off"
+            placeholder="Digite OP, Nota Fiscal ou Nota Fiscal de Caixa"
+            oninput="historicoBuscaDigitando()"
+            onkeydown="historicoEnter(event)"
+          >
+          <button
+            id="historySearchClear"
+            class="history-search-clear"
+            type="button"
+            title="Limpar busca"
+            onclick="limparBuscaHistorico()"
+          >×</button>
+          <div id="historySuggestions" class="history-suggestions"></div>
+        </div>
+      </div>
+
+      <button
+        id="historyConsultButton"
+        class="consult-button"
+        onclick="consultarHistorico(true)"
+      >
+        CONSULTAR
+      </button>
+
+      <button
+        id="historyReportButton"
+        class="report-button"
+        onclick="gerarRelatorioHistoricoTela()"
+      >
+        GERAR RELATÓRIO
+      </button>
+
+      <div id="historyInfo" class="history-info"></div>
+
+    </div>
+
+    <div class="grid-wrap">
+
+      <div id="historyLoading" class="loading" style="display:none;">
+        Consultando...
+      </div>
+
+      <div id="historyEmpty" class="history-empty">
+        Selecione o período e clique em Consultar.
+      </div>
+
+      <div id="historyCards" class="history-cards"></div>
+
+      <div class="history-more-wrap">
+        <button
+          id="historyLoadMore"
+          class="history-load-more"
+          type="button"
+          style="display:none;"
+          onclick="carregarMaisHistorico()"
+        >
+          CARREGAR MAIS
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+</div>

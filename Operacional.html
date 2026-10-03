@@ -1,0 +1,54 @@
+<!-- ==========================================================
+     TELA OPERACIONAL
+     ========================================================== -->
+<div id="systemScreen" class="screen">
+  <div class="app">
+
+    <div class="system-header">
+      <div>
+        <button class="back-button" onclick="voltarMenuLogistica()">
+          ← Menu Logística
+        </button>
+      </div>
+
+      <div id="pageTitle" class="page-title">
+        Recebimento SGQ - Fixpar
+      </div>
+
+      <div></div>
+    </div>
+
+    <div class="toolbar">
+
+      <div class="date-area">
+        <label for="selectedDate">Data:</label>
+        <input type="date" id="selectedDate" onchange="alterarData()">
+      </div>
+
+      <div id="statusbar" class="statusbar">Pronto</div>
+
+      <button
+        id="reportButton"
+        class="report-button"
+        onclick="gerarRelatorio()"
+      >
+        GERAR RELATÓRIO
+      </button>
+
+    </div>
+
+    <div class="grid-wrap">
+
+      <div id="loading" class="loading">Carregando...</div>
+
+      <table id="grid" style="display:none;">
+        <thead>
+          <tr id="headerRow"></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+
+    </div>
+
+  </div>
+</div>

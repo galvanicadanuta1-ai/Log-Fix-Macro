@@ -1,0 +1,102 @@
+<!-- ==========================================================
+     MENU PRINCIPAL
+     ========================================================== -->
+<div id="mainMenu" class="screen active">
+  <div class="main-menu-wrapper">
+
+    <div class="main-menu-stack">
+
+      <button class="main-menu-button" onclick="abrirMenuLogistica()">
+        SGQ Fixpar
+      </button>
+
+      <button class="main-menu-button" onclick="abrirMenuMacrosul()">
+        Macrosul
+      </button>
+
+      <button class="main-menu-button" type="button">
+        Programação
+      </button>
+
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ==========================================================
+     MENU LOGÍSTICA
+     ========================================================== -->
+<div id="logisticaMenu" class="screen">
+  <div class="menu-screen">
+
+    <div class="menu-title">
+      SGQ Fixpar
+    </div>
+
+    <div class="menu-grid">
+
+      <button class="menu-button" onclick="abrirSistema('RECEBIMENTO')">
+        Recebimento - SGQ Fixpar
+      </button>
+
+      <button class="menu-button secondary" onclick="abrirSistema('SAIDA')">
+        Saída - SGQ Fixpar
+      </button>
+
+      <button class="history-button" onclick="abrirHistorico('RECEBIMENTO')">
+        Histórico Recebimento
+      </button>
+
+      <button class="history-button" onclick="abrirHistorico('SAIDA')">
+        Histórico Saída
+      </button>
+
+    </div>
+
+    <div class="menu-back">
+      <button onclick="abrirMenuPrincipal()">← Voltar</button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ==========================================================
+     MENU MACROSUL
+     Apenas estrutura visual nesta etapa.
+     Os botões ainda não estão ligados a planilha/funções.
+     ========================================================== -->
+<div id="macrosulMenu" class="screen">
+  <div class="menu-screen">
+
+    <div class="menu-title">
+      Macrosul
+    </div>
+
+    <div class="menu-grid">
+
+      <button class="menu-button" type="button">
+        Recebimento - Macrosul
+      </button>
+
+      <button class="menu-button secondary" type="button">
+        Saída - Macrosul
+      </button>
+
+      <button class="history-button" type="button">
+        Histórico Recebimento
+      </button>
+
+      <button class="history-button" type="button">
+        Histórico Saída
+      </button>
+
+    </div>
+
+    <div class="menu-back">
+      <button onclick="abrirMenuPrincipal()">← Voltar</button>
+    </div>
+
+  </div>
+</div>
