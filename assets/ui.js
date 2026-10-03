@@ -2,37 +2,30 @@
    STATUS / LOADING
    ============================================================ */
 function setLoading(show) {
-
   document.getElementById('loading').style.display = show ? 'block' : 'none';
   document.getElementById('grid').style.display = show ? 'none' : 'table';
 }
 
 function setStatus(text, state) {
-
   const status = document.getElementById('statusbar');
-
   status.textContent = text;
   status.className = 'statusbar';
-
   if (state) status.classList.add(state);
 }
 
 
 /* ============================================================
-   COLAGEM UNIVERSAL EM GRADE - ESTILO EXCEL / GOOGLE SHEETS
+   COLAGEM UNIVERSAL - EXCEL / GOOGLE SHEETS / E-MAIL / HTML
    ============================================================
-   Esta rotina é global e trabalha com qualquer campo de grade que tenha:
-   data-row-id e data-col-index.
+   A colagem segue a MESMA POSIÇÃO visual das colunas.
 
-   Regras:
-   - mantém linhas e colunas exatamente como copiadas;
-   - preserva células vazias no meio da seleção;
-   - entende TAB, CRLF e células do Excel entre aspas;
-   - cola várias linhas de uma única vez;
-   - pula automaticamente campos protegidos/calculados quando a origem
-     contém apenas as colunas editáveis;
-   - aceita também uma cópia da linha completa com Data;
-   - salva tudo em lote no servidor.
+   Exemplo no Recebimento, clicando em OP:
+   OP | Caixas | Contêiner | Peso NF | Peso Danuta | Diferença |
+   Diferença % | Cor | NF | NF Caixa | Processo
+
+   Diferença e Diferença % continuam sendo calculadas pelo sistema,
+   mas ocupam sua posição na matriz copiada. Assim, as colunas seguintes
+   não são deslocadas.
    ============================================================ */
 
 function parseClipboardComoTabela(texto) {
@@ -51,7 +44,6 @@ function parseClipboardComoTabela(texto) {
         i++;
         continue;
       }
-
       entreAspas = !entreAspas;
       continue;
     }
@@ -63,10 +55,7 @@ function parseClipboardComoTabela(texto) {
     }
 
     if (!entreAspas && (char === '\n' || char === '\r')) {
-      if (char === '\r' && proximo === '\n') {
-        i++;
-      }
-
+      if (char === '\r' && proximo === '\n') i++;
       linha.push(celula);
       resultado.push(linha);
       linha = [];
@@ -91,12 +80,114 @@ function parseClipboardComoTabela(texto) {
   return resultado;
 }
 
+
+function textoCelulaHtml(celula) {
+  const clone = celula.cloneNode(true);
+
+  clone.querySelectorAll('br').forEach(br => {
+    br.replaceWith('\n');
+  });
+
+  return String(clone.textContent || '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n[ \t]+/g, '\n')
+    .trim();
+}
+
+
+function parseClipboardHtmlComoTabela(html) {
+  if (!html || !/<table[\s>]/i.test(html)) return [];
+
+  try {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const table = doc.querySelector('table');
+    if (!table) return [];
+
+    const matriz = [];
+    const ocupadas = [];
+    const trs = Array.from(table.querySelectorAll('tr'));
+
+    trs.forEach((tr, rowIndex) => {
+      if (!matriz[rowIndex]) matriz[rowIndex] = [];
+      if (!ocupadas[rowIndex]) ocupadas[rowIndex] = [];
+
+      let colIndex = 0;
+      const cells = Array.from(tr.children).filter(el =>
+        /^(TD|TH)$/i.test(el.tagName)
+      );
+
+      cells.forEach(cell => {
+        while (ocupadas[rowIndex][colIndex]) colIndex++;
+
+        const valor = textoCelulaHtml(cell);
+        const colspan = Math.max(Number(cell.getAttribute('colspan')) || 1, 1);
+        const rowspan = Math.max(Number(cell.getAttribute('rowspan')) || 1, 1);
+
+        for (let r = 0; r < rowspan; r++) {
+          const rr = rowIndex + r;
+          if (!matriz[rr]) matriz[rr] = [];
+          if (!ocupadas[rr]) ocupadas[rr] = [];
+
+          for (let c = 0; c < colspan; c++) {
+            const cc = colIndex + c;
+            matriz[rr][cc] = (r === 0 && c === 0) ? valor : '';
+            ocupadas[rr][cc] = true;
+          }
+        }
+
+        colIndex += colspan;
+      });
+    });
+
+    const largura = matriz.reduce(
+      (max, linha) => Math.max(max, Array.isArray(linha) ? linha.length : 0),
+      0
+    );
+
+    return matriz
+      .map(linha => {
+        const normalizada = new Array(largura).fill('');
+        (linha || []).forEach((valor, i) => {
+          normalizada[i] = valor == null ? '' : String(valor);
+        });
+        return normalizada;
+      })
+      .filter(linha => linha.some(valor => String(valor).trim() !== ''));
+  } catch (e) {
+    return [];
+  }
+}
+
+
+function obterMatrizClipboard(event) {
+  if (!event.clipboardData) return [];
+
+  const html = event.clipboardData.getData('text/html') || '';
+  const texto = event.clipboardData.getData('text/plain') || '';
+
+  const matrizHtml = parseClipboardHtmlComoTabela(html);
+
+  // E-mail normalmente entrega uma tabela HTML correta, mesmo quando
+  // o texto puro transforma cada célula em uma linha separada.
+  if (
+    matrizHtml.length &&
+    matrizHtml.some(linha => linha.length > 1)
+  ) {
+    return matrizHtml;
+  }
+
+  return texto ? parseClipboardComoTabela(texto) : [];
+}
+
+
 function obterQuantidadeColunasMatriz(matriz) {
   return matriz.reduce(
     (maior, linha) => Math.max(maior, Array.isArray(linha) ? linha.length : 0),
     0
   );
 }
+
 
 function pareceDataColada(valor) {
   const texto = String(valor ?? '').trim();
@@ -107,6 +198,7 @@ function pareceDataColada(valor) {
     /^\d{4}-\d{1,2}-\d{1,2}$/.test(texto)
   );
 }
+
 
 function primeiraColunaPareceData(matriz) {
   const valores = matriz
@@ -119,6 +211,7 @@ function primeiraColunaPareceData(matriz) {
   return datas / valores.length >= 0.8;
 }
 
+
 function colunaProtegidaParaColagem(colIndex, cfg) {
   if (colIndex === 0) return true;
 
@@ -130,56 +223,25 @@ function colunaProtegidaParaColagem(colIndex, cfg) {
   return false;
 }
 
-function montarPlanoColagem(matriz, startCol, cfg) {
-  const totalOrigem = obterQuantidadeColunasMatriz(matriz);
-  let sourceStart = 0;
-
-  if (
-    startCol > 0 &&
-    totalOrigem === cfg.headers.length &&
-    primeiraColunaPareceData(matriz)
-  ) {
-    sourceStart = 1;
-  }
-
-  const colunasOrigem = Math.max(totalOrigem - sourceStart, 0);
-  const colunasVisiveis = [];
-  const colunasEditaveis = [];
-
-  for (let col = startCol; col < cfg.headers.length; col++) {
-    colunasVisiveis.push(col);
-
-    if (!colunaProtegidaParaColagem(col, cfg)) {
-      colunasEditaveis.push(col);
-    }
-  }
-
-  let modo = 'editaveis';
-
-  if (colunasOrigem === colunasVisiveis.length) {
-    modo = 'posicional';
-  } else if (colunasOrigem <= colunasEditaveis.length) {
-    modo = 'editaveis';
-  } else {
-    modo = 'posicional';
-  }
-
-  return {
-    sourceStart,
-    modo,
-    colunasVisiveis,
-    colunasEditaveis
-  };
-}
 
 function aplicarMatrizNaGrade(matriz, rowId, colIndex) {
   const startRowIndex = rows.findIndex(item => item.id === rowId);
+
   if (startRowIndex < 0 || !matriz.length) {
     return { afetadas: [], ultimaCelula: null };
   }
 
   const cfg = getPageConfig();
-  const plano = montarPlanoColagem(matriz, colIndex, cfg);
+  const totalOrigem = obterQuantidadeColunasMatriz(matriz);
+
+  // Se o usuário copiou a linha completa incluindo Data, mas colou em OP,
+  // ignoramos somente a Data. O restante continua 100% posicional.
+  const sourceStart = (
+    colIndex > 0 &&
+    totalOrigem === cfg.headers.length &&
+    primeiraColunaPareceData(matriz)
+  ) ? 1 : 0;
+
   const linhasNecessarias = startRowIndex + matriz.length;
 
   while (rows.length < linhasNecessarias + 2) {
@@ -196,35 +258,20 @@ function aplicarMatrizNaGrade(matriz, rowId, colIndex) {
     const valoresOrigem = Array.isArray(linhaOrigem) ? linhaOrigem : [];
     let houveAlvo = false;
 
-    for (
-      let sourceCol = plano.sourceStart;
-      sourceCol < valoresOrigem.length;
-      sourceCol++
-    ) {
-      const offset = sourceCol - plano.sourceStart;
-      let targetCol;
+    for (let sourceCol = sourceStart; sourceCol < valoresOrigem.length; sourceCol++) {
+      const offset = sourceCol - sourceStart;
+      const targetCol = colIndex + offset;
 
-      if (plano.modo === 'editaveis') {
-        targetCol = plano.colunasEditaveis[offset];
-      } else {
-        targetCol = colIndex + offset;
-      }
+      if (targetCol < 0 || targetCol >= cfg.headers.length) continue;
 
-      if (
-        targetCol === undefined ||
-        targetCol < 0 ||
-        targetCol >= cfg.headers.length
-      ) {
-        continue;
-      }
-
-      if (colunaProtegidaParaColagem(targetCol, cfg)) {
-        continue;
-      }
+      // Importante: mesmo protegida, a coluna consome sua posição.
+      // Isso evita que Cor/NF/etc. "andem" para a esquerda.
+      if (colunaProtegidaParaColagem(targetCol, cfg)) continue;
 
       const valor = valoresOrigem[sourceCol] ?? '';
       row.values[targetCol] = valor;
       houveAlvo = true;
+
       ultimaCelula = {
         rowId: row.id,
         colIndex: targetCol
@@ -248,14 +295,40 @@ function aplicarMatrizNaGrade(matriz, rowId, colIndex) {
   });
 
   garantirDuasLinhasVazias();
-
   return { afetadas, ultimaCelula };
 }
+
+
+function atualizarCamposVisiveisDaColagem(afetadas) {
+  afetadas.forEach(row => {
+    const tr = document.querySelector('tr[data-row-id="' + row.id + '"]');
+    if (!tr) return;
+
+    const inputs = tr.querySelectorAll('.cell-input');
+
+    row.values.forEach((valor, colIndex) => {
+      if (!inputs[colIndex] || colIndex === 0) return;
+      inputs[colIndex].value = valor ?? '';
+    });
+
+    if (linhaSemDados(row)) {
+      tr.classList.add('blank-row');
+    } else {
+      tr.classList.remove('blank-row');
+    }
+  });
+}
+
 
 async function salvarColagemUniversal(afetadas) {
   if (!afetadas.length) return;
 
+  // Bloqueia salvamentos individuais disparados pelo blur enquanto
+  // o lote está sendo enviado.
   salvamentoEmLote = true;
+  afetadas.forEach(row => {
+    row.saving = true;
+  });
 
   const reportButton = document.getElementById('reportButton');
   if (reportButton) {
@@ -313,6 +386,9 @@ async function salvarColagemUniversal(afetadas) {
     }
 
     garantirDuasLinhasVazias();
+
+    // As linhas continuam marcadas como saving durante o render.
+    // Assim, o blur do campo removido não cria uma segunda gravação.
     renderTable();
 
     if (currentPage === 'RECEBIMENTO') {
@@ -338,6 +414,10 @@ async function salvarColagemUniversal(afetadas) {
       'Não foi possível salvar todos os dados colados.'
     );
   } finally {
+    afetadas.forEach(row => {
+      row.saving = false;
+    });
+
     salvamentoEmLote = false;
 
     if (reportButton) {
@@ -346,6 +426,7 @@ async function salvarColagemUniversal(afetadas) {
     }
   }
 }
+
 
 function focarCelulaDepoisDaColagem(ultimaCelula) {
   if (!ultimaCelula) return;
@@ -366,6 +447,7 @@ function focarCelulaDepoisDaColagem(ultimaCelula) {
   });
 }
 
+
 function colagemUniversalPlanilha(event) {
   const alvo = event.target;
 
@@ -383,13 +465,9 @@ function colagemUniversalPlanilha(event) {
 
   if (alvo.readOnly || alvo.disabled) return;
 
-  const texto = event.clipboardData
-    ? event.clipboardData.getData('text/plain')
-    : '';
+  const matriz = obterMatrizClipboard(event);
+  if (!matriz.length) return;
 
-  if (!texto) return;
-
-  const matriz = parseClipboardComoTabela(texto);
   const quantidadeColunas = obterQuantidadeColunasMatriz(matriz);
 
   if (matriz.length === 1 && quantidadeColunas === 1) {
@@ -409,9 +487,18 @@ function colagemUniversalPlanilha(event) {
     colIndex
   );
 
-  renderTable();
+  if (!resultado.afetadas.length) return;
+
+  // Marca ANTES de trocar foco para impedir um salvarAgora() concorrente.
+  salvamentoEmLote = true;
+  resultado.afetadas.forEach(row => {
+    row.saving = true;
+  });
+
+  atualizarCamposVisiveisDaColagem(resultado.afetadas);
   focarCelulaDepoisDaColagem(resultado.ultimaCelula);
   salvarColagemUniversal(resultado.afetadas);
 }
+
 
 document.addEventListener('paste', colagemUniversalPlanilha, true);
