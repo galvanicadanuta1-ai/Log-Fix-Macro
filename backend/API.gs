@@ -136,7 +136,10 @@ function apiConsultarHistoricoPaginado_(
  *   Conciliação OP -> OP de Entrada preenchida e OP de Saída vazia.
  *
  * Detalhes exibidos:
- *   Histórico Entrada -> caixas, contêiner, cor e Peso Danuta.
+ *   Histórico Entrada -> Data de Entrada, caixas, contêiner, cor e Peso Danuta.
+ *
+ * Ordem:
+ *   sempre da Data de Entrada mais antiga para a mais nova.
  *
  * Estado manual:
  *   aba "Programação SGQ Fixpar" -> Status / OK / Encaminhado.
@@ -195,6 +198,9 @@ function carregarProgramacaoSgq() {
 
     if (!chave || !opsPendentes.has(chave)) return;
 
+    const dataTime = apiProgDataTime_(row[0]);
+    const dataTexto = apiProgTexto_(shown[0]);
+
     if (!agrupado[chave]) {
       agrupado[chave] = {
         op: op,
@@ -202,7 +208,8 @@ function carregarProgramacaoSgq() {
         qtdConteiner: 0,
         pesoDanuta: 0,
         cores: {},
-        primeiraData: apiProgDataTime_(row[0])
+        primeiraData: dataTime,
+        primeiraDataTexto: dataTexto
       };
     }
 
@@ -215,9 +222,9 @@ function carregarProgramacaoSgq() {
     const cor = apiProgTexto_(shown[8]);
     if (cor) item.cores[cor.toLowerCase()] = cor;
 
-    const dataTime = apiProgDataTime_(row[0]);
     if (dataTime && (!item.primeiraData || dataTime < item.primeiraData)) {
       item.primeiraData = dataTime;
+      item.primeiraDataTexto = dataTexto;
     }
   });
 
@@ -229,6 +236,7 @@ function carregarProgramacaoSgq() {
       const estado = estados[chave] || {};
 
       return {
+        dataEntrada: item.primeiraDataTexto || '',
         op: item.op,
         qtdCaixas: apiProgFormatarNumero_(item.qtdCaixas),
         qtdConteiner: apiProgFormatarNumero_(item.qtdConteiner),
@@ -243,8 +251,9 @@ function carregarProgramacaoSgq() {
       };
     })
     .sort((a, b) => {
-      const dataA = Number(a.primeiraData || 0);
-      const dataB = Number(b.primeiraData || 0);
+      const dataA = Number(a.primeiraData || 0) || Number.MAX_SAFE_INTEGER;
+      const dataB = Number(b.primeiraData || 0) || Number.MAX_SAFE_INTEGER;
+
       if (dataA !== dataB) return dataA - dataB;
 
       return String(a.op).localeCompare(
