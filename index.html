@@ -9,6 +9,7 @@
   <meta name="theme-color" content="#1f4e78">
   <title>SGQ Fixpar</title>
   <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/programacao.css">
   <style>
     .main-brand{display:flex;justify-content:center;align-items:center;min-height:84px;margin-bottom:4px}.main-brand-logo{display:block;max-width:220px;max-height:72px;width:auto;height:auto;object-fit:contain}.api-setup-notice{display:none;width:min(760px,calc(100% - 28px));margin:10px auto;padding:10px 14px;border:1px solid #e1b954;border-radius:6px;background:#fff8dd;color:#72580e;font-size:12px;line-height:1.35;text-align:center;box-sizing:border-box}
 
@@ -123,10 +124,69 @@
     <div class="menu-screen">
       <div class="menu-title">Programação</div>
       <div class="menu-grid">
-        <button class="menu-button program-sgq" type="button" onclick="funcaoEmBreve('Programação SGQ - Fixpar')">Programação SGQ - Fixpar</button>
+        <button class="menu-button program-sgq" type="button" onclick="abrirProgramacaoSgq()">Programação SGQ - Fixpar</button>
         <button class="menu-button program-macrosul" type="button" onclick="funcaoEmBreve('Programação Macrosul')">Programação Macrosul</button>
       </div>
       <div class="menu-back"><button onclick="abrirMenuPrincipal()">← Voltar</button></div>
+    </div>
+  </div>
+
+  <div id="programacaoSgqScreen" class="screen">
+    <div class="programacao-page">
+      <div class="programacao-actions no-print">
+        <button type="button" onclick="voltarMenuProgramacao()">← Voltar</button>
+        <button
+          type="button"
+          class="programacao-print-button"
+          onclick="imprimirProgramacaoSgq()"
+        >
+          IMPRIMIR
+        </button>
+      </div>
+
+      <div class="programacao-sheet">
+        <div class="programacao-header">
+          <div class="programacao-logo-wrap">
+            <img
+              class="programacao-logo"
+              src="https://raw.githubusercontent.com/galvanicadanuta1-ai/canhoto-digital/main/logo.png"
+              alt="Galvânica Danuta"
+            >
+          </div>
+
+          <div class="programacao-title">Programação SGQ - Fixpar</div>
+          <div id="programacaoSgqDate" class="programacao-date">Data:</div>
+        </div>
+
+        <div class="programacao-subinfo">
+          <div id="programacaoSgqResumo"></div>
+          <div id="programacaoStatusMessage" class="programacao-status-message"></div>
+        </div>
+
+        <div id="programacaoSgqLoading" class="programacao-loading" style="display:none;">
+          Carregando programação...
+        </div>
+
+        <div id="programacaoSgqEmpty" class="programacao-empty" style="display:none;"></div>
+
+        <div class="programacao-table-wrap">
+          <table class="programacao-table">
+            <thead>
+              <tr>
+                <th>OP</th>
+                <th>Qtd. Caixas</th>
+                <th>Qtd. Contêiner</th>
+                <th>Cor</th>
+                <th>Peso Danuta (Kg)</th>
+                <th>Status</th>
+                <th>OK</th>
+                <th>Encaminhado</th>
+              </tr>
+            </thead>
+            <tbody id="programacaoSgqBody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -207,6 +267,7 @@
   <script src="assets/config.js"></script>
   <script src="assets/api.js"></script>
   <script src="assets/core.js"></script>
+  <script src="assets/programacao.js"></script>
   <script src="assets/operacional.js"></script>
   <script src="assets/relatorios.js"></script>
   <script src="assets/historico.js"></script>
