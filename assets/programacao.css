@@ -3,6 +3,26 @@
    Layout de tela e impressão A4 paisagem
    ============================================================ */
 
+/* Macrosul: vermelho mais vivo e brilhante em toda a navegação */
+#mainMenu .macrosul-main,
+#macrosulMenu .menu-button,
+#macrosulMenu .history-button,
+#programacaoMenu .program-macrosul {
+  background: #e53935 !important;
+  border-color: #c62828 !important;
+  color: #ffffff !important;
+  box-shadow: 0 3px 9px rgba(229, 57, 53, .18);
+}
+
+#mainMenu .macrosul-main:hover,
+#macrosulMenu .menu-button:hover,
+#macrosulMenu .history-button:hover,
+#programacaoMenu .program-macrosul:hover {
+  background: #d32f2f !important;
+  border-color: #b71c1c !important;
+  color: #ffffff !important;
+}
+
 .programacao-page {
   width: 100%;
   max-width: 1500px;
@@ -139,22 +159,35 @@
   color: #111827;
 }
 
+/*
+   1 Data de Entrada
+   2 OP
+   3 Qtd. Caixas
+   4 Qtd. Contêiner
+   5 Cor
+   6 Peso Danuta
+   7 Status
+   8 OK
+   9 Encaminhado
+*/
 .programacao-table th:nth-child(1),
-.programacao-table td:nth-child(1) { width: 10%; text-align: center; }
+.programacao-table td:nth-child(1) { width: 9%; text-align: center; }
 .programacao-table th:nth-child(2),
-.programacao-table td:nth-child(2) { width: 10%; text-align: center; }
+.programacao-table td:nth-child(2) { width: 9%; text-align: center; }
 .programacao-table th:nth-child(3),
-.programacao-table td:nth-child(3) { width: 11%; text-align: center; }
+.programacao-table td:nth-child(3) { width: 8%; text-align: center; }
 .programacao-table th:nth-child(4),
-.programacao-table td:nth-child(4) { width: 18%; text-align: center; }
+.programacao-table td:nth-child(4) { width: 9%; text-align: center; }
 .programacao-table th:nth-child(5),
-.programacao-table td:nth-child(5) { width: 12%; text-align: center; }
+.programacao-table td:nth-child(5) { width: 17%; text-align: center; }
 .programacao-table th:nth-child(6),
-.programacao-table td:nth-child(6) { width: 27%; }
+.programacao-table td:nth-child(6) { width: 10%; text-align: center; }
 .programacao-table th:nth-child(7),
-.programacao-table td:nth-child(7) { width: 6%; text-align: center; }
+.programacao-table td:nth-child(7) { width: 26%; }
 .programacao-table th:nth-child(8),
-.programacao-table td:nth-child(8) { width: 6%; text-align: center; }
+.programacao-table td:nth-child(8) { width: 5%; text-align: center; }
+.programacao-table th:nth-child(9),
+.programacao-table td:nth-child(9) { width: 7%; text-align: center; }
 
 .programacao-status-input {
   width: 100%;
@@ -208,7 +241,7 @@
   }
 
   .programacao-table {
-    min-width: 900px;
+    min-width: 1000px;
   }
 }
 
@@ -304,7 +337,7 @@
   }
 
   .programacao-table th {
-    font-size: 9px;
+    font-size: 8.5px;
     padding: 4px 3px;
     background: #e9eef2 !important;
     -webkit-print-color-adjust: exact;
@@ -312,7 +345,7 @@
   }
 
   .programacao-table td {
-    font-size: 9px;
+    font-size: 8.5px;
     padding: 4px 3px;
     height: 25px;
   }
@@ -321,7 +354,7 @@
     border: 0 !important;
     padding: 0 !important;
     min-height: 18px;
-    font-size: 9px;
+    font-size: 8.5px;
     background: transparent !important;
   }
 
