@@ -10,7 +10,34 @@
   <title>SGQ Fixpar</title>
   <link rel="stylesheet" href="assets/styles.css">
   <style>
-    .main-brand{display:flex;justify-content:center;align-items:center;min-height:84px;margin-bottom:4px}.main-brand-logo{display:block;max-width:220px;max-height:72px;width:auto;height:auto;object-fit:contain}.api-setup-notice{display:none;width:min(760px,calc(100% - 28px));margin:10px auto;padding:10px 14px;border:1px solid #e1b954;border-radius:6px;background:#fff8dd;color:#72580e;font-size:12px;line-height:1.35;text-align:center;box-sizing:border-box}@media(max-width:800px){.main-brand{min-height:72px}.main-brand-logo{max-width:190px;max-height:62px}.api-setup-notice{width:calc(100% - 20px);font-size:11px}}
+    .main-brand{display:flex;justify-content:center;align-items:center;min-height:84px;margin-bottom:4px}.main-brand-logo{display:block;max-width:220px;max-height:72px;width:auto;height:auto;object-fit:contain}.api-setup-notice{display:none;width:min(760px,calc(100% - 28px));margin:10px auto;padding:10px 14px;border:1px solid #e1b954;border-radius:6px;background:#fff8dd;color:#72580e;font-size:12px;line-height:1.35;text-align:center;box-sizing:border-box}
+
+    /* Tela principal totalmente branca para integrar visualmente com o fundo do logo */
+    #mainMenu,
+    #mainMenu .main-menu-wrapper {
+      background: #ffffff;
+    }
+
+    #mainMenu {
+      min-height: calc(100vh - 28px);
+    }
+
+    /* Botões do SGQ Fixpar em tom esverdeado */
+    #logisticaMenu .menu-button,
+    #logisticaMenu .history-button {
+      background: #5f8f70;
+      border-color: #4f7a5f;
+      color: #ffffff;
+    }
+
+    #logisticaMenu .menu-button:hover,
+    #logisticaMenu .history-button:hover {
+      background: #4f7a5f;
+      border-color: #41684f;
+      color: #ffffff;
+    }
+
+    @media(max-width:800px){.main-brand{min-height:72px}.main-brand-logo{max-width:190px;max-height:62px}.api-setup-notice{width:calc(100% - 20px);font-size:11px}}
   </style>
 </head>
 <body>
@@ -72,7 +99,7 @@
   <div id="systemScreen" class="screen">
     <div class="app">
       <div class="system-header">
-        <div><button class="back-button" onclick="voltarMenuLogistica()">← Menu Logística</button></div>
+        <div><button class="back-button" onclick="voltarMenuLogistica()">← Voltar</button></div>
         <div id="pageTitle" class="page-title">Recebimento SGQ - Fixpar</div>
         <div></div>
       </div>
@@ -99,7 +126,7 @@
   <div id="historyScreen" class="screen">
     <div class="app">
       <div class="system-header">
-        <div><button class="back-button" onclick="voltarMenuLogistica()">← Menu Logística</button></div>
+        <div><button class="back-button" onclick="voltarMenuLogistica()">← Voltar</button></div>
         <div id="historyTitle" class="page-title">Histórico Recebimento</div>
         <div></div>
       </div>
