@@ -11,6 +11,7 @@ function abrirProgramacaoSgq() {
   const screen = document.getElementById('programacaoSgqScreen');
   if (screen) screen.classList.add('active');
 
+  garantirCabecalhoDataEntradaProgramacao_();
   atualizarDataProgramacaoSgq();
   carregarProgramacaoSgq();
 }
@@ -30,6 +31,26 @@ function atualizarDataProgramacaoSgq() {
   const agora = new Date();
   const data = agora.toLocaleDateString('pt-BR');
   el.textContent = 'Data: ' + data;
+}
+
+function garantirCabecalhoDataEntradaProgramacao_() {
+  const tabela = document.querySelector('#programacaoSgqScreen .programacao-table');
+  if (!tabela) return;
+
+  const linha = tabela.querySelector('thead tr');
+  if (!linha) return;
+
+  const primeiro = linha.querySelector('th');
+  if (
+    primeiro &&
+    String(primeiro.textContent || '').trim().toLowerCase() === 'data de entrada'
+  ) {
+    return;
+  }
+
+  const th = document.createElement('th');
+  th.textContent = 'Data de Entrada';
+  linha.insertBefore(th, linha.firstChild);
 }
 
 function setProgramacaoStatus(texto, estado) {
@@ -87,6 +108,7 @@ function renderProgramacaoSgq() {
 
   if (!tbody) return;
 
+  garantirCabecalhoDataEntradaProgramacao_();
   tbody.innerHTML = '';
 
   if (!programacaoSgqRows.length) {
@@ -110,6 +132,7 @@ function renderProgramacaoSgq() {
     const tr = document.createElement('tr');
     tr.dataset.op = item.op || '';
 
+    appendProgramacaoTextCell(tr, item.dataEntrada);
     appendProgramacaoTextCell(tr, item.op);
     appendProgramacaoTextCell(tr, item.qtdCaixas);
     appendProgramacaoTextCell(tr, item.qtdConteiner);
