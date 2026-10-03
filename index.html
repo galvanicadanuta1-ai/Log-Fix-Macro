@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+  <meta name="theme-color" content="#1f4e78">
+  <title>SGQ Fixpar</title>
+  <link rel="stylesheet" href="assets/styles.css">
+  <style>
+    .main-brand{display:flex;justify-content:center;align-items:center;min-height:84px;margin-bottom:4px}.main-brand-logo{display:block;max-width:220px;max-height:72px;width:auto;height:auto;object-fit:contain}.api-setup-notice{display:none;width:min(760px,calc(100% - 28px));margin:10px auto;padding:10px 14px;border:1px solid #e1b954;border-radius:6px;background:#fff8dd;color:#72580e;font-size:12px;line-height:1.35;text-align:center;box-sizing:border-box}@media(max-width:800px){.main-brand{min-height:72px}.main-brand-logo{max-width:190px;max-height:62px}.api-setup-notice{width:calc(100% - 20px);font-size:11px}}
+  </style>
+</head>
+<body>
+
+  <div id="successToast" class="success-toast" role="status" aria-live="polite">
+    Relatório gerado com sucesso!
+  </div>
+
+  <div id="apiSetupNotice" class="api-setup-notice">
+    Front-end publicado, mas a API ainda não foi configurada.
+    Depois de implantar o Apps Script, informe a URL <strong>/exec</strong>
+    no arquivo <strong>assets/config.js</strong>.
+  </div>
+
+  <div id="mainMenu" class="screen active">
+    <div class="main-menu-wrapper">
+      <div class="main-menu-stack">
+        <div class="main-brand">
+          <img
+            class="main-brand-logo"
+            src="https://raw.githubusercontent.com/galvanicadanuta1-ai/canhoto-digital/main/logo.png"
+            alt="Galvânica Danuta"
+          >
+        </div>
+
+        <button class="main-menu-button" onclick="abrirMenuLogistica()">SGQ Fixpar</button>
+        <button class="main-menu-button" onclick="abrirMenuMacrosul()">Macrosul</button>
+        <button class="main-menu-button" type="button" onclick="funcaoEmBreve('Programação')">Programação</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="logisticaMenu" class="screen">
+    <div class="menu-screen">
+      <div class="menu-title">SGQ Fixpar</div>
+      <div class="menu-grid">
+        <button class="menu-button" onclick="abrirSistema('RECEBIMENTO')">Recebimento - SGQ Fixpar</button>
+        <button class="menu-button secondary" onclick="abrirSistema('SAIDA')">Saída - SGQ Fixpar</button>
+        <button class="history-button" onclick="abrirHistorico('RECEBIMENTO')">Histórico Recebimento</button>
+        <button class="history-button" onclick="abrirHistorico('SAIDA')">Histórico Saída</button>
+      </div>
+      <div class="menu-back"><button onclick="abrirMenuPrincipal()">← Voltar</button></div>
+    </div>
+  </div>
+
+  <div id="macrosulMenu" class="screen">
+    <div class="menu-screen">
+      <div class="menu-title">Macrosul</div>
+      <div class="menu-grid">
+        <button class="menu-button" type="button" onclick="funcaoEmBreve('Recebimento - Macrosul')">Recebimento - Macrosul</button>
+        <button class="menu-button secondary" type="button" onclick="funcaoEmBreve('Saída - Macrosul')">Saída - Macrosul</button>
+        <button class="history-button" type="button" onclick="funcaoEmBreve('Histórico Recebimento - Macrosul')">Histórico Recebimento</button>
+        <button class="history-button" type="button" onclick="funcaoEmBreve('Histórico Saída - Macrosul')">Histórico Saída</button>
+      </div>
+      <div class="menu-back"><button onclick="abrirMenuPrincipal()">← Voltar</button></div>
+    </div>
+  </div>
+
+  <div id="systemScreen" class="screen">
+    <div class="app">
+      <div class="system-header">
+        <div><button class="back-button" onclick="voltarMenuLogistica()">← Menu Logística</button></div>
+        <div id="pageTitle" class="page-title">Recebimento SGQ - Fixpar</div>
+        <div></div>
+      </div>
+
+      <div class="toolbar">
+        <div class="date-area">
+          <label for="selectedDate">Data:</label>
+          <input type="date" id="selectedDate" onchange="alterarData()">
+        </div>
+        <div id="statusbar" class="statusbar">Pronto</div>
+        <button id="reportButton" class="report-button" onclick="gerarRelatorio()">GERAR RELATÓRIO</button>
+      </div>
+
+      <div class="grid-wrap">
+        <div id="loading" class="loading">Carregando...</div>
+        <table id="grid" style="display:none;">
+          <thead><tr id="headerRow"></tr></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="historyScreen" class="screen">
+    <div class="app">
+      <div class="system-header">
+        <div><button class="back-button" onclick="voltarMenuLogistica()">← Menu Logística</button></div>
+        <div id="historyTitle" class="page-title">Histórico Recebimento</div>
+        <div></div>
+      </div>
+
+      <div class="history-toolbar">
+        <div class="history-filter-item">
+          <label for="historyStartDate">Data inicial</label>
+          <input type="date" id="historyStartDate">
+        </div>
+        <div class="history-filter-item">
+          <label for="historyEndDate">Data final</label>
+          <input type="date" id="historyEndDate">
+        </div>
+        <div class="history-filter-item search-item">
+          <label for="historySearch">Buscar por OP / Nota Fiscal / Nota Fiscal de Caixa</label>
+          <div class="history-search-wrap">
+            <input id="historySearch" class="history-search" type="text" autocomplete="off" placeholder="Digite OP, Nota Fiscal ou Nota Fiscal de Caixa" oninput="historicoBuscaDigitando()" onkeydown="historicoEnter(event)">
+            <button id="historySearchClear" class="history-search-clear" type="button" title="Limpar busca" onclick="limparBuscaHistorico()">×</button>
+            <div id="historySuggestions" class="history-suggestions"></div>
+          </div>
+        </div>
+        <button id="historyConsultButton" class="consult-button" onclick="consultarHistorico(true)">CONSULTAR</button>
+        <button id="historyReportButton" class="report-button" onclick="gerarRelatorioHistoricoTela()">GERAR RELATÓRIO</button>
+        <div id="historyInfo" class="history-info"></div>
+      </div>
+
+      <div class="grid-wrap">
+        <div id="historyLoading" class="loading" style="display:none;">Consultando...</div>
+        <div id="historyEmpty" class="history-empty">Selecione o período e clique em Consultar.</div>
+        <div id="historyCards" class="history-cards"></div>
+        <div class="history-more-wrap">
+          <button id="historyLoadMore" class="history-load-more" type="button" style="display:none;" onclick="carregarMaisHistorico()">CARREGAR MAIS</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <datalist id="coresFixparList"></datalist>
+  <datalist id="processosFixparList">
+    <option value="Industrialização"></option>
+    <option value="Retrabalho"></option>
+  </datalist>
+
+  <script src="assets/config.js"></script>
+  <script src="assets/api.js"></script>
+  <script src="assets/core.js"></script>
+  <script src="assets/operacional.js"></script>
+  <script src="assets/relatorios.js"></script>
+  <script src="assets/historico.js"></script>
+  <script src="assets/ui.js"></script>
+
+  <script>
+    function funcaoEmBreve(nome) {
+      const toast = document.getElementById('successToast');
+      if (toast) {
+        toast.textContent = nome + ' será implementado na próxima etapa.';
+        toast.classList.add('show');
+        setTimeout(() => {
+          toast.classList.remove('show');
+          toast.textContent = 'Relatório gerado com sucesso!';
+        }, 2200);
+        return;
+      }
+      alert(nome + ' será implementado na próxima etapa.');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!apiConfigurada()) {
+        const aviso = document.getElementById('apiSetupNotice');
+        if (aviso) aviso.style.display = 'block';
+      }
+    });
+  </script>
+
+</body>
+</html>
