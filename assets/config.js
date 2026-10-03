@@ -1,9 +1,9 @@
 /**
  * SGQ FIXPAR - CONFIGURAÇÃO DO FRONT-END
  *
- * Depois de publicar o Apps Script como Web App, cole a URL /exec abaixo.
+ * Web App do Apps Script usado como API pelo GitHub Pages.
  */
-const API_URL = 'COLE_AQUI_A_URL_DO_APPS_SCRIPT_EXEC';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwBimN8eXQFB3CkV-xv557oOiHjC8Htce9yUAiKjJhayao7-WXyxjOaiNHqm7NX4P3G8Q/exec';
 
 const CONFIG = {
   recebimento: {
