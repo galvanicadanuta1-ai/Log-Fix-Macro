@@ -12,7 +12,7 @@
   <style>
     .main-brand{display:flex;justify-content:center;align-items:center;min-height:84px;margin-bottom:4px}.main-brand-logo{display:block;max-width:220px;max-height:72px;width:auto;height:auto;object-fit:contain}.api-setup-notice{display:none;width:min(760px,calc(100% - 28px));margin:10px auto;padding:10px 14px;border:1px solid #e1b954;border-radius:6px;background:#fff8dd;color:#72580e;font-size:12px;line-height:1.35;text-align:center;box-sizing:border-box}
 
-    /* Tela principal totalmente branca para integrar visualmente com o fundo do logo */
+    /* Tela principal branca para integrar com o fundo do logo */
     #mainMenu,
     #mainMenu .main-menu-wrapper {
       background: #ffffff;
@@ -22,10 +22,11 @@
       min-height: calc(100vh - 28px);
     }
 
-    /* SGQ Fixpar: verde mais vibrante */
+    /* SGQ Fixpar: verde vibrante */
     #logisticaMenu .menu-button,
     #logisticaMenu .history-button,
-    #mainMenu .main-menu-button:first-of-type {
+    #mainMenu .main-menu-button:first-of-type,
+    #programacaoMenu .program-sgq {
       background: #22a85a;
       border-color: #198647;
       color: #ffffff;
@@ -33,9 +34,29 @@
 
     #logisticaMenu .menu-button:hover,
     #logisticaMenu .history-button:hover,
-    #mainMenu .main-menu-button:first-of-type:hover {
+    #mainMenu .main-menu-button:first-of-type:hover,
+    #programacaoMenu .program-sgq:hover {
       background: #198f4b;
       border-color: #15723d;
+      color: #ffffff;
+    }
+
+    /* Macrosul: vermelho mais suave */
+    #mainMenu .macrosul-main,
+    #macrosulMenu .menu-button,
+    #macrosulMenu .history-button,
+    #programacaoMenu .program-macrosul {
+      background: #b85b5b;
+      border-color: #9f4d4d;
+      color: #ffffff;
+    }
+
+    #mainMenu .macrosul-main:hover,
+    #macrosulMenu .menu-button:hover,
+    #macrosulMenu .history-button:hover,
+    #programacaoMenu .program-macrosul:hover {
+      background: #a84e4e;
+      border-color: #8f4141;
       color: #ffffff;
     }
 
@@ -66,8 +87,8 @@
         </div>
 
         <button class="main-menu-button" onclick="abrirMenuLogistica()">SGQ Fixpar</button>
-        <button class="main-menu-button" onclick="abrirMenuMacrosul()">Macrosul</button>
-        <button class="main-menu-button" type="button" onclick="funcaoEmBreve('Programação')">Programação</button>
+        <button class="main-menu-button macrosul-main" onclick="abrirMenuMacrosul()">Macrosul</button>
+        <button class="main-menu-button" type="button" onclick="abrirMenuProgramacao()">Programação</button>
       </div>
     </div>
   </div>
@@ -93,6 +114,17 @@
         <button class="menu-button secondary" type="button" onclick="funcaoEmBreve('Saída - Macrosul')">Saída - Macrosul</button>
         <button class="history-button" type="button" onclick="funcaoEmBreve('Histórico Recebimento - Macrosul')">Histórico Recebimento</button>
         <button class="history-button" type="button" onclick="funcaoEmBreve('Histórico Saída - Macrosul')">Histórico Saída</button>
+      </div>
+      <div class="menu-back"><button onclick="abrirMenuPrincipal()">← Voltar</button></div>
+    </div>
+  </div>
+
+  <div id="programacaoMenu" class="screen">
+    <div class="menu-screen">
+      <div class="menu-title">Programação</div>
+      <div class="menu-grid">
+        <button class="menu-button program-sgq" type="button" onclick="funcaoEmBreve('Programação SGQ - Fixpar')">Programação SGQ - Fixpar</button>
+        <button class="menu-button program-macrosul" type="button" onclick="funcaoEmBreve('Programação Macrosul')">Programação Macrosul</button>
       </div>
       <div class="menu-back"><button onclick="abrirMenuPrincipal()">← Voltar</button></div>
     </div>
@@ -181,6 +213,12 @@
   <script src="assets/ui.js"></script>
 
   <script>
+    function abrirMenuProgramacao() {
+      cancelarTimers();
+      esconderTelas();
+      document.getElementById('programacaoMenu').classList.add('active');
+    }
+
     function funcaoEmBreve(nome) {
       const toast = document.getElementById('successToast');
       if (toast) {
