@@ -204,7 +204,7 @@
 .programacao-dual-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 14px;
+  gap: 12px;
   width: 100%;
   align-items: start;
 }
@@ -216,23 +216,23 @@
 
 .programacao-bloco + .programacao-bloco {
   border-left: 1px dashed #94a3b8;
-  padding-left: 14px;
+  padding-left: 12px;
 }
 
 .programacao-bloco-cabecalho {
   display: grid;
   grid-template-columns: 72px 1fr;
   align-items: center;
-  min-height: 52px;
-  margin-bottom: 5px;
-  padding: 3px 4px 5px;
+  min-height: 50px;
+  margin-bottom: 4px;
+  padding: 2px 3px 4px;
   border-bottom: 1.5px solid #334155;
 }
 
 .programacao-bloco-logo {
   display: block;
   max-width: 66px;
-  max-height: 38px;
+  max-height: 36px;
   width: auto;
   height: auto;
   object-fit: contain;
@@ -246,13 +246,13 @@
 
 .programacao-bloco-titulo {
   font-size: 17px;
-  line-height: 1.1;
+  line-height: 1.05;
   font-weight: 900;
 }
 
 .programacao-bloco-subtitulo {
-  margin-top: 3px;
-  font-size: 11px;
+  margin-top: 2px;
+  font-size: 10.5px;
   font-weight: 800;
   color: #991b1b;
 }
@@ -267,26 +267,39 @@
 .programacao-table th,
 .programacao-table td {
   border: 1px solid #4b5563;
-  padding: 5px 3px;
+  padding: 4px 2px;
   vertical-align: middle;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
 }
 
 .programacao-table th {
   background: #e9eef2;
   color: #111827;
-  font-size: 10.5px;
-  line-height: 1.05;
+  font-size: 10px;
+  line-height: 1.0;
   font-weight: 900;
   text-align: center;
 }
 
 .programacao-table td {
-  min-height: 34px;
+  min-height: 32px;
   font-size: 14px;
-  line-height: 1.08;
+  line-height: 1.05;
   color: #111827;
   font-weight: 700;
+}
+
+.programacao-table .col-data,
+.programacao-table .col-op,
+.programacao-table .col-caixas,
+.programacao-table .col-conteiner,
+.programacao-table .col-cor,
+.programacao-table .col-peso,
+.programacao-table .col-ok,
+.programacao-table .col-enc {
+  text-align: center;
 }
 
 .programacao-table tr.programacao-urgente td {
@@ -299,36 +312,75 @@
   text-transform: uppercase;
 }
 
-/*
-   Colunas compactas para caber duas programações na mesma folha:
-   1 Data | 2 OP | 3 Caixas | 4 Contêiner | 5 Cor
-   6 Peso | 7 Status | 8 OK | 9 Encaminhado
-*/
-.programacao-table th:nth-child(1),
-.programacao-table td:nth-child(1) { width: 13%; text-align: center; }
-.programacao-table th:nth-child(2),
-.programacao-table td:nth-child(2) { width: 12%; text-align: center; }
-.programacao-table th:nth-child(3),
-.programacao-table td:nth-child(3) { width: 8%; text-align: center; }
-.programacao-table th:nth-child(4),
-.programacao-table td:nth-child(4) { width: 9%; text-align: center; }
-.programacao-table th:nth-child(5),
-.programacao-table td:nth-child(5) { width: 10%; text-align: center; }
-.programacao-table th:nth-child(6),
-.programacao-table td:nth-child(6) { width: 11%; text-align: center; }
-.programacao-table th:nth-child(7),
-.programacao-table td:nth-child(7) { width: 12%; }
-.programacao-table th:nth-child(8),
-.programacao-table td:nth-child(8) { width: 7%; text-align: center; }
-.programacao-table th:nth-child(9),
-.programacao-table td:nth-child(9) { width: 18%; text-align: center; }
+/* Cabeçalho interno usado apenas na impressão. Ele fica dentro do THEAD,
+   por isso é repetido automaticamente em todas as páginas impressas. */
+.programacao-print-repeat-header {
+  display: none;
+}
+
+.programacao-repeat-head {
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  align-items: center;
+  min-height: 42px;
+  background: #fff;
+}
+
+.programacao-repeat-logo {
+  display: block;
+  max-width: 54px;
+  max-height: 30px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.programacao-repeat-textos {
+  text-align: center;
+}
+
+.programacao-repeat-titulo {
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.programacao-repeat-turno-data {
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #991b1b;
+}
+
+/* ============================================================
+   LARGURAS OTIMIZADAS
+   ============================================================ */
+/* Esquerda: Data | OP | Caixas | Cont. | Cor | Kgs | Status | OK | Enc. */
+.programacao-table-principal .col-data { width: 12%; }
+.programacao-table-principal .col-op { width: 10%; }
+.programacao-table-principal .col-caixas { width: 7%; }
+.programacao-table-principal .col-conteiner { width: 7%; }
+.programacao-table-principal .col-cor { width: 28%; }
+.programacao-table-principal .col-peso { width: 8%; }
+.programacao-table-principal .col-status { width: 14%; }
+.programacao-table-principal .col-ok { width: 7%; }
+.programacao-table-principal .col-enc { width: 7%; }
+
+/* Direita: sem Contêiner. O espaço ganho vai principalmente para Cor. */
+.programacao-table-uma-caixa .col-data { width: 13%; }
+.programacao-table-uma-caixa .col-op { width: 11%; }
+.programacao-table-uma-caixa .col-caixas { width: 8%; }
+.programacao-table-uma-caixa .col-cor { width: 31%; }
+.programacao-table-uma-caixa .col-peso { width: 9%; }
+.programacao-table-uma-caixa .col-status { width: 14%; }
+.programacao-table-uma-caixa .col-ok { width: 7%; }
+.programacao-table-uma-caixa .col-enc { width: 7%; }
 
 .programacao-status-input {
   width: 100%;
-  min-height: 28px;
+  min-height: 27px;
   border: 1px solid #b7c0c8;
   border-radius: 3px;
-  padding: 3px 4px;
+  padding: 2px 3px;
   background: #fff;
   color: #111827;
   font-size: 13px;
@@ -337,8 +389,8 @@
 }
 
 .programacao-check {
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
   cursor: pointer;
 }
 
@@ -406,14 +458,14 @@
   }
 
   .programacao-table {
-    min-width: 760px;
+    min-width: 720px;
   }
 }
 
 @media print {
   @page {
     size: A4 landscape;
-    margin: 5mm;
+    margin: 4mm;
   }
 
   html,
@@ -443,7 +495,8 @@
   #programacaoSgqScreen > .programacao-page > .programacao-sheet > .programacao-header,
   #programacaoSgqScreen .programacao-subinfo,
   #programacaoSgqScreen .programacao-loading,
-  #programacaoSgqScreen .programacao-empty {
+  #programacaoSgqScreen .programacao-empty,
+  #programacaoSgqScreen .programacao-bloco-cabecalho {
     display: none !important;
   }
 
@@ -462,7 +515,7 @@
   .programacao-dual-grid {
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
-    gap: 3mm !important;
+    gap: 2.5mm !important;
     width: 100% !important;
     align-items: start !important;
   }
@@ -470,40 +523,18 @@
   .programacao-bloco {
     min-width: 0 !important;
     page-break-inside: auto;
+    break-inside: auto;
   }
 
   .programacao-bloco + .programacao-bloco {
     border-left: 1px dashed #777 !important;
     border-top: 0 !important;
-    padding-left: 3mm !important;
+    padding-left: 2.5mm !important;
     padding-top: 0 !important;
   }
 
   .programacao-bloco-principal {
-    padding-right: 1mm;
-  }
-
-  .programacao-bloco-cabecalho {
-    grid-template-columns: 22mm 1fr;
-    min-height: 13mm;
-    margin: 0 0 1.5mm;
-    padding: 0 1mm 1.5mm;
-    border-bottom: 1px solid #222;
-  }
-
-  .programacao-bloco-logo {
-    max-width: 20mm;
-    max-height: 10mm;
-  }
-
-  .programacao-bloco-titulo {
-    font-size: 11.5pt;
-    line-height: 1.05;
-  }
-
-  .programacao-bloco-subtitulo {
-    font-size: 8.5pt;
-    margin-top: 1mm;
+    padding-right: .5mm;
   }
 
   .programacao-table {
@@ -512,8 +543,42 @@
     table-layout: fixed !important;
   }
 
+  /* THEAD completo se repete em toda nova página. */
   .programacao-table thead {
-    display: table-header-group;
+    display: table-header-group !important;
+  }
+
+  .programacao-print-repeat-header {
+    display: table-row !important;
+  }
+
+  .programacao-print-repeat-header > th {
+    padding: 0 0 1mm !important;
+    background: #fff !important;
+    border-top: 0 !important;
+    border-left: 0 !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid #222 !important;
+  }
+
+  .programacao-repeat-head {
+    grid-template-columns: 19mm 1fr;
+    min-height: 10mm;
+  }
+
+  .programacao-repeat-logo {
+    max-width: 18mm;
+    max-height: 8mm;
+  }
+
+  .programacao-repeat-titulo {
+    font-size: 10.5pt;
+    line-height: 1;
+  }
+
+  .programacao-repeat-turno-data {
+    font-size: 7.5pt;
+    margin-top: .6mm;
   }
 
   .programacao-table tr {
@@ -521,20 +586,20 @@
     page-break-inside: avoid;
   }
 
-  .programacao-table th {
-    font-size: 7.6pt;
-    line-height: 1.0;
-    padding: 1.4mm .7mm;
+  .programacao-table .programacao-column-head th {
+    font-size: 7.2pt;
+    line-height: .98;
+    padding: 1.1mm .35mm;
     background: #e9eef2 !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
   .programacao-table td {
-    font-size: 9.6pt;
+    font-size: 10pt;
     line-height: 1.0;
-    padding: 1.6mm .7mm;
-    height: 7mm;
+    padding: 1.15mm .45mm;
+    height: 6.2mm;
     font-weight: 700;
   }
 
@@ -549,13 +614,13 @@
     padding: 0 !important;
     min-height: 0 !important;
     height: auto !important;
-    font-size: 9.4pt;
+    font-size: 9.8pt;
     line-height: 1 !important;
     background: transparent !important;
   }
 
   .programacao-check {
-    width: 4mm;
-    height: 4mm;
+    width: 3.6mm;
+    height: 3.6mm;
   }
 }
