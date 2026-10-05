@@ -25,7 +25,47 @@ document.addEventListener('DOMContentLoaded', () => {
       fecharSugestoesHistorico();
     }
   });
+
+  /*
+   * Ajustes carregados por último para valerem como padrão global:
+   * - relatório rápido/silencioso no Drive;
+   * - navegação interna integrada ao Voltar/Avançar do navegador.
+   */
+  carregarScriptsGlobais_([
+    'assets/relatorio-padrao.js',
+    'assets/navegacao.js'
+  ]);
 });
+
+
+function carregarScriptsGlobais_(arquivos) {
+  const lista = Array.isArray(arquivos) ? arquivos.slice() : [];
+
+  function proximo_() {
+    if (!lista.length) return;
+
+    const src = lista.shift();
+
+    if (document.querySelector('script[data-global-src="' + src + '"]')) {
+      proximo_();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = false;
+    script.dataset.globalSrc = src;
+    script.onload = proximo_;
+    script.onerror = () => {
+      console.error('Não foi possível carregar o ajuste global:', src);
+      proximo_();
+    };
+
+    document.body.appendChild(script);
+  }
+
+  proximo_();
+}
 
 
 /* ============================================================
