@@ -1,0 +1,301 @@
+/* ============================================================
+   AJUSTES DA PROGRAMAÇÃO SGQ - FIXPAR
+   - data superior mais discreta
+   - botão de OS manual
+   - cabeçalhos compactos/repetidos
+   - sem linha pontilhada central
+   - modal de inclusão manual
+   ============================================================ */
+
+.programacao-date-actions {
+  justify-self: end;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  margin-top: 0;
+}
+
+.programacao-date-actions .programacao-date {
+  justify-self: auto;
+  min-width: 0;
+  padding: 3px 7px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.programacao-add-os-button {
+  min-height: 28px;
+  padding: 0 9px;
+  border: 1px solid #198647;
+  border-radius: 4px;
+  background: #22a85a;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.programacao-add-os-button:hover {
+  background: #198f4b;
+}
+
+.programacao-bloco + .programacao-bloco {
+  border-left: 0 !important;
+}
+
+.programacao-dual-grid {
+  gap: 8px !important;
+}
+
+.programacao-bloco + .programacao-bloco {
+  padding-left: 8px !important;
+}
+
+.programacao-table th,
+.programacao-table td {
+  padding-left: 2px !important;
+  padding-right: 2px !important;
+}
+
+.programacao-repeat-panel th {
+  padding: 0 !important;
+  border: 0 !important;
+  background: #ffffff !important;
+}
+
+.programacao-repeat-panel .programacao-bloco-cabecalho {
+  margin: 0 0 4px;
+}
+
+.programacao-table-compacta th {
+  font-size: 9.4px !important;
+  line-height: 1.0 !important;
+}
+
+.programacao-table-compacta td {
+  font-size: 13.5px !important;
+  line-height: 1.0 !important;
+}
+
+/* LADO ESQUERDO: Data | OP | Caixas | Caçamba | Cor | Kgs | Status | OK | Enc. */
+.programacao-bloco-principal .programacao-table th:nth-child(1),
+.programacao-bloco-principal .programacao-table td:nth-child(1) { width: 12%; text-align:center; }
+.programacao-bloco-principal .programacao-table th:nth-child(2),
+.programacao-bloco-principal .programacao-table td:nth-child(2) { width: 11%; text-align:center; }
+.programacao-bloco-principal .programacao-table th:nth-child(3),
+.programacao-bloco-principal .programacao-table td:nth-child(3) { width: 7%; text-align:center; }
+.programacao-bloco-principal .programacao-table th:nth-child(4),
+.programacao-bloco-principal .programacao-table td:nth-child(4) { width: 8%; text-align:center; }
+.programacao-bloco-principal .programacao-table th:nth-child(5),
+.programacao-bloco-principal .programacao-table td:nth-child(5) { width: 20%; text-align:center; }
+.programacao-bloco-principal .programacao-table th:nth-child(6),
+.programacao-bloco-principal .programacao-table td:nth-child(6) { width: 9%; text-align:center; }
+.programacao-bloco-principal .programacao-table th:nth-child(7),
+.programacao-bloco-principal .programacao-table td:nth-child(7) { width: 15%; }
+.programacao-bloco-principal .programacao-table th:nth-child(8),
+.programacao-bloco-principal .programacao-table td:nth-child(8) { width: 7%; text-align:center; }
+.programacao-bloco-principal .programacao-table th:nth-child(9),
+.programacao-bloco-principal .programacao-table td:nth-child(9) { width: 11%; text-align:center; }
+
+/* LADO DIREITO: Data | OP | Caixas | Cor | Kgs | Status | OK | Enc. */
+.programacao-bloco-uma-caixa .programacao-table th:nth-child(1),
+.programacao-bloco-uma-caixa .programacao-table td:nth-child(1) { width: 13%; text-align:center; }
+.programacao-bloco-uma-caixa .programacao-table th:nth-child(2),
+.programacao-bloco-uma-caixa .programacao-table td:nth-child(2) { width: 12%; text-align:center; }
+.programacao-bloco-uma-caixa .programacao-table th:nth-child(3),
+.programacao-bloco-uma-caixa .programacao-table td:nth-child(3) { width: 8%; text-align:center; }
+.programacao-bloco-uma-caixa .programacao-table th:nth-child(4),
+.programacao-bloco-uma-caixa .programacao-table td:nth-child(4) { width: 25%; text-align:center; }
+.programacao-bloco-uma-caixa .programacao-table th:nth-child(5),
+.programacao-bloco-uma-caixa .programacao-table td:nth-child(5) { width: 10%; text-align:center; }
+.programacao-bloco-uma-caixa .programacao-table th:nth-child(6),
+.programacao-bloco-uma-caixa .programacao-table td:nth-child(6) { width: 15%; }
+.programacao-bloco-uma-caixa .programacao-table th:nth-child(7),
+.programacao-bloco-uma-caixa .programacao-table td:nth-child(7) { width: 7%; text-align:center; }
+.programacao-bloco-uma-caixa .programacao-table th:nth-child(8),
+.programacao-bloco-uma-caixa .programacao-table td:nth-child(8) { width: 10%; text-align:center; }
+
+.programacao-manual td {
+  box-shadow: inset 0 0 0 9999px rgba(255, 251, 235, .28);
+}
+
+/* MODAL OS MANUAL */
+.programacao-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(15, 23, 42, .48);
+}
+
+.programacao-modal-overlay.show {
+  display: flex;
+}
+
+.programacao-modal {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 18px 50px rgba(0,0,0,.22);
+  padding: 18px;
+}
+
+.programacao-modal-title {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 900;
+  color: #111827;
+}
+
+.programacao-modal-help {
+  margin: 0 0 14px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.programacao-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 11px;
+}
+
+.programacao-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.programacao-modal-field.full {
+  grid-column: 1 / -1;
+}
+
+.programacao-modal-field label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #334155;
+}
+
+.programacao-modal-field input,
+.programacao-modal-field select {
+  height: 36px;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  padding: 0 9px;
+  font-size: 13px;
+  color: #111827;
+  background: #ffffff;
+}
+
+.programacao-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.programacao-modal-actions button {
+  min-height: 34px;
+  padding: 0 13px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.programacao-modal-cancel {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+}
+
+.programacao-modal-save {
+  border: 1px solid #198647;
+  background: #22a85a;
+  color: #ffffff;
+}
+
+.programacao-modal-error {
+  min-height: 18px;
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #b91c1c;
+}
+
+@media (max-width: 640px) {
+  .programacao-modal-grid { grid-template-columns: 1fr; }
+  .programacao-modal-field.full { grid-column: auto; }
+}
+
+@media print {
+  .programacao-date-actions,
+  .programacao-modal-overlay {
+    display: none !important;
+  }
+
+  .programacao-dual-grid {
+    gap: 2mm !important;
+  }
+
+  .programacao-bloco + .programacao-bloco {
+    border-left: 0 !important;
+    padding-left: 2mm !important;
+  }
+
+  .programacao-repeat-panel {
+    display: table-row !important;
+  }
+
+  .programacao-repeat-panel th {
+    padding: 0 0 1mm !important;
+  }
+
+  .programacao-repeat-panel .programacao-bloco-cabecalho {
+    display: grid !important;
+    grid-template-columns: 18mm 1fr !important;
+    min-height: 10mm !important;
+    margin: 0 0 1mm !important;
+    padding: 0 0 1mm !important;
+    border-bottom: 1px solid #222 !important;
+  }
+
+  .programacao-repeat-panel .programacao-bloco-logo {
+    max-width: 17mm !important;
+    max-height: 8mm !important;
+  }
+
+  .programacao-repeat-panel .programacao-bloco-titulo {
+    font-size: 10.5pt !important;
+  }
+
+  .programacao-repeat-panel .programacao-bloco-subtitulo {
+    font-size: 7.8pt !important;
+  }
+
+  .programacao-table-compacta th {
+    font-size: 7.0pt !important;
+    padding: 1.0mm .45mm !important;
+  }
+
+  .programacao-table-compacta td {
+    font-size: 9.0pt !important;
+    padding: 1.15mm .45mm !important;
+    height: 6mm !important;
+  }
+
+  .programacao-status-input {
+    font-size: 8.6pt !important;
+  }
+}
