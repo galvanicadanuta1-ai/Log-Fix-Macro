@@ -30,12 +30,14 @@ document.addEventListener('DOMContentLoaded', () => {
    * Ajustes carregados por último para valerem como padrão global:
    * - relatório rápido/silencioso no Drive;
    * - navegação interna integrada ao Voltar/Avançar do navegador;
-   * - PDF/Excel da programação refletindo a divisão em dois blocos.
+   * - PDF/Excel da programação refletindo a divisão em dois blocos;
+   * - cabeçalhos compactos, OS manual e impressão otimizada.
    */
   carregarScriptsGlobais_([
     'assets/relatorio-padrao.js',
     'assets/navegacao.js',
-    'assets/programacao-exportacao-dividida.js'
+    'assets/programacao-exportacao-dividida.js',
+    'assets/programacao-ajustes.js'
   ]);
 });
 
