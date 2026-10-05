@@ -4,31 +4,59 @@
    Espelha a folha impressa:
    - esquerda: Caixas > 1 ou Contêiner >= 1;
    - direita: todas as OPs com exatamente 1 caixa;
+   - bloco da direita sem coluna Contêiner;
    - Urgentes no topo de cada bloco;
-   - depois, data mais antiga para a mais nova.
+   - depois, data mais antiga para a mais nova;
+   - cabeçalhos repetidos em todas as páginas do PDF.
    ============================================================ */
 
 (function () {
-  function headers_() {
+  function headersPrincipal_() {
     return [
-      'Data de Entrada',
+      'Data Entrada',
       'OP',
       'Qtd. Caixas',
       'Qtd. Contêiner',
       'Cor',
-      'Peso Danuta (Kg)',
+      'Kgs',
       'Status',
       'OK',
-      'Encaminhado'
+      'Enc.'
     ];
   }
 
-  function linhaExportacao_(item) {
+  function headersUmaCaixa_() {
+    return [
+      'Data Entrada',
+      'OP',
+      'Qtd. Caixas',
+      'Cor',
+      'Kgs',
+      'Status',
+      'OK',
+      'Enc.'
+    ];
+  }
+
+  function linhaPrincipal_(item) {
     return [
       item.dataEntrada || '',
       item.op || '',
       item.qtdCaixas || '',
       item.qtdConteiner || '',
+      item.cor || '',
+      item.pesoDanuta || '',
+      item.status || '',
+      item.ok ? 'SIM' : '',
+      item.encaminhado ? 'SIM' : ''
+    ];
+  }
+
+  function linhaUmaCaixa_(item) {
+    return [
+      item.dataEntrada || '',
+      item.op || '',
+      item.qtdCaixas || '',
       item.cor || '',
       item.pesoDanuta || '',
       item.status || '',
@@ -54,14 +82,16 @@
     const grupos = grupos_();
 
     return {
-      headers: headers_(),
-      principal: grupos.principal.map(linhaExportacao_),
-      umaCaixa: grupos.umaCaixa.map(linhaExportacao_),
-      dados: programacaoSgqRows.map(linhaExportacao_)
+      headers: headersPrincipal_(),
+      headersPrincipal: headersPrincipal_(),
+      headersUmaCaixa: headersUmaCaixa_(),
+      principal: grupos.principal.map(linhaPrincipal_),
+      umaCaixa: grupos.umaCaixa.map(linhaUmaCaixa_),
+      dados: programacaoSgqRows.map(linhaPrincipal_)
     };
   };
 
-  function criarPlanilha_(titulo, subtitulo, headers, rows) {
+  function criarPlanilha_(titulo, subtitulo, headers, rows, larguras) {
     const aoa = [
       [titulo],
       [subtitulo],
@@ -78,17 +108,7 @@
       { s: { r: 1, c: 0 }, e: { r: 1, c: ultimaColuna } }
     ];
 
-    ws['!cols'] = [
-      { wch: 14 },
-      { wch: 14 },
-      { wch: 10 },
-      { wch: 11 },
-      { wch: 13 },
-      { wch: 15 },
-      { wch: 13 },
-      { wch: 7 },
-      { wch: 13 }
-    ];
+    ws['!cols'] = (larguras || headers.map(() => 12)).map(wch => ({ wch }));
 
     return ws;
   }
@@ -129,8 +149,9 @@
         criarPlanilha_(
           'Programação SGQ - Fixpar',
           subtitulo,
-          dados.headers,
-          dados.principal
+          dados.headersPrincipal,
+          dados.principal,
+          [12, 11, 9, 10, 22, 9, 12, 6, 7]
         ),
         'Programação'
       );
@@ -140,8 +161,9 @@
         criarPlanilha_(
           'OPs de 1 caixa',
           subtitulo,
-          dados.headers,
-          dados.umaCaixa
+          dados.headersUmaCaixa,
+          dados.umaCaixa,
+          [12, 11, 9, 24, 9, 12, 6, 7]
         ),
         'OPs 1 caixa'
       );
@@ -186,39 +208,68 @@
   function desenharCabecalhoPainel_(doc, x, largura, titulo, subtitulo, logo) {
     if (logo) {
       try {
-        doc.addImage(logo, 'PNG', x + 1, 4, 18, 8);
+        doc.addImage(logo, 'PNG', x + 1, 3.5, 18, 8);
       } catch (e) {}
     }
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11.5);
-    doc.text(titulo, x + largura / 2, 8, { align: 'center' });
+    doc.setFontSize(11.2);
+    doc.text(titulo, x + largura / 2, 7.8, { align: 'center' });
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.text(subtitulo, x + largura / 2, 13, { align: 'center' });
+    doc.setFontSize(7.8);
+    doc.text(subtitulo, x + largura / 2, 12.5, { align: 'center' });
   }
 
-  function desenharTabelaPainel_(doc, x, largura, headers, rows) {
+  function estilosColunasPrincipal_() {
+    return {
+      0: { cellWidth: 17 },
+      1: { cellWidth: 15 },
+      2: { cellWidth: 10 },
+      3: { cellWidth: 10 },
+      4: { cellWidth: 31 },
+      5: { cellWidth: 12 },
+      6: { cellWidth: 21 },
+      7: { cellWidth: 9 },
+      8: { cellWidth: 11 }
+    };
+  }
+
+  function estilosColunasUmaCaixa_() {
+    return {
+      0: { cellWidth: 17 },
+      1: { cellWidth: 16 },
+      2: { cellWidth: 11 },
+      3: { cellWidth: 37 },
+      4: { cellWidth: 13 },
+      5: { cellWidth: 22 },
+      6: { cellWidth: 9 },
+      7: { cellWidth: 11 }
+    };
+  }
+
+  function desenharTabelaPainel_(doc, x, largura, headers, rows, tipo) {
     const pageWidth = doc.internal.pageSize.getWidth();
+    const statusIndex = tipo === 'umaCaixa' ? 5 : 6;
 
     doc.autoTable({
-      startY: 17,
+      startY: 15.5,
       head: [headers],
       body: rows,
       theme: 'grid',
-      tableWidth: 130,
+      tableWidth: 'wrap',
       margin: {
         left: x,
         right: Math.max(pageWidth - x - largura, 0),
-        bottom: 5
+        bottom: 4
       },
       pageBreak: 'avoid',
       rowPageBreak: 'avoid',
+      showHead: 'everyPage',
       styles: {
         font: 'helvetica',
-        fontSize: 8.6,
-        cellPadding: 1.15,
+        fontSize: 9.4,
+        cellPadding: 1.0,
         valign: 'middle',
         halign: 'center',
         lineWidth: 0.12,
@@ -228,31 +279,23 @@
         fillColor: [233, 238, 242],
         textColor: [17, 24, 39],
         fontStyle: 'bold',
-        fontSize: 7.2,
-        cellPadding: 1
+        fontSize: 6.9,
+        cellPadding: .8
       },
-      columnStyles: {
-        0: { cellWidth: 16 },
-        1: { cellWidth: 17 },
-        2: { cellWidth: 10 },
-        3: { cellWidth: 11 },
-        4: { cellWidth: 14 },
-        5: { cellWidth: 14 },
-        6: { cellWidth: 18 },
-        7: { cellWidth: 8 },
-        8: { cellWidth: 22 }
-      },
+      columnStyles: tipo === 'umaCaixa'
+        ? estilosColunasUmaCaixa_()
+        : estilosColunasPrincipal_(),
       didParseCell: data => {
         if (data.section !== 'body') return;
 
-        const status = rows[data.row.index] && rows[data.row.index][6]
-          ? String(rows[data.row.index][6]).trim().toLowerCase()
+        const status = rows[data.row.index] && rows[data.row.index][statusIndex]
+          ? String(rows[data.row.index][statusIndex]).trim().toLowerCase()
           : '';
 
         if (status === 'urgente') {
           data.cell.styles.fillColor = [255, 244, 244];
 
-          if (data.column.index === 6) {
+          if (data.column.index === statusIndex) {
             data.cell.styles.textColor = [185, 28, 28];
             data.cell.styles.fontStyle = 'bold';
           }
@@ -279,12 +322,12 @@
     const logo = await carregarLogo_();
 
     const pageWidth = doc.internal.pageSize.getWidth();
-    const margem = 5;
-    const gap = 5;
+    const margem = 4;
+    const gap = 4;
     const larguraPainel = (pageWidth - (margem * 2) - gap) / 2;
     const xEsquerdo = margem;
     const xDireito = margem + larguraPainel + gap;
-    const porPagina = 18;
+    const porPagina = 17;
     const totalPaginas = Math.max(
       1,
       Math.ceil(dados.principal.length / porPagina),
@@ -298,6 +341,7 @@
       const esquerda = dados.principal.slice(inicio, inicio + porPagina);
       const direita = dados.umaCaixa.slice(inicio, inicio + porPagina);
 
+      /* Cabeçalhos completos são desenhados em TODAS as páginas. */
       desenharCabecalhoPainel_(
         doc,
         xEsquerdo,
@@ -318,23 +362,25 @@
 
       doc.setDrawColor(150, 150, 150);
       doc.setLineDashPattern([1.5, 1.5], 0);
-      doc.line(pageWidth / 2, 3, pageWidth / 2, 205);
+      doc.line(pageWidth / 2, 2.5, pageWidth / 2, 206);
       doc.setLineDashPattern([], 0);
 
       desenharTabelaPainel_(
         doc,
         xEsquerdo,
         larguraPainel,
-        dados.headers,
-        esquerda
+        dados.headersPrincipal,
+        esquerda,
+        'principal'
       );
 
       desenharTabelaPainel_(
         doc,
         xDireito,
         larguraPainel,
-        dados.headers,
-        direita
+        dados.headersUmaCaixa,
+        direita,
+        'umaCaixa'
       );
     }
 
