@@ -4,6 +4,7 @@
  * Regras desta versão:
  * - leituras podem ocorrer em paralelo;
  * - gravações são serializadas para evitar concorrência e lock excessivo;
+ * - nenhuma gravação é enviada para um backend antigo;
  * - timeout explícito para não deixar a tela presa indefinidamente;
  * - erro de HTML/timeout do Apps Script é identificado corretamente;
  * - mantém compatibilidade com google.script.run.
@@ -20,6 +21,7 @@ const API_MUTATION_METHODS = new Set([
 ]);
 
 let apiMutationQueue_ = Promise.resolve();
+let apiBackendV3Promise_ = null;
 
 function apiTimeoutMs_(method) {
   return API_MUTATION_METHODS.has(String(method || '')) ? 90000 : 45000;
@@ -90,7 +92,7 @@ async function executarFetchApi_(method, args) {
     throw new Error(
       html
         ? 'O Apps Script retornou uma página de erro em vez de JSON.' + status +
-          ' Isso normalmente indica falha/tempo limite no processamento do servidor.'
+          ' Isso normalmente indica falha ou tempo limite no processamento do servidor.'
         : 'A API respondeu em formato inválido.' + status
     );
   }
@@ -114,6 +116,30 @@ async function executarFetchApi_(method, args) {
   return payload.result;
 }
 
+async function garantirBackendV3_() {
+  if (apiBackendV3Promise_) return apiBackendV3Promise_;
+
+  apiBackendV3Promise_ = executarFetchApi_('healthCheck', [])
+    .then(result => {
+      if (!result || result.api !== 'SGQ_FIXPAR_V3') {
+        throw new Error('Backend diferente da versão SGQ_FIXPAR_V3.');
+      }
+      return result;
+    })
+    .catch(error => {
+      apiBackendV3Promise_ = null;
+
+      throw new Error(
+        'A versão segura do servidor ainda não está publicada. ' +
+        'Nenhum dado foi gravado. Substitua o API.gs pelo arquivo backend/API.gs atual ' +
+        'e publique uma NOVA VERSÃO na mesma implantação /exec. ' +
+        ((error && error.message) ? '(' + error.message + ')' : '')
+      );
+    });
+
+  return apiBackendV3Promise_;
+}
+
 function chamarApiAppsScript(method, args) {
   const nome = String(method || '');
 
@@ -122,13 +148,16 @@ function chamarApiAppsScript(method, args) {
   }
 
   /*
-   * Apps Script + Google Sheets trabalham melhor quando as mutações não
-   * chegam concorrendo entre si. A fila evita múltiplos locks/requests
-   * simultâneos e reduz timeout e duplicidade por corrida.
+   * Toda mutação passa por duas barreiras:
+   * 1) confirma que o backend idempotente V3 está implantado;
+   * 2) entra numa fila única para não concorrer com outra gravação.
    */
-  const executar = () => executarFetchApi_(nome, args);
-  const promise = apiMutationQueue_.then(executar, executar);
+  const executar = async () => {
+    await garantirBackendV3_();
+    return executarFetchApi_(nome, args);
+  };
 
+  const promise = apiMutationQueue_.then(executar, executar);
   apiMutationQueue_ = promise.catch(() => undefined);
   return promise;
 }
