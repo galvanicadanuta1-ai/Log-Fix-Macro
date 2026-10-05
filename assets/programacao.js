@@ -81,28 +81,68 @@ function atualizarTituloTurnoProgramacaoSgq() {
 function atualizarCabecalhosBlocosProgramacao_() {
   const turno = obterTurnoProgramacaoSgq();
   const data = new Date().toLocaleDateString('pt-BR');
+  const texto = turno + ' • ' + data;
 
   const esquerdo = document.getElementById('programacaoBlocoEsquerdoSubtitulo');
   const direito = document.getElementById('programacaoBlocoDireitoSubtitulo');
 
-  const texto = turno + ' • ' + data;
-
   if (esquerdo) esquerdo.textContent = texto;
   if (direito) direito.textContent = texto;
+
+  document
+    .querySelectorAll('#programacaoSgqScreen .programacao-repeat-turno-data')
+    .forEach(el => {
+      el.textContent = texto;
+    });
 }
 
-function headersProgramacao_() {
+function colunasProgramacaoPrincipal_() {
   return [
-    'Data de Entrada',
-    'OP',
-    'Qtd. Caixas',
-    'Qtd. Contêiner',
-    'Cor',
-    'Peso Danuta (Kg)',
-    'Status',
-    'OK',
-    'Encaminhado'
+    { label: 'Data<br>Entrada', classe: 'col-data' },
+    { label: 'OP', classe: 'col-op' },
+    { label: 'Qtd.<br>Caixas', classe: 'col-caixas' },
+    { label: 'Qtd.<br>Cont.', classe: 'col-conteiner' },
+    { label: 'Cor', classe: 'col-cor' },
+    { label: 'Kgs', classe: 'col-peso' },
+    { label: 'Status', classe: 'col-status' },
+    { label: 'OK', classe: 'col-ok' },
+    { label: 'Enc.', classe: 'col-enc' }
   ];
+}
+
+function colunasProgramacaoUmaCaixa_() {
+  return [
+    { label: 'Data<br>Entrada', classe: 'col-data' },
+    { label: 'OP', classe: 'col-op' },
+    { label: 'Qtd.<br>Caixas', classe: 'col-caixas' },
+    { label: 'Cor', classe: 'col-cor' },
+    { label: 'Kgs', classe: 'col-peso' },
+    { label: 'Status', classe: 'col-status' },
+    { label: 'OK', classe: 'col-ok' },
+    { label: 'Enc.', classe: 'col-enc' }
+  ];
+}
+
+function montarCabecalhoColunasProgramacao_(colunas) {
+  return colunas
+    .map(coluna => '<th class="' + coluna.classe + '">' + coluna.label + '</th>')
+    .join('');
+}
+
+function montarCabecalhoRepetidoProgramacao_(titulo, colspan, logo) {
+  return (
+    '<tr class="programacao-print-repeat-header">' +
+      '<th colspan="' + colspan + '">' +
+        '<div class="programacao-repeat-head">' +
+          '<img class="programacao-repeat-logo" src="' + logo + '" alt="Galvânica Danuta">' +
+          '<div class="programacao-repeat-textos">' +
+            '<div class="programacao-repeat-titulo">' + titulo + '</div>' +
+            '<div class="programacao-repeat-turno-data"></div>' +
+          '</div>' +
+        '</div>' +
+      '</th>' +
+    '</tr>'
+  );
 }
 
 function garantirLayoutProgramacaoDividida_() {
@@ -114,8 +154,10 @@ function garantirLayoutProgramacaoDividida_() {
     return;
   }
 
-  const headers = headersProgramacao_();
-  const cabecalho = headers.map(header => '<th>' + header + '</th>').join('');
+  const colunasPrincipal = colunasProgramacaoPrincipal_();
+  const colunasUmaCaixa = colunasProgramacaoUmaCaixa_();
+  const cabecalhoPrincipal = montarCabecalhoColunasProgramacao_(colunasPrincipal);
+  const cabecalhoUmaCaixa = montarCabecalhoColunasProgramacao_(colunasUmaCaixa);
   const logo = 'https://raw.githubusercontent.com/galvanicadanuta1-ai/canhoto-digital/main/logo.png';
 
   wrap.innerHTML =
@@ -128,8 +170,11 @@ function garantirLayoutProgramacaoDividida_() {
             '<div id="programacaoBlocoEsquerdoSubtitulo" class="programacao-bloco-subtitulo"></div>' +
           '</div>' +
         '</div>' +
-        '<table class="programacao-table programacao-table-compacta">' +
-          '<thead><tr>' + cabecalho + '</tr></thead>' +
+        '<table class="programacao-table programacao-table-compacta programacao-table-principal">' +
+          '<thead>' +
+            montarCabecalhoRepetidoProgramacao_('Programação SGQ - Fixpar', colunasPrincipal.length, logo) +
+            '<tr class="programacao-column-head">' + cabecalhoPrincipal + '</tr>' +
+          '</thead>' +
           '<tbody id="programacaoSgqBody"></tbody>' +
         '</table>' +
       '</section>' +
@@ -141,8 +186,11 @@ function garantirLayoutProgramacaoDividida_() {
             '<div id="programacaoBlocoDireitoSubtitulo" class="programacao-bloco-subtitulo"></div>' +
           '</div>' +
         '</div>' +
-        '<table class="programacao-table programacao-table-compacta">' +
-          '<thead><tr>' + cabecalho + '</tr></thead>' +
+        '<table class="programacao-table programacao-table-compacta programacao-table-uma-caixa">' +
+          '<thead>' +
+            montarCabecalhoRepetidoProgramacao_('OPs de 1 caixa', colunasUmaCaixa.length, logo) +
+            '<tr class="programacao-column-head">' + cabecalhoUmaCaixa + '</tr>' +
+          '</thead>' +
           '<tbody id="programacaoSgqBodyUmaCaixa"></tbody>' +
         '</table>' +
       '</section>' +
@@ -348,17 +396,17 @@ function renderProgramacaoSgq() {
   }
 
   grupos.principal.forEach(item => {
-    tbodyEsquerdo.appendChild(criarLinhaProgramacaoSgq_(item));
+    tbodyEsquerdo.appendChild(criarLinhaProgramacaoSgq_(item, false));
   });
 
   grupos.umaCaixa.forEach(item => {
-    tbodyDireito.appendChild(criarLinhaProgramacaoSgq_(item));
+    tbodyDireito.appendChild(criarLinhaProgramacaoSgq_(item, true));
   });
 
   atualizarCabecalhosBlocosProgramacao_();
 }
 
-function criarLinhaProgramacaoSgq_(item) {
+function criarLinhaProgramacaoSgq_(item, umaCaixa) {
   const tr = document.createElement('tr');
   tr.dataset.op = item.op || '';
 
@@ -366,14 +414,19 @@ function criarLinhaProgramacaoSgq_(item) {
     tr.classList.add('programacao-urgente');
   }
 
-  appendProgramacaoTextCell(tr, item.dataEntrada);
-  appendProgramacaoTextCell(tr, item.op);
-  appendProgramacaoTextCell(tr, item.qtdCaixas);
-  appendProgramacaoTextCell(tr, item.qtdConteiner);
-  appendProgramacaoTextCell(tr, item.cor);
-  appendProgramacaoTextCell(tr, item.pesoDanuta);
+  appendProgramacaoTextCell(tr, item.dataEntrada, 'col-data');
+  appendProgramacaoTextCell(tr, item.op, 'col-op');
+  appendProgramacaoTextCell(tr, item.qtdCaixas, 'col-caixas');
+
+  if (!umaCaixa) {
+    appendProgramacaoTextCell(tr, item.qtdConteiner, 'col-conteiner');
+  }
+
+  appendProgramacaoTextCell(tr, item.cor, 'col-cor');
+  appendProgramacaoTextCell(tr, item.pesoDanuta, 'col-peso');
 
   const statusTd = document.createElement('td');
+  statusTd.className = 'col-status';
   const statusInput = document.createElement('input');
   statusInput.type = 'text';
   statusInput.className = 'programacao-status-input';
@@ -396,6 +449,7 @@ function criarLinhaProgramacaoSgq_(item) {
   tr.appendChild(statusTd);
 
   const okTd = document.createElement('td');
+  okTd.className = 'col-ok';
   const okInput = document.createElement('input');
   okInput.type = 'checkbox';
   okInput.className = 'programacao-check programacao-ok';
@@ -407,6 +461,7 @@ function criarLinhaProgramacaoSgq_(item) {
   tr.appendChild(okTd);
 
   const encaminhadoTd = document.createElement('td');
+  encaminhadoTd.className = 'col-enc';
   const encaminhadoInput = document.createElement('input');
   encaminhadoInput.type = 'checkbox';
   encaminhadoInput.className = 'programacao-check programacao-encaminhado';
@@ -420,8 +475,9 @@ function criarLinhaProgramacaoSgq_(item) {
   return tr;
 }
 
-function appendProgramacaoTextCell(tr, valor) {
+function appendProgramacaoTextCell(tr, valor, className) {
   const td = document.createElement('td');
+  if (className) td.className = className;
   td.textContent = valor === null || valor === undefined ? '' : String(valor);
   tr.appendChild(td);
 }
