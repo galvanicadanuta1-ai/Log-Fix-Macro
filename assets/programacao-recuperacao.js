@@ -1,33 +1,22 @@
 /* ============================================================
-   PROGRAMAÇÃO SGQ - CORREÇÃO FINAL / OPs DE 1 CAIXA
+   PROGRAMAÇÃO SGQ - CAMADA FINAL ESTÁVEL
    ============================================================
-   - garante a leitura das OPs de 1 caixa também pelo Histórico;
-   - remove a coluna Enc. do bloco "OPs de 1 caixa";
-   - preserva Enc. somente na programação principal;
-   - otimiza larguras e aproveitamento dos dois blocos;
-   - mantém Urgentes no topo e depois ordena por data.
+   A fonte de dados vem exclusivamente do backend.
+
+   Responsabilidades desta camada:
+   - separar 1 caixa no bloco da direita;
+   - remover Enc. do bloco de 1 caixa;
+   - pesquisa por OP somente na tela;
+   - PDF sempre com TODA a programação, ignorando pesquisa/data;
+   - Excel sempre com TODA a programação;
+   - PDF salvo no Drive mesmo se o salvamento local for cancelado.
    ============================================================ */
 
 (function () {
   const LOGO_URL = 'https://raw.githubusercontent.com/galvanicadanuta1-ai/canhoto-digital/main/logo.png';
-  const LAYOUT_VERSION = '2026-10-05-final';
+  const LAYOUT_VERSION = '2026-10-05-estavel-v2';
 
-  function carregarCssFinal_() {
-    if (document.querySelector('link[data-programacao-final-css]')) return;
-
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'assets/programacao-final.css';
-    link.dataset.programacaoFinalCss = '1';
-    document.head.appendChild(link);
-  }
-
-  function chaveOp_(valor) {
-    return String(valor == null ? '' : valor)
-      .trim()
-      .replace(/\s+/g, '')
-      .toUpperCase();
-  }
+  window.programacaoSgqBusca = window.programacaoSgqBusca || '';
 
   function numero_(valor) {
     if (typeof valor === 'number' && Number.isFinite(valor)) return valor;
@@ -44,44 +33,8 @@
       texto = texto.replace(',', '.');
     }
 
-    const numero = Number(texto);
-    return Number.isFinite(numero) ? numero : 0;
-  }
-
-  function formatarNumero_(valor) {
-    const numero = numero_(valor);
-    if (!numero) return '';
-
-    if (Math.abs(numero - Math.round(numero)) < 0.0000001) {
-      return String(Math.round(numero));
-    }
-
-    return String(Math.round(numero * 1000) / 1000).replace('.', ',');
-  }
-
-  function dataTime_(valor) {
-    const texto = String(valor || '').trim();
-    const br = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-
-    if (br) {
-      return new Date(
-        Number(br[3]),
-        Number(br[2]) - 1,
-        Number(br[1])
-      ).getTime();
-    }
-
-    const iso = texto.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-    if (iso) {
-      return new Date(
-        Number(iso[1]),
-        Number(iso[2]) - 1,
-        Number(iso[3])
-      ).getTime();
-    }
-
-    const data = new Date(texto);
-    return isNaN(data.getTime()) ? Number.MAX_SAFE_INTEGER : data.getTime();
+    const n = Number(texto);
+    return Number.isFinite(n) ? n : 0;
   }
 
   function formatarDataCurta_(valor) {
@@ -90,22 +43,15 @@
     }
 
     const texto = String(valor || '').trim();
-    const br = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if (br) {
-      return String(br[1]).padStart(2, '0') + '/' +
-        String(br[2]).padStart(2, '0') + '/' +
-        String(br[3]).slice(-2);
+    const m = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+
+    if (m) {
+      return String(m[1]).padStart(2, '0') + '/' +
+        String(m[2]).padStart(2, '0') + '/' +
+        String(m[3]).slice(-2);
     }
 
     return texto;
-  }
-
-  function periodoSeguro_() {
-    const ano = new Date().getFullYear();
-    return {
-      inicio: (ano - 1) + '-01-01',
-      fim: (ano + 1) + '-12-31'
-    };
   }
 
   function headersEsquerda_() {
@@ -134,9 +80,7 @@
     ];
   }
 
-  function htmlCabecalhoTabela_(titulo, subtituloId, headers) {
-    const ths = headers.map(header => '<th>' + header + '</th>').join('');
-
+  function htmlCabecalho_(titulo, subtituloId, headers) {
     return '<thead>' +
       '<tr class="programacao-repeat-panel">' +
         '<th colspan="' + headers.length + '">' +
@@ -149,27 +93,27 @@
           '</div>' +
         '</th>' +
       '</tr>' +
-      '<tr class="programacao-column-head">' + ths + '</tr>' +
+      '<tr class="programacao-column-head">' +
+        headers.map(h => '<th>' + h + '</th>').join('') +
+      '</tr>' +
     '</thead>';
   }
-
-  window.headersProgramacao_ = headersEsquerda_;
 
   window.garantirLayoutProgramacaoDividida_ = function () {
     const wrap = document.querySelector('#programacaoSgqScreen .programacao-table-wrap');
     if (!wrap) return;
 
-    const precisaReconstruir =
+    const reconstruir =
       wrap.dataset.layoutVersion !== LAYOUT_VERSION ||
       !document.getElementById('programacaoSgqBody') ||
       !document.getElementById('programacaoSgqBodyUmaCaixa');
 
-    if (precisaReconstruir) {
+    if (reconstruir) {
       wrap.innerHTML =
         '<div class="programacao-dual-grid">' +
           '<section class="programacao-bloco programacao-bloco-principal">' +
             '<table class="programacao-table programacao-table-compacta">' +
-              htmlCabecalhoTabela_(
+              htmlCabecalho_(
                 'Programação SGQ - Fixpar',
                 'programacaoBlocoEsquerdoSubtitulo',
                 headersEsquerda_()
@@ -179,7 +123,7 @@
           '</section>' +
           '<section class="programacao-bloco programacao-bloco-uma-caixa">' +
             '<table class="programacao-table programacao-table-compacta">' +
-              htmlCabecalhoTabela_(
+              htmlCabecalho_(
                 'OPs de 1 caixa',
                 'programacaoBlocoDireitoSubtitulo',
                 headersDireita_()
@@ -201,38 +145,54 @@
     garantirLayoutProgramacaoDividida_();
   };
 
-  window.separarProgramacaoSgqRows_ = function () {
+  function ordenar_(lista) {
+    const copia = lista.slice();
+    if (typeof compararProgramacaoSgq_ === 'function') {
+      copia.sort(compararProgramacaoSgq_);
+    }
+    return copia;
+  }
+
+  function separar_(usarBusca) {
     const principal = [];
     const umaCaixa = [];
+    const busca = usarBusca
+      ? String(window.programacaoSgqBusca || '').trim().toUpperCase()
+      : '';
 
     (programacaoSgqRows || []).forEach(item => {
-      const caixas = numero_(item.qtdCaixas);
-      const conteiner = numero_(item.qtdConteiner);
+      const op = String(item && item.op || '').toUpperCase();
+      if (busca && !op.includes(busca)) return;
 
-      if (caixas === 1) {
+      const caixas = numero_(item.qtdCaixas);
+      const cacamba = numero_(item.qtdConteiner);
+
+      if (Math.abs(caixas - 1) < 0.0000001) {
         umaCaixa.push(item);
         return;
       }
 
-      if (caixas > 1 || conteiner >= 1 || item.manual === true) {
+      if (caixas > 1 || cacamba >= 1 || item.manual === true) {
         principal.push(item);
       }
     });
 
-    if (typeof compararProgramacaoSgq_ === 'function') {
-      principal.sort(compararProgramacaoSgq_);
-      umaCaixa.sort(compararProgramacaoSgq_);
-    }
+    return {
+      principal: ordenar_(principal),
+      umaCaixa: ordenar_(umaCaixa)
+    };
+  }
 
-    return { principal, umaCaixa };
+  window.separarProgramacaoSgqRows_ = function () {
+    return separar_(true);
   };
 
-  function appendTexto_(tr, valor, dataCurta, classe) {
+  function appendTexto_(tr, valor, curta, classe) {
     const td = document.createElement('td');
     if (classe) td.className = classe;
-    td.textContent = dataCurta
+    td.textContent = curta
       ? formatarDataCurta_(valor)
-      : (valor === null || valor === undefined ? '' : String(valor));
+      : (valor == null ? '' : String(valor));
     tr.appendChild(td);
   }
 
@@ -285,7 +245,6 @@
     okTd.appendChild(okInput);
     tr.appendChild(okTd);
 
-    /* Enc. existe apenas no bloco principal. */
     if (!ladoDireito) {
       const encTd = document.createElement('td');
       encTd.className = 'col-enc';
@@ -309,12 +268,12 @@
 
     const statusInput = tr.querySelector('.programacao-status-input');
     const okInput = tr.querySelector('.programacao-ok');
-    const encaminhadoInput = tr.querySelector('.programacao-encaminhado');
+    const encInput = tr.querySelector('.programacao-encaminhado');
 
     const status = statusInput ? statusInput.value.trim() : '';
     const ok = okInput ? okInput.checked : false;
-    const encaminhado = encaminhadoInput
-      ? encaminhadoInput.checked
+    const encaminhado = encInput
+      ? encInput.checked
       : tr.dataset.encaminhado === '1';
 
     if (typeof setProgramacaoStatus === 'function') {
@@ -323,9 +282,7 @@
 
     google.script.run
       .withSuccessHandler(() => {
-        const item = (programacaoSgqRows || []).find(row =>
-          chaveOp_(row.op) === chaveOp_(op)
-        );
+        const item = (programacaoSgqRows || []).find(row => String(row.op) === String(op));
 
         if (item) {
           item.status = status;
@@ -354,204 +311,320 @@
       .salvarProgramacaoSgq(op, status, ok, encaminhado);
   };
 
-  function recuperarUmaCaixaDoHistorico_(baseRows, entradasResultado, saidasResultado) {
-    const rows = Array.isArray(baseRows) ? baseRows.slice() : [];
-    const entradas = entradasResultado && Array.isArray(entradasResultado.rows)
-      ? entradasResultado.rows
-      : [];
-    const saidas = saidasResultado && Array.isArray(saidasResultado.rows)
-      ? saidasResultado.rows
-      : [];
-
-    if (!entradas.length) return rows;
-
-    const existentes = new Set();
-    rows.forEach(item => {
-      const chave = chaveOp_(item && item.op);
-      if (chave) existentes.add(chave);
-    });
-
-    const opsComSaida = new Set();
-    saidas.forEach(registro => {
-      const valores = registro && Array.isArray(registro.values)
-        ? registro.values
-        : [];
-      const chave = chaveOp_(valores[1]);
-      if (chave) opsComSaida.add(chave);
-    });
-
-    const agrupado = {};
-
-    entradas.forEach(registro => {
-      const valores = registro && Array.isArray(registro.values)
-        ? registro.values
-        : [];
-
-      const op = String(valores[1] == null ? '' : valores[1]).trim();
-      const chave = chaveOp_(op);
-
-      if (!chave || opsComSaida.has(chave) || existentes.has(chave)) return;
-
-      if (!agrupado[chave]) {
-        agrupado[chave] = {
-          op,
-          dataEntrada: valores[0] || '',
-          qtdCaixas: 0,
-          qtdConteiner: 0,
-          pesoDanuta: 0,
-          temCaixas: false,
-          temConteiner: false,
-          temPeso: false,
-          cores: new Set(),
-          primeiraData: dataTime_(valores[0])
-        };
-      }
-
-      const item = agrupado[chave];
-      const dataAtual = dataTime_(valores[0]);
-
-      if (dataAtual < item.primeiraData) {
-        item.primeiraData = dataAtual;
-        item.dataEntrada = valores[0] || '';
-      }
-
-      if (String(valores[2] == null ? '' : valores[2]).trim() !== '') {
-        item.temCaixas = true;
-        item.qtdCaixas += numero_(valores[2]);
-      }
-
-      if (String(valores[3] == null ? '' : valores[3]).trim() !== '') {
-        item.temConteiner = true;
-        item.qtdConteiner += numero_(valores[3]);
-      }
-
-      if (String(valores[5] == null ? '' : valores[5]).trim() !== '') {
-        item.temPeso = true;
-        item.pesoDanuta += numero_(valores[5]);
-      }
-
-      const cor = String(valores[8] == null ? '' : valores[8]).trim();
-      if (cor) item.cores.add(cor);
-    });
-
-    Object.keys(agrupado).forEach(chave => {
-      const item = agrupado[chave];
-      if (!item.temCaixas || Math.abs(item.qtdCaixas - 1) > 0.0000001) return;
-
-      rows.push({
-        dataEntrada: item.dataEntrada || '',
-        op: item.op || '',
-        qtdCaixas: formatarNumero_(item.qtdCaixas),
-        qtdConteiner: item.temConteiner ? formatarNumero_(item.qtdConteiner) : '',
-        cor: Array.from(item.cores).join(' / '),
-        pesoDanuta: item.temPeso ? formatarNumero_(item.pesoDanuta) : '',
-        status: '',
-        ok: false,
-        encaminhado: false,
-        manual: false,
-        recuperadoHistorico: true
-      });
-    });
-
-    return rows;
-  }
-
-  window.carregarProgramacaoSgq = async function () {
+  window.renderProgramacaoSgq = function () {
     garantirLayoutProgramacaoDividida_();
 
-    const loading = document.getElementById('programacaoSgqLoading');
+    const esquerda = document.getElementById('programacaoSgqBody');
+    const direita = document.getElementById('programacaoSgqBodyUmaCaixa');
     const empty = document.getElementById('programacaoSgqEmpty');
-    const tbodyEsquerdo = document.getElementById('programacaoSgqBody');
-    const tbodyDireito = document.getElementById('programacaoSgqBodyUmaCaixa');
     const resumo = document.getElementById('programacaoSgqResumo');
 
-    if (loading) loading.style.display = 'block';
-    if (empty) empty.style.display = 'none';
-    if (tbodyEsquerdo) tbodyEsquerdo.innerHTML = '';
-    if (tbodyDireito) tbodyDireito.innerHTML = '';
-    if (resumo) resumo.textContent = '';
+    if (!esquerda || !direita) return;
 
-    if (typeof setProgramacaoStatus === 'function') {
-      setProgramacaoStatus('Carregando programação...', 'saving');
+    if (typeof ordenarProgramacaoSgqRows_ === 'function') ordenarProgramacaoSgqRows_();
+
+    const grupos = separar_(true);
+
+    esquerda.innerHTML = '';
+    direita.innerHTML = '';
+
+    grupos.principal.forEach(item => esquerda.appendChild(criarLinhaProgramacaoSgq_(item, false)));
+    grupos.umaCaixa.forEach(item => direita.appendChild(criarLinhaProgramacaoSgq_(item, true)));
+
+    const totalFiltrado = grupos.principal.length + grupos.umaCaixa.length;
+    const temBusca = String(window.programacaoSgqBusca || '').trim() !== '';
+
+    if (empty) {
+      if (!(programacaoSgqRows || []).length) {
+        empty.style.display = 'block';
+        empty.textContent = 'Não há OPs pendentes de saída.';
+      } else if (temBusca && !totalFiltrado) {
+        empty.style.display = 'block';
+        empty.textContent = 'Nenhuma OP encontrada na pesquisa.';
+      } else {
+        empty.style.display = 'none';
+      }
     }
 
-    try {
-      const periodo = periodoSeguro_();
+    if (resumo) {
+      resumo.textContent =
+        grupos.principal.length + ' na programação principal' +
+        ' • ' + grupos.umaCaixa.length + ' OPs de 1 caixa' +
+        (temBusca ? ' • filtro: ' + window.programacaoSgqBusca : '');
+    }
 
-      const resultados = await Promise.all([
-        chamarApiAppsScript('carregarProgramacaoSgq', []),
-        chamarApiAppsScript('consultarHistorico', [
-          'RECEBIMENTO',
-          periodo.inicio,
-          periodo.fim,
-          ''
-        ]).catch(error => {
-          console.warn('Histórico de entrada indisponível para conferência:', error);
-          return null;
-        }),
-        chamarApiAppsScript('consultarHistorico', [
-          'SAIDA',
-          periodo.inicio,
-          periodo.fim,
-          ''
-        ]).catch(error => {
-          console.warn('Histórico de saída indisponível para conferência:', error);
-          return null;
-        })
-      ]);
-
-      const base = resultados[0] && Array.isArray(resultados[0].rows)
-        ? resultados[0].rows
-        : [];
-
-      programacaoSgqRows = recuperarUmaCaixaDoHistorico_(
-        base,
-        resultados[1],
-        resultados[2]
-      );
-
-      if (typeof ordenarProgramacaoSgqRows_ === 'function') {
-        ordenarProgramacaoSgqRows_();
-      }
-
-      if (loading) loading.style.display = 'none';
-
-      renderProgramacaoSgq();
-
-      if (typeof setProgramacaoStatus === 'function') {
-        setProgramacaoStatus('Programação atualizada', 'saved');
-      }
-    } catch (error) {
-      if (loading) loading.style.display = 'none';
-
-      if (empty) {
-        empty.style.display = 'block';
-        empty.textContent = error && error.message
-          ? error.message
-          : 'Erro ao carregar a programação.';
-      }
-
-      if (typeof setProgramacaoStatus === 'function') {
-        setProgramacaoStatus(
-          error && error.message ? error.message : 'Erro ao carregar a programação.',
-          'error'
-        );
-      }
+    if (typeof atualizarCabecalhosBlocosProgramacao_ === 'function') {
+      atualizarCabecalhosBlocosProgramacao_();
     }
   };
 
-  /*
-   * Reaplica o render já existente, agora usando os overrides acima.
-   */
-  const renderOriginal = window.renderProgramacaoSgq;
+  function garantirBusca_() {
+    const area = document.querySelector('#programacaoSgqScreen .programacao-actions-right');
+    if (!area || document.getElementById('programacaoSgqSearch')) return;
 
-  if (typeof renderOriginal === 'function') {
-    window.renderProgramacaoSgq = function () {
-      garantirLayoutProgramacaoDividida_();
-      return renderOriginal.apply(this, arguments);
-    };
+    const report = area.querySelector('.programacao-report-button');
+    const wrap = document.createElement('div');
+    wrap.className = 'programacao-search-wrap';
+
+    const input = document.createElement('input');
+    input.id = 'programacaoSgqSearch';
+    input.type = 'search';
+    input.placeholder = 'Buscar OP';
+    input.autocomplete = 'off';
+    input.className = 'programacao-search-input';
+    input.addEventListener('input', () => {
+      window.programacaoSgqBusca = input.value || '';
+      renderProgramacaoSgq();
+    });
+
+    wrap.appendChild(input);
+    area.insertBefore(wrap, report || area.firstChild);
+
+    const style = document.createElement('style');
+    style.textContent =
+      '.programacao-search-wrap{display:flex;align-items:center}' +
+      '.programacao-search-input{height:34px;width:150px;border:1px solid #9ca3af;border-radius:4px;padding:0 9px;font-size:12px;background:#fff;color:#111827;box-sizing:border-box}' +
+      '.programacao-search-input:focus{outline:none;border-color:#1f6f43;box-shadow:0 0 0 2px rgba(31,111,67,.12)}' +
+      '@media(max-width:900px){.programacao-search-input{width:120px}}' +
+      '@media print{.programacao-search-wrap{display:none!important}}';
+    document.head.appendChild(style);
   }
 
-  carregarCssFinal_();
+  function linhaEsquerda_(item) {
+    return [
+      formatarDataCurta_(item.dataEntrada),
+      item.op || '',
+      item.qtdCaixas || '',
+      item.qtdConteiner || '',
+      item.cor || '',
+      item.pesoDanuta || '',
+      item.status || '',
+      item.ok ? '✓' : '',
+      item.encaminhado ? '✓' : ''
+    ];
+  }
+
+  function linhaDireita_(item) {
+    return [
+      formatarDataCurta_(item.dataEntrada),
+      item.op || '',
+      item.qtdCaixas || '',
+      item.cor || '',
+      item.pesoDanuta || '',
+      item.status || '',
+      item.ok ? '✓' : ''
+    ];
+  }
+
+  /* Exportações SEM filtro de pesquisa. */
+  window.dadosProgramacaoParaExportar_ = function () {
+    const grupos = separar_(false);
+
+    return {
+      headers: headersEsquerda_(),
+      headersEsquerda: headersEsquerda_(),
+      headersDireita: headersDireita_(),
+      headersPrincipal: headersEsquerda_(),
+      headersUmaCaixa: headersDireita_(),
+      principal: grupos.principal.map(linhaEsquerda_),
+      umaCaixa: grupos.umaCaixa.map(linhaDireita_),
+      dados: grupos.principal.map(linhaEsquerda_)
+    };
+  };
+
+  function obterJsPdf_() {
+    if (window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+    if (window.jsPDF) return window.jsPDF;
+    throw new Error('Biblioteca de PDF não carregada.');
+  }
+
+  function desenharTitulo_(doc, x, largura, titulo, subtitulo) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10.5);
+    doc.text(titulo, x + largura / 2, 8, { align: 'center' });
+
+    doc.setFontSize(7.5);
+    doc.text(subtitulo, x + largura / 2, 12, { align: 'center' });
+  }
+
+  function tabelaPdf_(doc, x, largura, headers, rows, direita) {
+    if (typeof doc.autoTable !== 'function') {
+      throw new Error('Componente de tabela do PDF não carregado.');
+    }
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    const columnStyles = direita
+      ? {
+          0: { cellWidth: 16 },
+          1: { cellWidth: 16 },
+          2: { cellWidth: 12 },
+          3: { cellWidth: 35 },
+          4: { cellWidth: 13 },
+          5: { cellWidth: 27 },
+          6: { cellWidth: 9 }
+        }
+      : {
+          0: { cellWidth: 15 },
+          1: { cellWidth: 15 },
+          2: { cellWidth: 10 },
+          3: { cellWidth: 12 },
+          4: { cellWidth: 27 },
+          5: { cellWidth: 12 },
+          6: { cellWidth: 18 },
+          7: { cellWidth: 8 },
+          8: { cellWidth: 9 }
+        };
+
+    doc.autoTable({
+      startY: 15,
+      head: [headers],
+      body: rows,
+      theme: 'grid',
+      tableWidth: largura,
+      margin: {
+        left: x,
+        right: Math.max(pageWidth - x - largura, 0),
+        top: 15,
+        bottom: 5
+      },
+      pageBreak: 'avoid',
+      rowPageBreak: 'avoid',
+      styles: {
+        font: 'helvetica',
+        fontSize: 8.3,
+        cellPadding: .8,
+        valign: 'middle',
+        halign: 'center',
+        lineWidth: .1,
+        overflow: 'linebreak'
+      },
+      headStyles: {
+        fillColor: [233, 238, 242],
+        textColor: [17, 24, 39],
+        fontStyle: 'bold',
+        fontSize: 6.5,
+        cellPadding: .7
+      },
+      columnStyles,
+      didParseCell: data => {
+        if (data.section !== 'body') return;
+        const statusIndex = direita ? 5 : 6;
+        const status = rows[data.row.index] && rows[data.row.index][statusIndex]
+          ? String(rows[data.row.index][statusIndex]).trim().toLowerCase()
+          : '';
+
+        if (status === 'urgente') {
+          data.cell.styles.fillColor = [255, 242, 242];
+          if (data.column.index === statusIndex) {
+            data.cell.styles.textColor = [190, 30, 30];
+            data.cell.styles.fontStyle = 'bold';
+          }
+        }
+      }
+    });
+  }
+
+  async function criarPdfCompleto_() {
+    const JsPdf = obterJsPdf_();
+    const doc = new JsPdf({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4',
+      compress: true
+    });
+
+    const dados = dadosProgramacaoParaExportar_();
+    const turno = typeof obterTurnoProgramacaoSgq === 'function'
+      ? obterTurnoProgramacaoSgq()
+      : 'Turno Dia';
+    const dataHoje = new Date().toLocaleDateString('pt-BR');
+    const subtitulo = turno + ' • ' + dataHoje;
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margem = 4;
+    const gap = 4;
+    const largura = (pageWidth - (margem * 2) - gap) / 2;
+    const xEsq = margem;
+    const xDir = margem + largura + gap;
+
+    /*
+     * Quantidade conservadora por página para impedir que o autoTable
+     * jogue uma das tabelas para uma página vazia.
+     */
+    const porPagina = 11;
+    const totalPaginas = Math.max(
+      1,
+      Math.ceil(dados.principal.length / porPagina),
+      Math.ceil(dados.umaCaixa.length / porPagina)
+    );
+
+    for (let pagina = 0; pagina < totalPaginas; pagina++) {
+      if (pagina > 0) doc.addPage('a4', 'landscape');
+
+      const inicio = pagina * porPagina;
+      const esquerda = dados.principal.slice(inicio, inicio + porPagina);
+      const direita = dados.umaCaixa.slice(inicio, inicio + porPagina);
+
+      desenharTitulo_(doc, xEsq, largura, 'Programação SGQ - Fixpar', subtitulo);
+      desenharTitulo_(doc, xDir, largura, 'OPs de 1 caixa', subtitulo);
+
+      tabelaPdf_(doc, xEsq, largura, dados.headersEsquerda, esquerda, false);
+      tabelaPdf_(doc, xDir, largura, dados.headersDireita, direita, true);
+    }
+
+    return doc.output('blob');
+  }
+
+  window.gerarRelatorioProgramacaoSgq = async function () {
+    if (!(programacaoSgqRows || []).length) {
+      alert('Não existem OPs na programação para gerar o relatório.');
+      return;
+    }
+
+    const turno = typeof obterTurnoProgramacaoSgq === 'function'
+      ? obterTurnoProgramacaoSgq()
+      : 'Turno Dia';
+    const dataHoje = new Date().toLocaleDateString('pt-BR');
+    const baseNome = 'Programação SGQ - Fixpar - ' + turno + ' - ' + dataHoje.replace(/\//g, '-');
+    const nomeArquivo = typeof normalizarNomeArquivo_ === 'function'
+      ? normalizarNomeArquivo_(baseNome, 'pdf')
+      : baseNome + '.pdf';
+
+    let destino = { cancelado: true };
+
+    try {
+      if (typeof escolherDestinoArquivo_ === 'function') {
+        destino = await escolherDestinoArquivo_(
+          nomeArquivo,
+          'application/pdf',
+          '.pdf',
+          'Documento PDF'
+        );
+      }
+
+      const pdfBlob = await criarPdfCompleto_();
+
+      /* Drive sempre recebe o PDF completo, mesmo se o usuário cancelar o salvar local. */
+      if (typeof salvarPdfNoDrive_ === 'function') {
+        Promise.resolve(salvarPdfNoDrive_(nomeArquivo, pdfBlob)).catch(error => {
+          console.error('Falha ao salvar PDF da programação no Drive:', error);
+        });
+      }
+
+      if (!destino || destino.cancelado) return;
+
+      if (typeof salvarBlobDestino_ === 'function') {
+        await salvarBlobDestino_(destino, pdfBlob, nomeArquivo);
+      }
+    } catch (error) {
+      console.error(error);
+      alert(error && error.message
+        ? error.message
+        : 'Não foi possível gerar o relatório da programação.');
+    }
+  };
+
+  garantirBusca_();
   garantirLayoutProgramacaoDividida_();
 })();
