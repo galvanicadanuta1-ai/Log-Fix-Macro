@@ -14,7 +14,22 @@ let historyNextOffset = null;
 let historyTotal = 0;
 let historyHeadersCache = [];
 let historyPageSize = window.matchMedia('(max-width: 800px)').matches ? 25 : 60;
-const GLOBAL_ASSET_VERSION = '20261005-1815';
+const GLOBAL_ASSET_VERSION = '20261005-1830';
+
+/*
+ * Impede qualquer clique durante os poucos instantes em que as camadas
+ * finais de confiabilidade são carregadas. Assim o usuário nunca consegue
+ * acionar uma função antiga antes dos overrides V3 estarem prontos.
+ */
+(function bloquearDuranteBoot_() {
+  document.documentElement.classList.add('sgq-booting');
+  const style = document.createElement('style');
+  style.id = 'sgqBootStyle';
+  style.textContent =
+    '.sgq-booting body{pointer-events:none!important;cursor:wait!important}' +
+    '.sgq-booting button,.sgq-booting input,.sgq-booting select{cursor:wait!important}';
+  document.head.appendChild(style);
+})();
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -41,15 +56,20 @@ document.addEventListener('DOMContentLoaded', () => {
     'assets/programacao-exportacao-dividida.js',
     'assets/programacao-recuperacao.js',
     'assets/programacao-dedup-final.js'
-  ]);
+  ], () => {
+    document.documentElement.classList.remove('sgq-booting');
+  });
 });
 
 
-function carregarScriptsGlobais_(arquivos) {
+function carregarScriptsGlobais_(arquivos, onComplete) {
   const lista = Array.isArray(arquivos) ? arquivos.slice() : [];
 
   function proximo_() {
-    if (!lista.length) return;
+    if (!lista.length) {
+      if (typeof onComplete === 'function') onComplete();
+      return;
+    }
 
     const src = lista.shift();
 
