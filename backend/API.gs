@@ -4,9 +4,13 @@
  * ============================================================
  *
  * Adicione este arquivo ao MESMO projeto Apps Script onde já
- * está o Code.gs atual do SGQ Fixpar.
+ * estão os demais arquivos .gs do SGQ Fixpar.
  *
- * NÃO apague o Code.gs atual.
+ * A Programação SGQ usa como fonte de verdade:
+ * - Recebimento Fixpar
+ * - Entregas Fixpar
+ *
+ * Isso evita duplicidade provocada pelo Histórico/Conciliação.
  * ============================================================
  */
 
@@ -115,10 +119,7 @@ function apiConsultarHistoricoPaginado_(
   );
 
   const inicio = Math.max(Number(offset || 0), 0);
-  const tamanho = Math.min(
-    Math.max(Number(limit || 50), 1),
-    100
-  );
+  const tamanho = Math.min(Math.max(Number(limit || 50), 1), 100);
   const fim = inicio + tamanho;
 
   return {
@@ -269,62 +270,66 @@ function apiCriarPdfBase64NoDrive_(nomeArquivo, pdfBase64) {
  * ============================================================
  * PROGRAMAÇÃO SGQ - FIXPAR
  * ============================================================
- * A programação reúne:
- * - OPs com entrada sem saída;
- * - OSs adicionadas manualmente antes da chegada física do material.
+ *
+ * REGRA CENTRAL:
+ * A fonte de verdade é a própria operação, NÃO o Histórico.
+ *
+ * - Entrada: aba Recebimento Fixpar
+ * - Saída:   aba Entregas Fixpar
+ *
+ * Se a OP existe na entrada e ainda não existe na saída, aparece.
+ * Quantidades são somadas somente das linhas reais da entrada.
  * ============================================================
  */
 
 function carregarProgramacaoSgq() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const conciliacao = ss.getSheetByName('Conciliação OP');
-  const historico = ss.getSheetByName('Histórico Entrada');
+  const cfgEntrada = getConfig_('RECEBIMENTO');
+  const cfgSaida = getConfig_('SAIDA');
 
-  if (!conciliacao) {
-    throw new Error('A aba "Conciliação OP" não foi encontrada.');
+  const entrada = ss.getSheetByName(cfgEntrada.sheetName);
+  const saida = ss.getSheetByName(cfgSaida.sheetName);
+
+  if (!entrada) {
+    throw new Error('A aba "' + cfgEntrada.sheetName + '" não foi encontrada.');
   }
 
-  if (!historico) {
-    throw new Error('A aba "Histórico Entrada" não foi encontrada.');
+  if (!saida) {
+    throw new Error('A aba "' + cfgSaida.sheetName + '" não foi encontrada.');
   }
 
-  const opsPendentes = new Set();
   const opsComSaida = new Set();
 
-  if (conciliacao.getLastRow() >= 3) {
-    const dadosConciliacao = conciliacao
-      .getRange(3, 2, conciliacao.getLastRow() - 2, 4)
+  if (saida.getLastRow() >= 3) {
+    const qtdLinhasSaida = saida.getLastRow() - 2;
+    const displaySaida = saida
+      .getRange(3, 1, qtdLinhasSaida, cfgSaida.headers.length)
       .getDisplayValues();
 
-    dadosConciliacao.forEach(row => {
-      const opEntrada = apiProgTexto_(row[0]);
-      const opSaida = apiProgTexto_(row[3]);
-      const chave = apiProgChaveOp_(opEntrada);
-
-      if (!chave) return;
-
-      if (opSaida) {
-        opsComSaida.add(chave);
-      } else {
-        opsPendentes.add(chave);
-      }
+    displaySaida.forEach(row => {
+      const op = apiProgTexto_(row[1]);
+      const chave = apiProgChaveOp_(op);
+      if (chave) opsComSaida.add(chave);
     });
   }
 
   const agrupado = {};
-  const lastRow = historico.getLastRow();
 
-  if (lastRow >= 3 && opsPendentes.size) {
-    const largura = Math.min(Math.max(historico.getLastColumn(), 12), 14);
-    const raw = historico.getRange(3, 1, lastRow - 2, largura).getValues();
-    const display = historico.getRange(3, 1, lastRow - 2, largura).getDisplayValues();
+  if (entrada.getLastRow() >= 3) {
+    const qtdLinhasEntrada = entrada.getLastRow() - 2;
+    const raw = entrada
+      .getRange(3, 1, qtdLinhasEntrada, cfgEntrada.headers.length)
+      .getValues();
+    const display = entrada
+      .getRange(3, 1, qtdLinhasEntrada, cfgEntrada.headers.length)
+      .getDisplayValues();
 
     raw.forEach((row, index) => {
       const shown = display[index] || [];
       const op = apiProgTexto_(shown[1]);
       const chave = apiProgChaveOp_(op);
 
-      if (!chave || !opsPendentes.has(chave)) return;
+      if (!chave || opsComSaida.has(chave)) return;
 
       const dataTime = apiProgDataTime_(row[0]);
       const dataTexto = apiProgTexto_(shown[0]);
@@ -339,32 +344,32 @@ function carregarProgramacaoSgq() {
           temQtdConteiner: false,
           temPesoDanuta: false,
           cores: {},
-          primeiraData: dataTime,
+          primeiraData: dataTime || Number.MAX_SAFE_INTEGER,
           primeiraDataTexto: dataTexto
         };
       }
 
       const item = agrupado[chave];
 
-      if (apiProgTexto_(shown[2])) {
+      if (apiProgTexto_(shown[2]) !== '') {
         item.temQtdCaixas = true;
         item.qtdCaixas += apiProgNumero_(row[2]);
       }
 
-      if (apiProgTexto_(shown[3])) {
+      if (apiProgTexto_(shown[3]) !== '') {
         item.temQtdConteiner = true;
         item.qtdConteiner += apiProgNumero_(row[3]);
       }
 
-      if (apiProgTexto_(shown[5])) {
+      if (apiProgTexto_(shown[5]) !== '') {
         item.temPesoDanuta = true;
         item.pesoDanuta += apiProgNumero_(row[5]);
       }
 
       const cor = apiProgTexto_(shown[8]);
-      if (cor) item.cores[cor.toLowerCase()] = cor;
+      if (cor) item.cores[cor.toLocaleLowerCase('pt-BR')] = cor;
 
-      if (dataTime && (!item.primeiraData || dataTime < item.primeiraData)) {
+      if (dataTime && dataTime < item.primeiraData) {
         item.primeiraData = dataTime;
         item.primeiraDataTexto = dataTexto;
       }
@@ -438,6 +443,11 @@ function carregarProgramacaoSgq() {
   });
 
   rows.sort((a, b) => {
+    const urgenteA = apiProgTexto_(a.status).toLocaleLowerCase('pt-BR') === 'urgente';
+    const urgenteB = apiProgTexto_(b.status).toLocaleLowerCase('pt-BR') === 'urgente';
+
+    if (urgenteA !== urgenteB) return urgenteA ? -1 : 1;
+
     const dataA = Number(a.primeiraData || 0) || Number.MAX_SAFE_INTEGER;
     const dataB = Number(b.primeiraData || 0) || Number.MAX_SAFE_INTEGER;
 
@@ -452,8 +462,18 @@ function carregarProgramacaoSgq() {
 
   rows.forEach(item => delete item.primeiraData);
 
-  return { rows: rows };
+  return {
+    rows: rows,
+    source: 'ABAS_OPERACIONAIS'
+  };
 }
+
+
+/**
+ * ============================================================
+ * ESTADO / OS MANUAL DA PROGRAMAÇÃO
+ * ============================================================
+ */
 
 function salvarProgramacaoSgq(op, status, ok, encaminhado, manualData) {
   const chave = apiProgChaveOp_(op);
@@ -665,6 +685,13 @@ function apiProgLerManuais_() {
 
   return result;
 }
+
+
+/**
+ * ============================================================
+ * HELPERS
+ * ============================================================
+ */
 
 function apiProgChaveOp_(value) {
   return apiProgTexto_(value)
