@@ -14,7 +14,7 @@ let historyNextOffset = null;
 let historyTotal = 0;
 let historyHeadersCache = [];
 let historyPageSize = window.matchMedia('(max-width: 800px)').matches ? 25 : 60;
-const GLOBAL_ASSET_VERSION = '20261005-1531';
+const GLOBAL_ASSET_VERSION = '20261005-1540';
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -34,7 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
    * - OS manual e impressão otimizada;
    * - exportação dividida;
    * - camada final estável da Programação SGQ;
-   * - deduplicação final dos dados antes de separar OPs de 1 caixa.
+   * - deduplicação final dos dados antes de separar OPs de 1 caixa;
+   * - impressão paginada com títulos e logo em todas as páginas.
    */
   carregarScriptsGlobais_([
     'assets/relatorio-padrao.js',
@@ -42,7 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
     'assets/programacao-ajustes.js',
     'assets/programacao-exportacao-dividida.js',
     'assets/programacao-recuperacao.js',
-    'assets/programacao-dedup-final.js'
+    'assets/programacao-dedup-final.js',
+    'assets/programacao-impressao.js'
   ]);
 });
 
