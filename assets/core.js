@@ -31,13 +31,15 @@ document.addEventListener('DOMContentLoaded', () => {
    * - relatório rápido/silencioso no Drive;
    * - navegação interna integrada ao Voltar/Avançar do navegador;
    * - PDF/Excel da programação refletindo a divisão em dois blocos;
-   * - cabeçalhos compactos, OS manual e impressão otimizada.
+   * - cabeçalhos compactos, OS manual e impressão otimizada;
+   * - conferência de segurança das OPs pendentes de 1 caixa.
    */
   carregarScriptsGlobais_([
     'assets/relatorio-padrao.js',
     'assets/navegacao.js',
     'assets/programacao-exportacao-dividida.js',
-    'assets/programacao-ajustes.js'
+    'assets/programacao-ajustes.js',
+    'assets/programacao-recuperacao.js'
   ]);
 });
 
