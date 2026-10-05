@@ -137,13 +137,6 @@ function apiConsultarHistoricoPaginado_(
  * ============================================================
  * PDF RÁPIDO
  * ============================================================
- * O PDF é montado no navegador. O Apps Script apenas:
- * 1) salva o arquivo pronto no Drive;
- * 2) finaliza o estado das linhas do relatório operacional.
- *
- * Isso evita criar uma planilha temporária e convertê-la em PDF,
- * que era a parte mais demorada do processo.
- * ============================================================
  */
 
 function salvarPdfRapidoDrive(nomeArquivo, pdfBase64) {
@@ -171,8 +164,6 @@ function finalizarRelatorioRapido(
     throw new Error('Não existem dados preenchidos para finalizar o relatório.');
   }
 
-  // Salva primeiro o PDF já pronto. Esta operação é rápida porque não
-  // existe conversão de planilha temporária.
   const pdfFile = apiCriarPdfBase64NoDrive_(nomeArquivo, pdfBase64);
 
   const lock = LockService.getDocumentLock();
@@ -239,11 +230,6 @@ function finalizarRelatorioRapido(
       registros: persistidas.length
     };
 
-  } catch (error) {
-    // Se a finalização falhar, preserva o PDF criado no Drive para não
-    // perder o relatório já salvo pelo usuário.
-    throw error;
-
   } finally {
     lock.releaseLock();
   }
@@ -283,19 +269,9 @@ function apiCriarPdfBase64NoDrive_(nomeArquivo, pdfBase64) {
  * ============================================================
  * PROGRAMAÇÃO SGQ - FIXPAR
  * ============================================================
- *
- * Fonte das pendências:
- *   Conciliação OP -> OP de Entrada preenchida e OP de Saída vazia.
- *
- * Detalhes exibidos:
- *   Histórico Entrada -> Data de Entrada, caixas, contêiner, cor e Peso Danuta.
- *
- * Ordem base:
- *   Data de Entrada mais antiga para a mais nova.
- *   A interface coloca Status = Urgente no topo, mantendo a ordem de data.
- *
- * Estado manual:
- *   aba "Programação SGQ Fixpar" -> Status / OK / Encaminhado.
+ * A programação reúne:
+ * - OPs com entrada sem saída;
+ * - OSs adicionadas manualmente antes da chegada física do material.
  * ============================================================
  */
 
@@ -313,6 +289,7 @@ function carregarProgramacaoSgq() {
   }
 
   const opsPendentes = new Set();
+  const opsComSaida = new Set();
 
   if (conciliacao.getLastRow() >= 3) {
     const dadosConciliacao = conciliacao
@@ -322,108 +299,163 @@ function carregarProgramacaoSgq() {
     dadosConciliacao.forEach(row => {
       const opEntrada = apiProgTexto_(row[0]);
       const opSaida = apiProgTexto_(row[3]);
+      const chave = apiProgChaveOp_(opEntrada);
 
-      if (opEntrada && !opSaida) {
-        opsPendentes.add(apiProgChaveOp_(opEntrada));
+      if (!chave) return;
+
+      if (opSaida) {
+        opsComSaida.add(chave);
+      } else {
+        opsPendentes.add(chave);
       }
     });
   }
 
-  if (!opsPendentes.size) {
-    return { rows: [] };
-  }
-
-  const lastRow = historico.getLastRow();
-  if (lastRow < 3) {
-    return { rows: [] };
-  }
-
-  const largura = Math.min(Math.max(historico.getLastColumn(), 12), 14);
-  const raw = historico.getRange(3, 1, lastRow - 2, largura).getValues();
-  const display = historico.getRange(3, 1, lastRow - 2, largura).getDisplayValues();
-
   const agrupado = {};
+  const lastRow = historico.getLastRow();
 
-  raw.forEach((row, index) => {
-    const shown = display[index] || [];
-    const op = apiProgTexto_(shown[1]);
-    const chave = apiProgChaveOp_(op);
+  if (lastRow >= 3 && opsPendentes.size) {
+    const largura = Math.min(Math.max(historico.getLastColumn(), 12), 14);
+    const raw = historico.getRange(3, 1, lastRow - 2, largura).getValues();
+    const display = historico.getRange(3, 1, lastRow - 2, largura).getDisplayValues();
 
-    if (!chave || !opsPendentes.has(chave)) return;
+    raw.forEach((row, index) => {
+      const shown = display[index] || [];
+      const op = apiProgTexto_(shown[1]);
+      const chave = apiProgChaveOp_(op);
 
-    const dataTime = apiProgDataTime_(row[0]);
-    const dataTexto = apiProgTexto_(shown[0]);
+      if (!chave || !opsPendentes.has(chave)) return;
 
-    if (!agrupado[chave]) {
-      agrupado[chave] = {
-        op: op,
-        qtdCaixas: 0,
-        qtdConteiner: 0,
-        pesoDanuta: 0,
-        cores: {},
-        primeiraData: dataTime,
-        primeiraDataTexto: dataTexto
-      };
+      const dataTime = apiProgDataTime_(row[0]);
+      const dataTexto = apiProgTexto_(shown[0]);
+
+      if (!agrupado[chave]) {
+        agrupado[chave] = {
+          op: op,
+          qtdCaixas: 0,
+          qtdConteiner: 0,
+          pesoDanuta: 0,
+          temQtdCaixas: false,
+          temQtdConteiner: false,
+          temPesoDanuta: false,
+          cores: {},
+          primeiraData: dataTime,
+          primeiraDataTexto: dataTexto
+        };
+      }
+
+      const item = agrupado[chave];
+
+      if (apiProgTexto_(shown[2])) {
+        item.temQtdCaixas = true;
+        item.qtdCaixas += apiProgNumero_(row[2]);
+      }
+
+      if (apiProgTexto_(shown[3])) {
+        item.temQtdConteiner = true;
+        item.qtdConteiner += apiProgNumero_(row[3]);
+      }
+
+      if (apiProgTexto_(shown[5])) {
+        item.temPesoDanuta = true;
+        item.pesoDanuta += apiProgNumero_(row[5]);
+      }
+
+      const cor = apiProgTexto_(shown[8]);
+      if (cor) item.cores[cor.toLowerCase()] = cor;
+
+      if (dataTime && (!item.primeiraData || dataTime < item.primeiraData)) {
+        item.primeiraData = dataTime;
+        item.primeiraDataTexto = dataTexto;
+      }
+    });
+  }
+
+  const estados = apiProgLerEstados_();
+  const manuais = apiProgLerManuais_();
+  const manualPorChave = {};
+
+  manuais.forEach(item => {
+    const chave = apiProgChaveOp_(item.op);
+    if (!chave || opsComSaida.has(chave)) return;
+    manualPorChave[chave] = item;
+  });
+
+  const chaves = new Set([
+    ...Object.keys(agrupado),
+    ...Object.keys(manualPorChave)
+  ]);
+
+  const rows = [];
+
+  chaves.forEach(chave => {
+    const automatico = agrupado[chave] || null;
+    const manual = manualPorChave[chave] || null;
+    const estado = estados[chave] || {};
+
+    if (automatico) {
+      const coresAuto = Object.keys(automatico.cores)
+        .map(key => automatico.cores[key])
+        .join(' / ');
+
+      rows.push({
+        dataEntrada: automatico.primeiraDataTexto || (manual ? manual.dataEntrada : ''),
+        op: automatico.op || (manual ? manual.op : ''),
+        qtdCaixas: automatico.temQtdCaixas
+          ? apiProgFormatarNumero_(automatico.qtdCaixas)
+          : (manual ? manual.qtdCaixas : ''),
+        qtdConteiner: automatico.temQtdConteiner
+          ? apiProgFormatarNumero_(automatico.qtdConteiner)
+          : (manual ? manual.qtdConteiner : ''),
+        cor: coresAuto || (manual ? manual.cor : ''),
+        pesoDanuta: automatico.temPesoDanuta
+          ? apiProgFormatarNumero_(automatico.pesoDanuta)
+          : (manual ? manual.pesoDanuta : ''),
+        status: estado.status || (manual ? manual.status : ''),
+        ok: Boolean(estado.ok),
+        encaminhado: Boolean(estado.encaminhado),
+        manual: false,
+        primeiraData: automatico.primeiraData || apiProgDataTime_(manual ? manual.dataEntrada : '')
+      });
+      return;
     }
 
-    const item = agrupado[chave];
-
-    item.qtdCaixas += apiProgNumero_(row[2]);
-    item.qtdConteiner += apiProgNumero_(row[3]);
-    item.pesoDanuta += apiProgNumero_(row[5]);
-
-    const cor = apiProgTexto_(shown[8]);
-    if (cor) item.cores[cor.toLowerCase()] = cor;
-
-    if (dataTime && (!item.primeiraData || dataTime < item.primeiraData)) {
-      item.primeiraData = dataTime;
-      item.primeiraDataTexto = dataTexto;
+    if (manual) {
+      rows.push({
+        dataEntrada: manual.dataEntrada || '',
+        op: manual.op || '',
+        qtdCaixas: manual.qtdCaixas || '',
+        qtdConteiner: manual.qtdConteiner || '',
+        cor: manual.cor || '',
+        pesoDanuta: manual.pesoDanuta || '',
+        status: estado.status || manual.status || '',
+        ok: Boolean(estado.ok),
+        encaminhado: Boolean(estado.encaminhado),
+        manual: true,
+        primeiraData: apiProgDataTime_(manual.dataEntrada)
+      });
     }
   });
 
-  const estados = apiProgLerEstados_();
+  rows.sort((a, b) => {
+    const dataA = Number(a.primeiraData || 0) || Number.MAX_SAFE_INTEGER;
+    const dataB = Number(b.primeiraData || 0) || Number.MAX_SAFE_INTEGER;
 
-  const rows = Object.keys(agrupado)
-    .map(chave => {
-      const item = agrupado[chave];
-      const estado = estados[chave] || {};
+    if (dataA !== dataB) return dataA - dataB;
 
-      return {
-        dataEntrada: item.primeiraDataTexto || '',
-        op: item.op,
-        qtdCaixas: apiProgFormatarNumero_(item.qtdCaixas),
-        qtdConteiner: apiProgFormatarNumero_(item.qtdConteiner),
-        cor: Object.keys(item.cores)
-          .map(key => item.cores[key])
-          .join(' / '),
-        pesoDanuta: apiProgFormatarNumero_(item.pesoDanuta),
-        status: estado.status || '',
-        ok: Boolean(estado.ok),
-        encaminhado: Boolean(estado.encaminhado),
-        primeiraData: item.primeiraData || 0
-      };
-    })
-    .sort((a, b) => {
-      const dataA = Number(a.primeiraData || 0) || Number.MAX_SAFE_INTEGER;
-      const dataB = Number(b.primeiraData || 0) || Number.MAX_SAFE_INTEGER;
+    return String(a.op).localeCompare(
+      String(b.op),
+      'pt-BR',
+      { numeric: true, sensitivity: 'base' }
+    );
+  });
 
-      if (dataA !== dataB) return dataA - dataB;
-
-      return String(a.op).localeCompare(
-        String(b.op),
-        'pt-BR',
-        { numeric: true, sensitivity: 'base' }
-      );
-    })
-    .map(item => {
-      delete item.primeiraData;
-      return item;
-    });
+  rows.forEach(item => delete item.primeiraData);
 
   return { rows: rows };
 }
 
-function salvarProgramacaoSgq(op, status, ok, encaminhado) {
+function salvarProgramacaoSgq(op, status, ok, encaminhado, manualData) {
   const chave = apiProgChaveOp_(op);
   if (!chave) {
     throw new Error('OP inválida para salvar a programação.');
@@ -459,6 +491,10 @@ function salvarProgramacaoSgq(op, status, ok, encaminhado) {
     ]]);
 
   sheet.getRange(targetRow, 5).setNumberFormat('dd/MM/yyyy HH:mm:ss');
+
+  if (manualData && manualData.manual === true) {
+    apiProgSalvarManual_(op, status, manualData);
+  }
 
   return { ok: true };
 }
@@ -513,6 +549,123 @@ function apiProgLerEstados_() {
   return estados;
 }
 
+function apiProgObterAbaManual_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName('Programação Manual SGQ');
+
+  if (!sheet) {
+    sheet = ss.insertSheet('Programação Manual SGQ');
+    sheet
+      .getRange(1, 1, 1, 10)
+      .setValues([[
+        'OP',
+        'Data',
+        'Qtd. Caixas',
+        'Qtd. Caçamba',
+        'Cor',
+        'Peso Danuta',
+        'Status inicial',
+        'Ativo',
+        'Criado em',
+        'Atualizado em'
+      ]])
+      .setFontWeight('bold');
+
+    sheet.setFrozenRows(1);
+    sheet.setColumnWidth(1, 120);
+    sheet.setColumnWidth(2, 100);
+    sheet.setColumnWidth(3, 100);
+    sheet.setColumnWidth(4, 110);
+    sheet.setColumnWidth(5, 220);
+    sheet.setColumnWidth(6, 100);
+    sheet.setColumnWidth(7, 120);
+  }
+
+  return sheet;
+}
+
+function apiProgSalvarManual_(op, status, manualData) {
+  const sheet = apiProgObterAbaManual_();
+  const lastRow = sheet.getLastRow();
+  let targetRow = 0;
+
+  if (lastRow >= 2) {
+    const match = sheet
+      .getRange(2, 1, lastRow - 1, 1)
+      .createTextFinder(String(op))
+      .matchCase(false)
+      .matchEntireCell(true)
+      .findNext();
+
+    if (match) targetRow = match.getRow();
+  }
+
+  const agora = new Date();
+  let criadoEm = agora;
+
+  if (targetRow) {
+    const existente = sheet.getRange(targetRow, 9).getValue();
+    if (existente instanceof Date && !isNaN(existente.getTime())) {
+      criadoEm = existente;
+    }
+  } else {
+    targetRow = Math.max(lastRow + 1, 2);
+  }
+
+  const data = apiProgDataPlanilha_(manualData.dataEntrada) || agora;
+
+  sheet
+    .getRange(targetRow, 1, 1, 10)
+    .setValues([[
+      String(op),
+      data,
+      apiProgTexto_(manualData.qtdCaixas),
+      apiProgTexto_(manualData.qtdConteiner),
+      apiProgTexto_(manualData.cor),
+      apiProgTexto_(manualData.pesoDanuta),
+      apiProgTexto_(status),
+      true,
+      criadoEm,
+      agora
+    ]]);
+
+  sheet.getRange(targetRow, 2).setNumberFormat('dd/MM/yyyy');
+  sheet.getRange(targetRow, 9, 1, 2).setNumberFormat('dd/MM/yyyy HH:mm:ss');
+}
+
+function apiProgLerManuais_() {
+  const sheet = apiProgObterAbaManual_();
+
+  if (sheet.getLastRow() < 2) return [];
+
+  const quantidade = sheet.getLastRow() - 1;
+  const raw = sheet.getRange(2, 1, quantidade, 10).getValues();
+  const display = sheet.getRange(2, 1, quantidade, 10).getDisplayValues();
+  const result = [];
+
+  raw.forEach((row, index) => {
+    const shown = display[index] || [];
+    const op = apiProgTexto_(shown[0]);
+    if (!op) return;
+
+    const ativo = row[7];
+    if (ativo === false) return;
+
+    result.push({
+      op: op,
+      dataEntrada: apiProgTexto_(shown[1]),
+      qtdCaixas: apiProgTexto_(shown[2]),
+      qtdConteiner: apiProgTexto_(shown[3]),
+      cor: apiProgTexto_(shown[4]),
+      pesoDanuta: apiProgTexto_(shown[5]),
+      status: apiProgTexto_(shown[6]),
+      manual: true
+    });
+  });
+
+  return result;
+}
+
 function apiProgChaveOp_(value) {
   return apiProgTexto_(value)
     .replace(/\s+/g, '')
@@ -555,26 +708,31 @@ function apiProgFormatarNumero_(value) {
     .replace('.', ',');
 }
 
-function apiProgDataTime_(value) {
-  if (value instanceof Date && !isNaN(value.getTime())) {
-    return value.getTime();
-  }
+function apiProgDataPlanilha_(value) {
+  if (value instanceof Date && !isNaN(value.getTime())) return value;
 
   const text = apiProgTexto_(value);
-  if (!text) return 0;
+  if (!text) return null;
 
-  const br = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (br) {
-    const date = new Date(
-      Number(br[3]),
-      Number(br[2]) - 1,
-      Number(br[1])
-    );
-    return isNaN(date.getTime()) ? 0 : date.getTime();
+  let match = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (match) {
+    const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    return isNaN(date.getTime()) ? null : date;
+  }
+
+  match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (match) {
+    const date = new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
+    return isNaN(date.getTime()) ? null : date;
   }
 
   const parsed = new Date(text);
-  return isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function apiProgDataTime_(value) {
+  const date = apiProgDataPlanilha_(value);
+  return date ? date.getTime() : 0;
 }
 
 function respostaJsonApi_(obj) {
