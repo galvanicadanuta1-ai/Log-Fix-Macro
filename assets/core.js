@@ -14,6 +14,7 @@ let historyNextOffset = null;
 let historyTotal = 0;
 let historyHeadersCache = [];
 let historyPageSize = window.matchMedia('(max-width: 800px)').matches ? 25 : 60;
+const GLOBAL_ASSET_VERSION = '20261005-1425';
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -58,7 +59,7 @@ function carregarScriptsGlobais_(arquivos) {
     }
 
     const script = document.createElement('script');
-    script.src = src;
+    script.src = src + '?v=' + encodeURIComponent(GLOBAL_ASSET_VERSION);
     script.async = false;
     script.dataset.globalSrc = src;
     script.onload = proximo_;
