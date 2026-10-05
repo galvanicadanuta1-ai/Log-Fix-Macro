@@ -14,7 +14,7 @@ let historyNextOffset = null;
 let historyTotal = 0;
 let historyHeadersCache = [];
 let historyPageSize = window.matchMedia('(max-width: 800px)').matches ? 25 : 60;
-const GLOBAL_ASSET_VERSION = '20261005-1531';
+const GLOBAL_ASSET_VERSION = '20261005-1815';
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -28,16 +28,14 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /*
-   * Ajustes carregados por último para valerem como padrão global:
-   * - relatório rápido/silencioso no Drive;
-   * - navegação interna integrada ao Voltar/Avançar do navegador;
-   * - OS manual e impressão otimizada;
-   * - exportação dividida;
-   * - camada final estável da Programação SGQ;
-   * - deduplicação final dos dados antes de separar OPs de 1 caixa.
+   * Camadas finais carregadas em ordem controlada.
+   * O núcleo operacional permanece nos arquivos originais;
+   * as camadas V3 tratam apenas confiabilidade de gravação/relatório.
    */
   carregarScriptsGlobais_([
     'assets/relatorio-padrao.js',
+    'assets/operacional-estavel.js',
+    'assets/relatorio-operacional-v3.js',
     'assets/navegacao.js',
     'assets/programacao-ajustes.js',
     'assets/programacao-exportacao-dividida.js',
