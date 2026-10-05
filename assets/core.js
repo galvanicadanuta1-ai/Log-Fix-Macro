@@ -30,18 +30,16 @@ document.addEventListener('DOMContentLoaded', () => {
    * Ajustes carregados por último para valerem como padrão global:
    * - relatório rápido/silencioso no Drive;
    * - navegação interna integrada ao Voltar/Avançar do navegador;
-   * - cabeçalhos compactos, OS manual e impressão otimizada;
-   * - PDF/Excel da programação refletindo a divisão final dos dois blocos;
-   * - conferência de segurança das OPs pendentes;
-   * - deduplicação do Histórico antes de calcular caixas/peso.
+   * - OS manual e impressão otimizada;
+   * - exportação dividida;
+   * - camada final estável da Programação SGQ.
    */
   carregarScriptsGlobais_([
     'assets/relatorio-padrao.js',
     'assets/navegacao.js',
     'assets/programacao-ajustes.js',
     'assets/programacao-exportacao-dividida.js',
-    'assets/programacao-recuperacao.js',
-    'assets/programacao-correcao-duplicidade.js'
+    'assets/programacao-recuperacao.js'
   ]);
 });
 
