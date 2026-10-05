@@ -12,6 +12,7 @@ function abrirProgramacaoSgq() {
   if (screen) screen.classList.add('active');
 
   garantirCabecalhoDataEntradaProgramacao_();
+  inicializarTurnoProgramacaoSgq();
   atualizarDataProgramacaoSgq();
   carregarProgramacaoSgq();
 }
@@ -30,7 +31,51 @@ function atualizarDataProgramacaoSgq() {
 
   const agora = new Date();
   const data = agora.toLocaleDateString('pt-BR');
-  el.textContent = 'Data: ' + data;
+  el.textContent = 'DATA: ' + data;
+}
+
+function inicializarTurnoProgramacaoSgq() {
+  const select = document.getElementById('programacaoSgqTurno');
+  if (!select) return;
+
+  let salvo = '';
+
+  try {
+    salvo = localStorage.getItem('programacaoSgqTurno') || '';
+  } catch (e) {}
+
+  if (salvo === 'Turno Noite') {
+    select.value = 'Turno Noite';
+  } else {
+    select.value = 'Turno Dia';
+  }
+
+  atualizarTituloTurnoProgramacaoSgq();
+}
+
+function obterTurnoProgramacaoSgq() {
+  const select = document.getElementById('programacaoSgqTurno');
+  return select && select.value === 'Turno Noite'
+    ? 'Turno Noite'
+    : 'Turno Dia';
+}
+
+function alterarTurnoProgramacaoSgq() {
+  const turno = obterTurnoProgramacaoSgq();
+
+  try {
+    localStorage.setItem('programacaoSgqTurno', turno);
+  } catch (e) {}
+
+  atualizarTituloTurnoProgramacaoSgq();
+}
+
+function atualizarTituloTurnoProgramacaoSgq() {
+  const printTitle = document.getElementById('programacaoSgqPrintTitle');
+  if (printTitle) {
+    printTitle.textContent =
+      'Programação SGQ - Fixpar - ' + obterTurnoProgramacaoSgq();
+  }
 }
 
 function garantirCabecalhoDataEntradaProgramacao_() {
@@ -51,6 +96,54 @@ function garantirCabecalhoDataEntradaProgramacao_() {
   const th = document.createElement('th');
   th.textContent = 'Data de Entrada';
   linha.insertBefore(th, linha.firstChild);
+}
+
+function normalizarStatusProgramacao_(status) {
+  return String(status || '')
+    .trim()
+    .toLocaleLowerCase('pt-BR');
+}
+
+function statusUrgenteProgramacao_(status) {
+  return normalizarStatusProgramacao_(status) === 'urgente';
+}
+
+function dataProgramacaoTime_(valor) {
+  const texto = String(valor || '').trim();
+  const match = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+
+  if (match) {
+    return new Date(
+      Number(match[3]),
+      Number(match[2]) - 1,
+      Number(match[1])
+    ).getTime();
+  }
+
+  const parsed = new Date(texto);
+  return isNaN(parsed.getTime()) ? Number.MAX_SAFE_INTEGER : parsed.getTime();
+}
+
+function ordenarProgramacaoSgqRows_() {
+  programacaoSgqRows.sort((a, b) => {
+    const urgenteA = statusUrgenteProgramacao_(a.status);
+    const urgenteB = statusUrgenteProgramacao_(b.status);
+
+    if (urgenteA !== urgenteB) {
+      return urgenteA ? -1 : 1;
+    }
+
+    const dataA = dataProgramacaoTime_(a.dataEntrada);
+    const dataB = dataProgramacaoTime_(b.dataEntrada);
+
+    if (dataA !== dataB) return dataA - dataB;
+
+    return String(a.op || '').localeCompare(
+      String(b.op || ''),
+      'pt-BR',
+      { numeric: true, sensitivity: 'base' }
+    );
+  });
 }
 
 function setProgramacaoStatus(texto, estado) {
@@ -81,6 +174,8 @@ function carregarProgramacaoSgq() {
         ? result.rows
         : [];
 
+      ordenarProgramacaoSgqRows_();
+
       if (loading) loading.style.display = 'none';
 
       renderProgramacaoSgq();
@@ -109,6 +204,7 @@ function renderProgramacaoSgq() {
   if (!tbody) return;
 
   garantirCabecalhoDataEntradaProgramacao_();
+  ordenarProgramacaoSgqRows_();
   tbody.innerHTML = '';
 
   if (!programacaoSgqRows.length) {
@@ -123,14 +219,23 @@ function renderProgramacaoSgq() {
 
   if (empty) empty.style.display = 'none';
   if (resumo) {
+    const urgentes = programacaoSgqRows.filter(item =>
+      statusUrgenteProgramacao_(item.status)
+    ).length;
+
     resumo.textContent =
       programacaoSgqRows.length +
-      (programacaoSgqRows.length === 1 ? ' OP pendente' : ' OPs pendentes');
+      (programacaoSgqRows.length === 1 ? ' OP pendente' : ' OPs pendentes') +
+      (urgentes ? ' • ' + urgentes + ' urgente' + (urgentes === 1 ? '' : 's') : '');
   }
 
   programacaoSgqRows.forEach(item => {
     const tr = document.createElement('tr');
     tr.dataset.op = item.op || '';
+
+    if (statusUrgenteProgramacao_(item.status)) {
+      tr.classList.add('programacao-urgente');
+    }
 
     appendProgramacaoTextCell(tr, item.dataEntrada);
     appendProgramacaoTextCell(tr, item.op);
@@ -144,7 +249,7 @@ function renderProgramacaoSgq() {
     statusInput.type = 'text';
     statusInput.className = 'programacao-status-input';
     statusInput.value = item.status || '';
-    statusInput.placeholder = 'Digite o status';
+    statusInput.placeholder = 'Status';
     statusInput.autocomplete = 'off';
     statusInput.addEventListener('keydown', event => {
       if (event.key === 'Enter') {
@@ -215,6 +320,8 @@ function salvarEstadoLinhaProgramacaoSgq(tr) {
         item.encaminhado = encaminhado;
       }
 
+      ordenarProgramacaoSgqRows_();
+      renderProgramacaoSgq();
       setProgramacaoStatus('Alterações salvas', 'saved');
     })
     .withFailureHandler(error => {
@@ -228,5 +335,6 @@ function salvarEstadoLinhaProgramacaoSgq(tr) {
 
 function imprimirProgramacaoSgq() {
   atualizarDataProgramacaoSgq();
+  atualizarTituloTurnoProgramacaoSgq();
   window.print();
 }
