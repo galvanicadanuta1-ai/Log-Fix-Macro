@@ -1,6 +1,6 @@
 /* ============================================================
    PROGRAMAÇÃO SGQ - FIXPAR
-   Layout de tela e impressão A4 paisagem
+   Layout de tela e impressão A4 paisagem em dois blocos
    ============================================================ */
 
 /* Macrosul: vermelho mais vivo e brilhante em toda a navegação */
@@ -25,7 +25,7 @@
 
 .programacao-page {
   width: 100%;
-  max-width: 1500px;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
@@ -198,6 +198,65 @@
   overflow-x: auto;
 }
 
+/* ============================================================
+   DIVISÃO DA FOLHA EM DOIS BLOCOS
+   ============================================================ */
+.programacao-dual-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+  width: 100%;
+  align-items: start;
+}
+
+.programacao-bloco {
+  min-width: 0;
+  background: #fff;
+}
+
+.programacao-bloco + .programacao-bloco {
+  border-left: 1px dashed #94a3b8;
+  padding-left: 14px;
+}
+
+.programacao-bloco-cabecalho {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  align-items: center;
+  min-height: 52px;
+  margin-bottom: 5px;
+  padding: 3px 4px 5px;
+  border-bottom: 1.5px solid #334155;
+}
+
+.programacao-bloco-logo {
+  display: block;
+  max-width: 66px;
+  max-height: 38px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.programacao-bloco-titulos {
+  min-width: 0;
+  text-align: center;
+  color: #111827;
+}
+
+.programacao-bloco-titulo {
+  font-size: 17px;
+  line-height: 1.1;
+  font-weight: 900;
+}
+
+.programacao-bloco-subtitulo {
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #991b1b;
+}
+
 .programacao-table {
   width: 100%;
   border-collapse: collapse;
@@ -208,23 +267,26 @@
 .programacao-table th,
 .programacao-table td {
   border: 1px solid #4b5563;
-  padding: 7px 7px;
+  padding: 5px 3px;
   vertical-align: middle;
+  overflow-wrap: anywhere;
 }
 
 .programacao-table th {
   background: #e9eef2;
   color: #111827;
-  font-size: 12px;
-  font-weight: 800;
+  font-size: 10.5px;
+  line-height: 1.05;
+  font-weight: 900;
   text-align: center;
 }
 
 .programacao-table td {
-  min-height: 38px;
-  font-size: 13px;
+  min-height: 34px;
+  font-size: 14px;
+  line-height: 1.08;
   color: #111827;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .programacao-table tr.programacao-urgente td {
@@ -238,49 +300,45 @@
 }
 
 /*
-   1 Data de Entrada
-   2 OP
-   3 Qtd. Caixas
-   4 Qtd. Contêiner
-   5 Cor
-   6 Peso Danuta
-   7 Status
-   8 OK
-   9 Encaminhado
+   Colunas compactas para caber duas programações na mesma folha:
+   1 Data | 2 OP | 3 Caixas | 4 Contêiner | 5 Cor
+   6 Peso | 7 Status | 8 OK | 9 Encaminhado
 */
 .programacao-table th:nth-child(1),
-.programacao-table td:nth-child(1) { width: 11%; text-align: center; }
+.programacao-table td:nth-child(1) { width: 13%; text-align: center; }
 .programacao-table th:nth-child(2),
-.programacao-table td:nth-child(2) { width: 10%; text-align: center; }
+.programacao-table td:nth-child(2) { width: 12%; text-align: center; }
 .programacao-table th:nth-child(3),
-.programacao-table td:nth-child(3) { width: 9%; text-align: center; }
+.programacao-table td:nth-child(3) { width: 8%; text-align: center; }
 .programacao-table th:nth-child(4),
-.programacao-table td:nth-child(4) { width: 10%; text-align: center; }
+.programacao-table td:nth-child(4) { width: 9%; text-align: center; }
 .programacao-table th:nth-child(5),
-.programacao-table td:nth-child(5) { width: 18%; text-align: center; }
+.programacao-table td:nth-child(5) { width: 10%; text-align: center; }
 .programacao-table th:nth-child(6),
-.programacao-table td:nth-child(6) { width: 12%; text-align: center; }
+.programacao-table td:nth-child(6) { width: 11%; text-align: center; }
 .programacao-table th:nth-child(7),
-.programacao-table td:nth-child(7) { width: 14%; }
+.programacao-table td:nth-child(7) { width: 12%; }
 .programacao-table th:nth-child(8),
 .programacao-table td:nth-child(8) { width: 7%; text-align: center; }
 .programacao-table th:nth-child(9),
-.programacao-table td:nth-child(9) { width: 9%; text-align: center; }
+.programacao-table td:nth-child(9) { width: 18%; text-align: center; }
 
 .programacao-status-input {
   width: 100%;
-  min-height: 31px;
+  min-height: 28px;
   border: 1px solid #b7c0c8;
-  border-radius: 4px;
-  padding: 5px 7px;
+  border-radius: 3px;
+  padding: 3px 4px;
   background: #fff;
   color: #111827;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  box-sizing: border-box;
 }
 
 .programacao-check {
-  width: 19px;
-  height: 19px;
+  width: 18px;
+  height: 18px;
   cursor: pointer;
 }
 
@@ -290,6 +348,19 @@
   text-align: center;
   color: #64748b;
   font-size: 13px;
+}
+
+@media (max-width: 1100px) {
+  .programacao-dual-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .programacao-bloco + .programacao-bloco {
+    border-left: 0;
+    border-top: 1px dashed #94a3b8;
+    padding-left: 0;
+    padding-top: 14px;
+  }
 }
 
 @media (max-width: 800px) {
@@ -326,15 +397,23 @@
     padding: 6px 5px;
   }
 
+  .programacao-table-wrap {
+    overflow-x: visible;
+  }
+
+  .programacao-bloco {
+    overflow-x: auto;
+  }
+
   .programacao-table {
-    min-width: 1000px;
+    min-width: 760px;
   }
 }
 
 @media print {
   @page {
     size: A4 landscape;
-    margin: 7mm;
+    margin: 5mm;
   }
 
   html,
@@ -360,68 +439,77 @@
     width: 100% !important;
   }
 
-  #programacaoSgqScreen .no-print {
+  #programacaoSgqScreen .no-print,
+  #programacaoSgqScreen > .programacao-page > .programacao-sheet > .programacao-header,
+  #programacaoSgqScreen .programacao-subinfo,
+  #programacaoSgqScreen .programacao-loading,
+  #programacaoSgqScreen .programacao-empty {
     display: none !important;
   }
 
   .programacao-page,
-  .programacao-sheet {
+  .programacao-sheet,
+  .programacao-table-wrap {
     width: 100% !important;
     max-width: none !important;
     margin: 0 !important;
     padding: 0 !important;
     border: 0 !important;
     box-shadow: none !important;
-  }
-
-  .programacao-header {
-    grid-template-columns: 170px 1fr 160px;
-    min-height: 60px;
-    margin-bottom: 5px;
-    padding-bottom: 5px;
-  }
-
-  .programacao-logo {
-    max-width: 150px;
-    max-height: 46px;
-  }
-
-  .programacao-title-screen {
-    display: none !important;
-  }
-
-  .programacao-title-print {
-    display: block !important;
-    font-size: 19px;
-  }
-
-  .programacao-date {
-    font-size: 13px;
-    border-width: 1.5px;
-    padding: 6px 8px;
-    color: #991b1b !important;
-    background: #fff1f1 !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  .programacao-subinfo {
-    font-size: 11px;
-    min-height: 20px;
-    margin-bottom: 4px;
-  }
-
-  .programacao-status-message {
-    display: none !important;
-  }
-
-  .programacao-table-wrap {
     overflow: visible !important;
   }
 
-  .programacao-table {
-    table-layout: fixed;
+  .programacao-dual-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 3mm !important;
     width: 100% !important;
+    align-items: start !important;
+  }
+
+  .programacao-bloco {
+    min-width: 0 !important;
+    page-break-inside: auto;
+  }
+
+  .programacao-bloco + .programacao-bloco {
+    border-left: 1px dashed #777 !important;
+    border-top: 0 !important;
+    padding-left: 3mm !important;
+    padding-top: 0 !important;
+  }
+
+  .programacao-bloco-principal {
+    padding-right: 1mm;
+  }
+
+  .programacao-bloco-cabecalho {
+    grid-template-columns: 22mm 1fr;
+    min-height: 13mm;
+    margin: 0 0 1.5mm;
+    padding: 0 1mm 1.5mm;
+    border-bottom: 1px solid #222;
+  }
+
+  .programacao-bloco-logo {
+    max-width: 20mm;
+    max-height: 10mm;
+  }
+
+  .programacao-bloco-titulo {
+    font-size: 11.5pt;
+    line-height: 1.05;
+  }
+
+  .programacao-bloco-subtitulo {
+    font-size: 8.5pt;
+    margin-top: 1mm;
+  }
+
+  .programacao-table {
+    width: 100% !important;
+    min-width: 0 !important;
+    table-layout: fixed !important;
   }
 
   .programacao-table thead {
@@ -434,18 +522,20 @@
   }
 
   .programacao-table th {
-    font-size: 10.5px;
-    padding: 5px 3px;
+    font-size: 7.6pt;
+    line-height: 1.0;
+    padding: 1.4mm .7mm;
     background: #e9eef2 !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
   .programacao-table td {
-    font-size: 10.5px;
-    padding: 5px 3px;
-    height: 29px;
-    font-weight: 600;
+    font-size: 9.6pt;
+    line-height: 1.0;
+    padding: 1.6mm .7mm;
+    height: 7mm;
+    font-weight: 700;
   }
 
   .programacao-table tr.programacao-urgente td {
@@ -457,13 +547,15 @@
   .programacao-status-input {
     border: 0 !important;
     padding: 0 !important;
-    min-height: 18px;
-    font-size: 10.5px;
+    min-height: 0 !important;
+    height: auto !important;
+    font-size: 9.4pt;
+    line-height: 1 !important;
     background: transparent !important;
   }
 
   .programacao-check {
-    width: 15px;
-    height: 15px;
+    width: 4mm;
+    height: 4mm;
   }
 }
