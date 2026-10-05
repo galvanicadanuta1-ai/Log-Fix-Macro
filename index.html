@@ -13,7 +13,6 @@
   <style>
     .main-brand{display:flex;justify-content:center;align-items:center;min-height:84px;margin-bottom:4px}.main-brand-logo{display:block;max-width:220px;max-height:72px;width:auto;height:auto;object-fit:contain}.api-setup-notice{display:none;width:min(760px,calc(100% - 28px));margin:10px auto;padding:10px 14px;border:1px solid #e1b954;border-radius:6px;background:#fff8dd;color:#72580e;font-size:12px;line-height:1.35;text-align:center;box-sizing:border-box}
 
-    /* Tela principal branca para integrar com o fundo do logo */
     #mainMenu,
     #mainMenu .main-menu-wrapper {
       background: #ffffff;
@@ -23,7 +22,6 @@
       min-height: calc(100vh - 28px);
     }
 
-    /* SGQ Fixpar: verde vibrante */
     #logisticaMenu .menu-button,
     #logisticaMenu .history-button,
     #mainMenu .main-menu-button:first-of-type,
@@ -42,13 +40,12 @@
       color: #ffffff;
     }
 
-    /* Macrosul: vermelho mais suave */
     #mainMenu .macrosul-main,
     #macrosulMenu .menu-button,
     #macrosulMenu .history-button,
     #programacaoMenu .program-macrosul {
-      background: #b85b5b;
-      border-color: #9f4d4d;
+      background: #e53935;
+      border-color: #c62828;
       color: #ffffff;
     }
 
@@ -56,12 +53,49 @@
     #macrosulMenu .menu-button:hover,
     #macrosulMenu .history-button:hover,
     #programacaoMenu .program-macrosul:hover {
-      background: #a84e4e;
-      border-color: #8f4141;
+      background: #d32f2f;
+      border-color: #b71c1c;
       color: #ffffff;
     }
 
-    @media(max-width:800px){.main-brand{min-height:72px}.main-brand-logo{max-width:190px;max-height:62px}.api-setup-notice{width:calc(100% - 20px);font-size:11px}}
+    .export-excel-button {
+      height: 32px;
+      min-width: 125px;
+      padding: 0 13px;
+      border: 1px solid #198647;
+      border-radius: 4px;
+      background: #ffffff;
+      color: #166534;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .export-excel-button:hover {
+      background: #effaf3;
+    }
+
+    .icon-action-button {
+      width: 36px;
+      min-width: 36px;
+      height: 32px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #64748b;
+      border-radius: 4px;
+      background: #ffffff;
+      color: #1f2937;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .icon-action-button:hover {
+      background: #f1f5f9;
+    }
+
+    @media(max-width:800px){.main-brand{min-height:72px}.main-brand-logo{max-width:190px;max-height:62px}.api-setup-notice{width:calc(100% - 20px);font-size:11px}.export-excel-button{min-width:110px}.icon-action-button{width:38px;min-width:38px}}
   </style>
 </head>
 <body>
@@ -134,14 +168,37 @@
   <div id="programacaoSgqScreen" class="screen">
     <div class="programacao-page">
       <div class="programacao-actions no-print">
-        <button type="button" onclick="voltarMenuProgramacao()">← Voltar</button>
-        <button
-          type="button"
-          class="programacao-print-button"
-          onclick="imprimirProgramacaoSgq()"
-        >
-          IMPRIMIR
-        </button>
+        <div class="programacao-actions-left">
+          <button type="button" onclick="voltarMenuProgramacao()">← Voltar</button>
+        </div>
+
+        <div class="programacao-actions-right">
+          <button
+            type="button"
+            class="programacao-report-button"
+            onclick="gerarRelatorioProgramacaoSgq()"
+          >
+            GERAR RELATÓRIO
+          </button>
+
+          <button
+            type="button"
+            class="programacao-excel-button"
+            onclick="exportarProgramacaoSgqExcel()"
+          >
+            EXPORTAR EXCEL
+          </button>
+
+          <button
+            type="button"
+            class="programacao-print-button"
+            title="Imprimir"
+            aria-label="Imprimir"
+            onclick="imprimirProgramacaoSgq()"
+          >
+            🖨
+          </button>
+        </div>
       </div>
 
       <div class="programacao-sheet">
@@ -154,8 +211,24 @@
             >
           </div>
 
-          <div class="programacao-title">Programação SGQ - Fixpar</div>
-          <div id="programacaoSgqDate" class="programacao-date">Data:</div>
+          <div class="programacao-title">
+            <div class="programacao-title-screen">
+              <span>Programação SGQ - Fixpar</span>
+              <select
+                id="programacaoSgqTurno"
+                aria-label="Turno da programação"
+                onchange="alterarTurnoProgramacaoSgq()"
+              >
+                <option value="Turno Dia">Turno Dia</option>
+                <option value="Turno Noite">Turno Noite</option>
+              </select>
+            </div>
+            <div id="programacaoSgqPrintTitle" class="programacao-title-print">
+              Programação SGQ - Fixpar - Turno Dia
+            </div>
+          </div>
+
+          <div id="programacaoSgqDate" class="programacao-date">DATA:</div>
         </div>
 
         <div class="programacao-subinfo">
@@ -173,6 +246,7 @@
           <table class="programacao-table">
             <thead>
               <tr>
+                <th>Data de Entrada</th>
                 <th>OP</th>
                 <th>Qtd. Caixas</th>
                 <th>Qtd. Contêiner</th>
@@ -244,6 +318,8 @@
         </div>
         <button id="historyConsultButton" class="consult-button" onclick="consultarHistorico(true)">CONSULTAR</button>
         <button id="historyReportButton" class="report-button" onclick="gerarRelatorioHistoricoTela()">GERAR RELATÓRIO</button>
+        <button id="historyExcelButton" class="export-excel-button" type="button" onclick="exportarHistoricoExcel()">EXPORTAR EXCEL</button>
+        <button id="historyPrintButton" class="icon-action-button" type="button" title="Imprimir" aria-label="Imprimir" onclick="imprimirHistoricoTela()">🖨</button>
         <div id="historyInfo" class="history-info"></div>
       </div>
 
@@ -264,6 +340,10 @@
     <option value="Retrabalho"></option>
   </datalist>
 
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <script src="assets/config.js"></script>
   <script src="assets/api.js"></script>
   <script src="assets/core.js"></script>
@@ -272,6 +352,7 @@
   <script src="assets/relatorios.js"></script>
   <script src="assets/historico.js"></script>
   <script src="assets/ui.js"></script>
+  <script src="assets/exportacoes.js"></script>
 
   <script>
     function abrirMenuProgramacao() {
