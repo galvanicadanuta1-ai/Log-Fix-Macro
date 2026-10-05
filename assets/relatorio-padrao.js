@@ -14,7 +14,6 @@
    ============================================================ */
 
 (function () {
-  /* Sucesso silencioso: não exibe toast/alerta ao concluir relatório. */
   window.mostrarSucessoRelatorio = function () {};
 
   function esperarRelatorio_(ms) {
@@ -37,7 +36,7 @@
           args
         );
 
-        if (!result || result.ok !== true || result.confirmado !== true) {
+        if (!result || result.ok !== true) {
           throw new Error(
             'O servidor não confirmou a gravação completa do relatório.'
           );
@@ -56,10 +55,6 @@
     throw ultimoErro || new Error('Falha ao finalizar o relatório.');
   }
 
-  /*
-   * Histórico e Programação continuam salvando a cópia no Drive em
-   * segundo plano, sem mensagem de sucesso na interface.
-   */
   window.salvarPdfNoDrive_ = function (nomeArquivo, blob) {
     Promise.resolve()
       .then(() => blobParaBase64_(blob))
@@ -73,17 +68,6 @@
     return Promise.resolve({ background: true });
   };
 
-  /*
-   * Relatório operacional - Recebimento e Saída.
-   *
-   * Ponto mais importante:
-   * rows só é apagado quando o Apps Script confirma que concluiu:
-   * - PDF no Drive;
-   * - dados na aba operacional;
-   * - status GERADO;
-   * - Histórico;
-   * - Conciliação.
-   */
   window.gerarRelatorio = async function () {
     if (salvamentoEmLote) {
       alert('Os dados ainda estão sendo salvos. Aguarde alguns segundos e tente novamente.');
@@ -143,10 +127,6 @@
       return;
     }
 
-    /*
-     * Dispara o seletor local a partir do clique do usuário, mas ele não
-     * controla a gravação oficial do sistema.
-     */
     const destinoPromise = escolherDestinoArquivo_(
       nomeArquivo,
       'application/pdf',
@@ -173,10 +153,6 @@
 
     const reportId = criarIdRelatorio_();
 
-    /*
-     * A finalização oficial começa independentemente do que o usuário fizer
-     * no seletor de arquivo local.
-     */
     const finalizacaoPromise = blobParaBase64_(pdfBlob)
       .then(pdfBase64 =>
         finalizarRelatorioSeguro_([
@@ -202,9 +178,6 @@
         }
       }
 
-      /*
-       * NÃO limpa a tela antes desta confirmação.
-       */
       await finalizacaoPromise;
 
       rows = [];
@@ -223,11 +196,6 @@
       }
 
     } catch (error) {
-      /*
-       * Falha da confirmação oficial = mantém tudo na tela.
-       * Assim o usuário nunca perde as linhas por uma falha de internet,
-       * Drive ou Apps Script.
-       */
       if (typeof setStatus === 'function') {
         setStatus('Falha ao finalizar. Dados mantidos na tela.', 'error');
       }
