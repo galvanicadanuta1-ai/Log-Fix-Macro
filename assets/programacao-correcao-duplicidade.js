@@ -1,17 +1,17 @@
 /* ============================================================
    PROGRAMAÇÃO SGQ - CORREÇÃO DE DUPLICIDADE
    ============================================================
-   O Histórico pode conter mais de um registro referente à mesma
-   linha de origem. Para a programação isso não pode somar duas
-   vezes a mesma entrada, pois 1 caixa passaria a aparecer como 2.
+   Corrige o caso em que o Histórico contém o mesmo registro mais
+   de uma vez, fazendo 1 caixa virar 2, 11 virar 22 e o peso dobrar.
 
-   Esta camada:
-   - deduplica o Histórico Entrada pelo sourceRow;
-   - usa um fingerprint como segurança quando sourceRow não existe;
+   Regras:
+   - primeiro elimina duplicidade por sourceRow;
+   - depois elimina registros integralmente idênticos, mesmo que
+     tenham sourceRow diferente;
    - corrige quantidade, peso, cor e data das linhas automáticas;
-   - preserva Status, OK e Encaminhado salvos na programação;
+   - preserva Status, OK e Encaminhado;
    - mantém OSs manuais intactas;
-   - faz a separação final novamente: 1 caixa vai para a direita.
+   - após a correção, Qtd. Caixas = 1 volta para o bloco da direita.
    ============================================================ */
 
 (function () {
@@ -79,16 +79,14 @@
     };
   }
 
-  function chaveRegistro_(registro, indice) {
-    if (registro && registro.sourceRow !== null && registro.sourceRow !== undefined && registro.sourceRow !== '') {
-      return 'SRC|' + String(registro.sourceRow);
-    }
-
+  function assinaturaValores_(registro) {
     const values = registro && Array.isArray(registro.values)
       ? registro.values
       : [];
 
-    return 'VAL|' + values.map(v => String(v == null ? '' : v).trim()).join('\u001f') + '|' + String(indice);
+    return values
+      .map(v => String(v == null ? '' : v).trim())
+      .join('\u001f');
   }
 
   function deduplicarHistorico_(resultado) {
@@ -96,31 +94,46 @@
       ? resultado.rows
       : [];
 
-    const porChave = new Map();
+    const porSource = new Map();
 
-    rows.forEach((registro, indice) => {
-      let chave;
+    rows.forEach(registro => {
+      const source = registro && registro.sourceRow !== null &&
+        registro.sourceRow !== undefined && registro.sourceRow !== ''
+        ? String(registro.sourceRow)
+        : '';
 
-      if (registro && registro.sourceRow !== null && registro.sourceRow !== undefined && registro.sourceRow !== '') {
-        chave = 'SRC|' + String(registro.sourceRow);
-      } else {
-        const values = registro && Array.isArray(registro.values)
-          ? registro.values
-          : [];
-        chave = 'VAL|' + values.map(v => String(v == null ? '' : v).trim()).join('\u001f');
-      }
+      const chave = source
+        ? 'SRC|' + source
+        : 'SEM_SRC|' + assinaturaValores_(registro);
 
-      const anterior = porChave.get(chave);
-      const linhaAtual = Number(registro && registro.historyRow || 0);
-      const linhaAnterior = Number(anterior && anterior.historyRow || 0);
+      const anterior = porSource.get(chave);
+      const atualRow = Number(registro && registro.historyRow || 0);
+      const anteriorRow = Number(anterior && anterior.historyRow || 0);
 
-      /* Se houver duplicidade, fica com o registro mais recente. */
-      if (!anterior || linhaAtual >= linhaAnterior) {
-        porChave.set(chave, registro);
+      if (!anterior || atualRow >= anteriorRow) {
+        porSource.set(chave, registro);
       }
     });
 
-    return Array.from(porChave.values());
+    /*
+     * Segunda proteção: há históricos antigos em que o mesmo registro
+     * pode existir duas vezes com sourceRow diferente. Se todas as
+     * informações visíveis forem idênticas, conta somente uma vez.
+     */
+    const porConteudo = new Map();
+
+    Array.from(porSource.values()).forEach(registro => {
+      const assinatura = assinaturaValores_(registro);
+      const anterior = porConteudo.get(assinatura);
+      const atualRow = Number(registro && registro.historyRow || 0);
+      const anteriorRow = Number(anterior && anterior.historyRow || 0);
+
+      if (!anterior || atualRow >= anteriorRow) {
+        porConteudo.set(assinatura, registro);
+      }
+    });
+
+    return Array.from(porConteudo.values());
   }
 
   function agruparEntradas_(resultado) {
@@ -198,7 +211,6 @@
         qtdConteiner: formatarNumero_(hist.qtdConteiner, hist.temConteiner),
         cor: Array.from(hist.cores.values()).join(' / ') || item.cor || '',
         pesoDanuta: formatarNumero_(hist.pesoDanuta, hist.temPeso),
-        /* Estado operacional permanece exatamente como estava. */
         status: item.status || '',
         ok: Boolean(item.ok),
         encaminhado: Boolean(item.encaminhado),
@@ -245,11 +257,6 @@
         ? resultados[0].rows
         : [];
 
-      /*
-       * IMPORTANTE: o backend define quais OPs estão pendentes.
-       * O Histórico deduplicado apenas corrige os dados quantitativos.
-       * Isso evita que uma entrada repetida faça 1 caixa virar 2.
-       */
       programacaoSgqRows = aplicarHistoricoNaBase_(base, resultados[1]);
 
       if (typeof ordenarProgramacaoSgqRows_ === 'function') {
