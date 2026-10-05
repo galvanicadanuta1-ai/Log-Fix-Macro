@@ -71,6 +71,12 @@ function executarMetodoApi_(method, args) {
     case 'gerarRelatorioHistorico':
       return gerarRelatorioHistorico.apply(null, args);
 
+    case 'finalizarRelatorioRapido':
+      return finalizarRelatorioRapido.apply(null, args);
+
+    case 'salvarPdfRapidoDrive':
+      return salvarPdfRapidoDrive.apply(null, args);
+
     case 'carregarProgramacaoSgq':
       return carregarProgramacaoSgq.apply(null, args);
 
@@ -129,6 +135,152 @@ function apiConsultarHistoricoPaginado_(
 
 /**
  * ============================================================
+ * PDF RÁPIDO
+ * ============================================================
+ * O PDF é montado no navegador. O Apps Script apenas:
+ * 1) salva o arquivo pronto no Drive;
+ * 2) finaliza o estado das linhas do relatório operacional.
+ *
+ * Isso evita criar uma planilha temporária e convertê-la em PDF,
+ * que era a parte mais demorada do processo.
+ * ============================================================
+ */
+
+function salvarPdfRapidoDrive(nomeArquivo, pdfBase64) {
+  const file = apiCriarPdfBase64NoDrive_(nomeArquivo, pdfBase64);
+
+  return {
+    ok: true,
+    fileName: file.getName(),
+    fileId: file.getId(),
+    url: file.getUrl()
+  };
+}
+
+function finalizarRelatorioRapido(
+  pageKey,
+  isoDate,
+  linhasTela,
+  nomeArquivo,
+  pdfBase64
+) {
+  const cfg = getConfig_(pageKey);
+  const registros = normalizarRegistrosRecebidos_(linhasTela);
+
+  if (!registros.length) {
+    throw new Error('Não existem dados preenchidos para finalizar o relatório.');
+  }
+
+  // Salva primeiro o PDF já pronto. Esta operação é rápida porque não
+  // existe conversão de planilha temporária.
+  const pdfFile = apiCriarPdfBase64NoDrive_(nomeArquivo, pdfBase64);
+
+  const lock = LockService.getDocumentLock();
+  lock.waitLock(30000);
+
+  try {
+    const sheet = SpreadsheetApp
+      .getActiveSpreadsheet()
+      .getSheetByName(cfg.sheetName);
+
+    if (!sheet) {
+      throw new Error('A aba "' + cfg.sheetName + '" não foi encontrada.');
+    }
+
+    const statusCol = cfg.headers.length + 1;
+    const opIndex = acharHeader_(cfg.headers, 'OP');
+    const opsAfetadas = [];
+    const persistidas = [];
+
+    registros.forEach(registro => {
+      const normalized = normalizarLinhaParaPlanilha_(
+        pageKey,
+        isoDate,
+        registro.values
+      );
+
+      let targetRow = Number(registro.sheetRow || 0);
+
+      if (targetRow >= 3) {
+        sheet
+          .getRange(targetRow, 1, 1, cfg.headers.length)
+          .setValues([normalized]);
+      } else {
+        targetRow = Math.max(sheet.getLastRow() + 1, 3);
+
+        sheet
+          .getRange(targetRow, 1, 1, cfg.headers.length)
+          .setValues([normalized]);
+      }
+
+      sheet.getRange(targetRow, 1).setNumberFormat('dd/MM/yyyy');
+      sheet.getRange(targetRow, statusCol).setValue(STATUS_GERADO);
+
+      upsertHistorico_(pageKey, targetRow, normalized);
+
+      if (opIndex >= 0) {
+        opsAfetadas.push(normalized[opIndex]);
+      }
+
+      persistidas.push({
+        sheetRow: targetRow,
+        values: normalized
+      });
+    });
+
+    SpreadsheetApp.flush();
+    sincronizarConciliacaoOps_(opsAfetadas);
+
+    return {
+      ok: true,
+      fileName: pdfFile.getName(),
+      fileId: pdfFile.getId(),
+      url: pdfFile.getUrl(),
+      registros: persistidas.length
+    };
+
+  } catch (error) {
+    // Se a finalização falhar, preserva o PDF criado no Drive para não
+    // perder o relatório já salvo pelo usuário.
+    throw error;
+
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function apiCriarPdfBase64NoDrive_(nomeArquivo, pdfBase64) {
+  let base64 = String(pdfBase64 || '').trim();
+
+  if (!base64) {
+    throw new Error('O PDF não foi recebido pelo servidor.');
+  }
+
+  const marker = 'base64,';
+  const markerIndex = base64.indexOf(marker);
+  if (markerIndex >= 0) {
+    base64 = base64.slice(markerIndex + marker.length);
+  }
+
+  const nome = /\.pdf$/i.test(String(nomeArquivo || ''))
+    ? String(nomeArquivo)
+    : String(nomeArquivo || 'Relatorio') + '.pdf';
+
+  const bytes = Utilities.base64Decode(base64);
+  const blob = Utilities.newBlob(bytes, MimeType.PDF, nome);
+  const folder = DriveApp.getFolderById(PASTA_RELATORIOS_ID);
+  const file = folder.createFile(blob);
+
+  if (!file || !file.getId()) {
+    throw new Error('O PDF não pôde ser salvo na pasta do Drive.');
+  }
+
+  return file;
+}
+
+
+/**
+ * ============================================================
  * PROGRAMAÇÃO SGQ - FIXPAR
  * ============================================================
  *
@@ -138,8 +290,9 @@ function apiConsultarHistoricoPaginado_(
  * Detalhes exibidos:
  *   Histórico Entrada -> Data de Entrada, caixas, contêiner, cor e Peso Danuta.
  *
- * Ordem:
- *   sempre da Data de Entrada mais antiga para a mais nova.
+ * Ordem base:
+ *   Data de Entrada mais antiga para a mais nova.
+ *   A interface coloca Status = Urgente no topo, mantendo a ordem de data.
  *
  * Estado manual:
  *   aba "Programação SGQ Fixpar" -> Status / OK / Encaminhado.
