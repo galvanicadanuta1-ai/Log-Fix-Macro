@@ -1,16 +1,21 @@
 /* ============================================================
    EXPORTAÇÃO DA PROGRAMAÇÃO DIVIDIDA
    ============================================================
-   Espelha a folha impressa:
-   - esquerda: Caixas > 1 ou Contêiner >= 1;
-   - direita: todas as OPs com exatamente 1 caixa;
-   - bloco da direita sem coluna Contêiner;
-   - Urgentes no topo de cada bloco;
-   - depois, data mais antiga para a mais nova;
-   - cabeçalhos repetidos em todas as páginas do PDF.
+   - esquerda: programação principal;
+   - direita: OPs de 1 caixa;
+   - direita sem Contêiner e sem Enc.;
+   - Urgentes no topo e depois data;
+   - PDF em paisagem com dois blocos equilibrados.
    ============================================================ */
 
 (function () {
+  function dataCurta_(valor) {
+    if (typeof formatarDataCurtaProgramacao_ === 'function') {
+      return formatarDataCurtaProgramacao_(valor);
+    }
+    return valor || '';
+  }
+
   function headersPrincipal_() {
     return [
       'Data Entrada',
@@ -33,14 +38,13 @@
       'Cor',
       'Kgs',
       'Status',
-      'OK',
-      'Enc.'
+      'OK'
     ];
   }
 
   function linhaPrincipal_(item) {
     return [
-      item.dataEntrada || '',
+      dataCurta_(item.dataEntrada),
       item.op || '',
       item.qtdCaixas || '',
       item.qtdConteiner || '',
@@ -54,14 +58,13 @@
 
   function linhaUmaCaixa_(item) {
     return [
-      item.dataEntrada || '',
+      dataCurta_(item.dataEntrada),
       item.op || '',
       item.qtdCaixas || '',
       item.cor || '',
       item.pesoDanuta || '',
       item.status || '',
-      item.ok ? 'SIM' : '',
-      item.encaminhado ? 'SIM' : ''
+      item.ok ? 'SIM' : ''
     ];
   }
 
@@ -71,7 +74,6 @@
     }
 
     const grupos = separarProgramacaoSgqRows_();
-
     return {
       principal: (grupos.principal || []).slice(),
       umaCaixa: (grupos.umaCaixa || []).slice()
@@ -87,19 +89,12 @@
       headersUmaCaixa: headersUmaCaixa_(),
       principal: grupos.principal.map(linhaPrincipal_),
       umaCaixa: grupos.umaCaixa.map(linhaUmaCaixa_),
-      dados: programacaoSgqRows.map(linhaPrincipal_)
+      dados: (programacaoSgqRows || []).map(linhaPrincipal_)
     };
   };
 
   function criarPlanilha_(titulo, subtitulo, headers, rows, larguras) {
-    const aoa = [
-      [titulo],
-      [subtitulo],
-      [],
-      headers,
-      ...rows
-    ];
-
+    const aoa = [[titulo], [subtitulo], [], headers, ...rows];
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     const ultimaColuna = Math.max(headers.length - 1, 0);
 
@@ -108,14 +103,13 @@
       { s: { r: 1, c: 0 }, e: { r: 1, c: ultimaColuna } }
     ];
 
-    ws['!cols'] = (larguras || headers.map(() => 12)).map(wch => ({ wch }));
-
+    ws['!cols'] = larguras.map(wch => ({ wch }));
     return ws;
   }
 
   window.exportarProgramacaoSgqExcel = async function () {
     try {
-      if (!programacaoSgqRows.length) {
+      if (!(programacaoSgqRows || []).length) {
         throw new Error('Não existem OPs na programação para exportar.');
       }
 
@@ -151,7 +145,7 @@
           subtitulo,
           dados.headersPrincipal,
           dados.principal,
-          [12, 11, 9, 10, 22, 9, 12, 6, 7]
+          [11, 11, 8, 9, 24, 9, 13, 6, 7]
         ),
         'Programação'
       );
@@ -163,7 +157,7 @@
           subtitulo,
           dados.headersUmaCaixa,
           dados.umaCaixa,
-          [12, 11, 9, 24, 9, 12, 6, 7]
+          [11, 12, 8, 28, 9, 14, 6]
         ),
         'OPs 1 caixa'
       );
@@ -191,7 +185,6 @@
     try {
       const response = await fetch(url);
       if (!response.ok) return null;
-
       const blob = await response.blob();
 
       return await new Promise(resolve => {
@@ -216,35 +209,33 @@
     doc.setFontSize(11.2);
     doc.text(titulo, x + largura / 2, 7.8, { align: 'center' });
 
-    doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.8);
     doc.text(subtitulo, x + largura / 2, 12.5, { align: 'center' });
   }
 
-  function estilosColunasPrincipal_() {
+  function estilosPrincipal_() {
     return {
-      0: { cellWidth: 17 },
+      0: { cellWidth: 16 },
       1: { cellWidth: 15 },
       2: { cellWidth: 10 },
-      3: { cellWidth: 10 },
-      4: { cellWidth: 31 },
-      5: { cellWidth: 12 },
-      6: { cellWidth: 21 },
-      7: { cellWidth: 9 },
-      8: { cellWidth: 11 }
+      3: { cellWidth: 11 },
+      4: { cellWidth: 30 },
+      5: { cellWidth: 11 },
+      6: { cellWidth: 20 },
+      7: { cellWidth: 8 },
+      8: { cellWidth: 10 }
     };
   }
 
-  function estilosColunasUmaCaixa_() {
+  function estilosUmaCaixa_() {
     return {
-      0: { cellWidth: 17 },
-      1: { cellWidth: 16 },
+      0: { cellWidth: 16 },
+      1: { cellWidth: 17 },
       2: { cellWidth: 11 },
-      3: { cellWidth: 37 },
+      3: { cellWidth: 44 },
       4: { cellWidth: 13 },
-      5: { cellWidth: 22 },
-      6: { cellWidth: 9 },
-      7: { cellWidth: 11 }
+      5: { cellWidth: 25 },
+      6: { cellWidth: 9 }
     };
   }
 
@@ -257,7 +248,7 @@
       head: [headers],
       body: rows,
       theme: 'grid',
-      tableWidth: 'wrap',
+      tableWidth: largura - 1,
       margin: {
         left: x,
         right: Math.max(pageWidth - x - largura, 0),
@@ -268,7 +259,7 @@
       showHead: 'everyPage',
       styles: {
         font: 'helvetica',
-        fontSize: 9.4,
+        fontSize: 9.2,
         cellPadding: 1.0,
         valign: 'middle',
         halign: 'center',
@@ -283,8 +274,8 @@
         cellPadding: .8
       },
       columnStyles: tipo === 'umaCaixa'
-        ? estilosColunasUmaCaixa_()
-        : estilosColunasPrincipal_(),
+        ? estilosUmaCaixa_()
+        : estilosPrincipal_(),
       didParseCell: data => {
         if (data.section !== 'body') return;
 
@@ -323,11 +314,11 @@
 
     const pageWidth = doc.internal.pageSize.getWidth();
     const margem = 4;
-    const gap = 4;
+    const gap = 3;
     const larguraPainel = (pageWidth - (margem * 2) - gap) / 2;
     const xEsquerdo = margem;
     const xDireito = margem + larguraPainel + gap;
-    const porPagina = 17;
+    const porPagina = 18;
     const totalPaginas = Math.max(
       1,
       Math.ceil(dados.principal.length / porPagina),
@@ -341,7 +332,6 @@
       const esquerda = dados.principal.slice(inicio, inicio + porPagina);
       const direita = dados.umaCaixa.slice(inicio, inicio + porPagina);
 
-      /* Cabeçalhos completos são desenhados em TODAS as páginas. */
       desenharCabecalhoPainel_(
         doc,
         xEsquerdo,
@@ -359,11 +349,6 @@
         subtitulo,
         logo
       );
-
-      doc.setDrawColor(150, 150, 150);
-      doc.setLineDashPattern([1.5, 1.5], 0);
-      doc.line(pageWidth / 2, 2.5, pageWidth / 2, 206);
-      doc.setLineDashPattern([], 0);
 
       desenharTabelaPainel_(
         doc,
@@ -388,7 +373,7 @@
   }
 
   window.gerarRelatorioProgramacaoSgq = async function () {
-    if (!programacaoSgqRows.length) {
+    if (!(programacaoSgqRows || []).length) {
       alert('Não existem OPs na programação para gerar o relatório.');
       return;
     }
@@ -414,10 +399,7 @@
 
     try {
       const pdfBlob = await criarPdfProgramacaoDividida_();
-
       await salvarBlobDestino_(destino, pdfBlob, nomeArquivo);
-
-      /* Drive permanece silencioso e em segundo plano. */
       salvarPdfNoDrive_(nomeArquivo, pdfBlob);
     } catch (error) {
       alert(error.message || 'Não foi possível gerar o relatório da programação.');
