@@ -1,0 +1,98 @@
+/* ============================================================
+   PROGRAMAÇÃO SGQ - AJUSTE FINAL DE LAYOUT
+   ============================================================ */
+
+.programacao-dual-grid {
+  grid-template-columns: minmax(0, 1.03fr) minmax(0, .97fr) !important;
+  gap: 6px !important;
+}
+
+.programacao-bloco + .programacao-bloco {
+  border-left: 0 !important;
+  padding-left: 6px !important;
+}
+
+.programacao-table-compacta th {
+  font-size: 9.2px !important;
+  line-height: 1 !important;
+  padding: 4px 2px !important;
+}
+
+.programacao-table-compacta td {
+  font-size: 14px !important;
+  line-height: 1.03 !important;
+  padding: 5px 2px !important;
+}
+
+.programacao-table-compacta .programacao-status-input {
+  min-height: 26px !important;
+  padding: 2px 3px !important;
+  font-size: 12.5px !important;
+}
+
+/* ESQUERDA: Data | OP | Caixas | Caçamba | Cor | Kgs | Status | OK | Enc. */
+.programacao-bloco-principal .programacao-table th:nth-child(1),
+.programacao-bloco-principal .programacao-table td:nth-child(1) { width: 11% !important; text-align:center; }
+.programacao-bloco-principal .programacao-table th:nth-child(2),
+.programacao-bloco-principal .programacao-table td:nth-child(2) { width: 11% !important; text-align:center; }
+.programacao-bloco-principal .programacao-table th:nth-child(3),
+.programacao-bloco-principal .programacao-table td:nth-child(3) { width: 7% !important; text-align:center; }
+.programacao-bloco-principal .programacao-table th:nth-child(4),
+.programacao-bloco-principal .programacao-table td:nth-child(4) { width: 8% !important; text-align:center; }
+.programacao-bloco-principal .programacao-table th:nth-child(5),
+.programacao-bloco-principal .programacao-table td:nth-child(5) { width: 24% !important; text-align:center; }
+.programacao-bloco-principal .programacao-table th:nth-child(6),
+.programacao-bloco-principal .programacao-table td:nth-child(6) { width: 8% !important; text-align:center; }
+.programacao-bloco-principal .programacao-table th:nth-child(7),
+.programacao-bloco-principal .programacao-table td:nth-child(7) { width: 15% !important; }
+.programacao-bloco-principal .programacao-table th:nth-child(8),
+.programacao-bloco-principal .programacao-table td:nth-child(8) { width: 6% !important; text-align:center; }
+.programacao-bloco-principal .programacao-table th:nth-child(9),
+.programacao-bloco-principal .programacao-table td:nth-child(9) { width: 10% !important; text-align:center; }
+
+/* DIREITA: Data | OP | Caixas | Cor | Kgs | Status | OK */
+.programacao-bloco-uma-caixa .programacao-table th:nth-child(1),
+.programacao-bloco-uma-caixa .programacao-table td:nth-child(1) { width: 12% !important; text-align:center; }
+.programacao-bloco-uma-caixa .programacao-table th:nth-child(2),
+.programacao-bloco-uma-caixa .programacao-table td:nth-child(2) { width: 13% !important; text-align:center; }
+.programacao-bloco-uma-caixa .programacao-table th:nth-child(3),
+.programacao-bloco-uma-caixa .programacao-table td:nth-child(3) { width: 9% !important; text-align:center; }
+.programacao-bloco-uma-caixa .programacao-table th:nth-child(4),
+.programacao-bloco-uma-caixa .programacao-table td:nth-child(4) { width: 32% !important; text-align:center; }
+.programacao-bloco-uma-caixa .programacao-table th:nth-child(5),
+.programacao-bloco-uma-caixa .programacao-table td:nth-child(5) { width: 10% !important; text-align:center; }
+.programacao-bloco-uma-caixa .programacao-table th:nth-child(6),
+.programacao-bloco-uma-caixa .programacao-table td:nth-child(6) { width: 17% !important; }
+.programacao-bloco-uma-caixa .programacao-table th:nth-child(7),
+.programacao-bloco-uma-caixa .programacao-table td:nth-child(7) { width: 7% !important; text-align:center; }
+
+.programacao-encaminhado-hidden {
+  display: none !important;
+}
+
+@media print {
+  .programacao-dual-grid {
+    grid-template-columns: minmax(0, 1.03fr) minmax(0, .97fr) !important;
+    gap: 1.5mm !important;
+  }
+
+  .programacao-bloco + .programacao-bloco {
+    padding-left: 1.5mm !important;
+    border-left: 0 !important;
+  }
+
+  .programacao-table-compacta th {
+    font-size: 6.8pt !important;
+    padding: 1mm .45mm !important;
+  }
+
+  .programacao-table-compacta td {
+    font-size: 9.4pt !important;
+    padding: 1.25mm .45mm !important;
+    height: 6.5mm !important;
+  }
+
+  .programacao-table-compacta .programacao-status-input {
+    font-size: 9pt !important;
+  }
+}
