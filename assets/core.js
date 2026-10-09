@@ -14,7 +14,7 @@ let historyNextOffset = null;
 let historyTotal = 0;
 let historyHeadersCache = [];
 let historyPageSize = window.matchMedia('(max-width: 800px)').matches ? 25 : 60;
-const GLOBAL_ASSET_VERSION = '20261009-1017';
+const GLOBAL_ASSET_VERSION = '20261009-1136';
 
 /*
  * Impede qualquer clique durante os poucos instantes em que as camadas
@@ -56,7 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
     'assets/programacao-ajustes.js',
     'assets/programacao-exportacao-dividida.js',
     'assets/programacao-recuperacao.js',
-    'assets/programacao-dedup-final.js'
+    'assets/programacao-dedup-final.js',
+    'assets/programacao-prioridade.js',
+    'assets/programacao-impressao.js'
   ], () => {
     document.documentElement.classList.remove('sgq-booting');
   });
