@@ -1,18 +1,14 @@
 /* ============================================================
-   PROGRAMAÇÃO SGQ - IMPRESSÃO FIEL À TELA
+   PROGRAMAÇÃO SGQ - IMPRESSÃO FIEL À TELA / RETRATO
    ============================================================
-   Usa a própria grade já renderizada na tela para que a impressão saia
-   exatamente com os dois blocos visuais atuais.
-
    Regras:
    - botão da impressora usa a mesma impressão nativa do Ctrl+P;
-   - mostra logo + título + turno/data dos dois blocos;
-   - repete esses cabeçalhos em TODAS as páginas via THEAD;
-   - mantém os cabeçalhos das colunas em todas as páginas;
-   - mostra o resumo no topo da primeira página;
-   - Prioridade vazia imprime vazia, sem placeholder;
-   - URGENTE é convertido para texto estático na impressão, evitando corte;
-   - não altera dados, backend ou regras de ordenação.
+   - A4 retrato;
+   - Programação SGQ em largura total;
+   - OPs de 1 caixa abaixo, também em largura total;
+   - títulos + turno/data + cabeçalhos repetem pelo THEAD;
+   - Prioridade vazia imprime vazia;
+   - URGENTE vira texto estático para não cortar.
    ============================================================ */
 
 (function () {
@@ -27,10 +23,10 @@
     style.id = STYLE_ID;
     style.textContent = `
       #programacaoSgqScreen .programacao-status-input {
-        font-size: 10px !important;
-        padding-left: 1px !important;
-        padding-right: 1px !important;
-        letter-spacing: -0.25px !important;
+        font-size: 11px !important;
+        padding-left: 4px !important;
+        padding-right: 4px !important;
+        letter-spacing: 0 !important;
         text-overflow: clip !important;
       }
 
@@ -38,30 +34,15 @@
         display: none;
       }
 
-      #programacaoSgqScreen .programacao-bloco-principal .programacao-table th:nth-child(7),
-      #programacaoSgqScreen .programacao-bloco-principal .programacao-table td:nth-child(7) {
-        width: 15% !important;
-      }
-
-      #programacaoSgqScreen .programacao-bloco-principal .programacao-table th:nth-child(5),
-      #programacaoSgqScreen .programacao-bloco-principal .programacao-table td:nth-child(5) {
-        width: 18% !important;
-      }
-
-      #programacaoSgqScreen .programacao-bloco-uma-caixa .programacao-table th:nth-child(6),
-      #programacaoSgqScreen .programacao-bloco-uma-caixa .programacao-table td:nth-child(6) {
-        width: 17% !important;
-      }
-
       @media print {
         @page {
-          size: A4 landscape;
-          margin: 4mm;
+          size: A4 portrait !important;
+          margin: 6mm !important;
         }
 
         html,
         body {
-          width: 100% !important;
+          width: 210mm !important;
           margin: 0 !important;
           padding: 0 !important;
           background: #fff !important;
@@ -108,34 +89,42 @@
         #programacaoSgqScreen .programacao-subinfo {
           display: flex !important;
           min-height: 5mm !important;
-          margin: 0 0 1.5mm !important;
+          margin: 0 0 2mm !important;
           padding: 0 !important;
           font-size: 7.5pt !important;
           color: #334155 !important;
         }
 
+        /* IMPORTANTE: um bloco embaixo do outro */
         #programacaoSgqScreen .programacao-dual-grid {
-          display: grid !important;
-          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
-          gap: 2.5mm !important;
+          display: block !important;
           width: 100% !important;
-          align-items: start !important;
         }
 
         #programacaoSgqScreen .programacao-bloco,
         #programacaoSgqScreen .programacao-bloco-principal,
         #programacaoSgqScreen .programacao-bloco-uma-caixa {
           display: block !important;
+          width: 100% !important;
           min-width: 0 !important;
-          padding-top: 0 !important;
+          border-left: 0 !important;
+          padding-left: 0 !important;
           page-break-inside: auto !important;
           break-inside: auto !important;
         }
 
+        #programacaoSgqScreen .programacao-bloco-principal {
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+
+        #programacaoSgqScreen .programacao-bloco-uma-caixa,
         #programacaoSgqScreen .programacao-bloco + .programacao-bloco {
-          border-left: 1px solid #cbd5e1 !important;
-          border-top: 0 !important;
-          padding-left: 2.5mm !important;
+          border-left: 0 !important;
+          border-top: 1px solid #cbd5e1 !important;
+          margin-top: 5mm !important;
+          padding-left: 0 !important;
+          padding-top: 4mm !important;
         }
 
         #programacaoSgqScreen .programacao-table {
@@ -166,19 +155,19 @@
 
         #programacaoSgqScreen .programacao-bloco-cabecalho {
           display: grid !important;
-          grid-template-columns: 19mm 1fr 19mm !important;
+          grid-template-columns: 24mm 1fr 24mm !important;
           align-items: center !important;
-          min-height: 11mm !important;
+          min-height: 13mm !important;
           margin: 0 !important;
-          padding: 0 0 .7mm !important;
+          padding: 0 0 1mm !important;
           border: 0 !important;
           background: #fff !important;
         }
 
         #programacaoSgqScreen .programacao-bloco-logo {
           display: block !important;
-          max-width: 18mm !important;
-          max-height: 8mm !important;
+          max-width: 22mm !important;
+          max-height: 10mm !important;
           width: auto !important;
           height: auto !important;
           object-fit: contain !important;
@@ -193,7 +182,7 @@
 
         #programacaoSgqScreen .programacao-bloco-titulo {
           display: block !important;
-          font-size: 10.8pt !important;
+          font-size: 12pt !important;
           line-height: 1 !important;
           font-weight: 900 !important;
           white-space: nowrap !important;
@@ -203,7 +192,7 @@
         #programacaoSgqScreen .programacao-bloco-subtitulo {
           display: block !important;
           margin-top: .8mm !important;
-          font-size: 7.5pt !important;
+          font-size: 8pt !important;
           line-height: 1 !important;
           font-weight: 800 !important;
           white-space: nowrap !important;
@@ -219,10 +208,10 @@
           display: table-cell !important;
           background: #e9eef2 !important;
           color: #111827 !important;
-          font-size: 6.8pt !important;
+          font-size: 7.2pt !important;
           font-weight: 900 !important;
           line-height: 1 !important;
-          padding: 1mm .3mm !important;
+          padding: 1.15mm .45mm !important;
           border: 1px solid #4b5563 !important;
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
@@ -240,11 +229,11 @@
 
         #programacaoSgqScreen .programacao-table tbody td {
           display: table-cell !important;
-          font-size: 8.2pt !important;
+          font-size: 9pt !important;
           line-height: 1.02 !important;
           font-weight: 700 !important;
-          padding: 1mm .35mm !important;
-          height: 6.3mm !important;
+          padding: 1.15mm .55mm !important;
+          height: 7mm !important;
           vertical-align: middle !important;
           border: 1px solid #4b5563 !important;
           color: #111827 !important;
@@ -257,25 +246,27 @@
           print-color-adjust: exact !important;
         }
 
+        /* Principal: Data | OP | Caixas | Caçamba | Cor | Kgs | Prioridade | OK | Enc. */
         #programacaoSgqScreen .programacao-bloco-principal th:nth-child(1),
         #programacaoSgqScreen .programacao-bloco-principal td:nth-child(1) { width: 11% !important; }
         #programacaoSgqScreen .programacao-bloco-principal th:nth-child(2),
-        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(2) { width: 10% !important; }
+        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(2) { width: 11% !important; }
         #programacaoSgqScreen .programacao-bloco-principal th:nth-child(3),
-        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(3) { width: 8% !important; }
+        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(3) { width: 9% !important; }
         #programacaoSgqScreen .programacao-bloco-principal th:nth-child(4),
-        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(4) { width: 9% !important; }
+        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(4) { width: 10% !important; }
         #programacaoSgqScreen .programacao-bloco-principal th:nth-child(5),
-        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(5) { width: 18% !important; }
+        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(5) { width: 22% !important; }
         #programacaoSgqScreen .programacao-bloco-principal th:nth-child(6),
-        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(6) { width: 8% !important; }
+        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(6) { width: 9% !important; }
         #programacaoSgqScreen .programacao-bloco-principal th:nth-child(7),
-        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(7) { width: 15% !important; }
+        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(7) { width: 14% !important; }
         #programacaoSgqScreen .programacao-bloco-principal th:nth-child(8),
-        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(8) { width: 9% !important; }
+        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(8) { width: 7% !important; }
         #programacaoSgqScreen .programacao-bloco-principal th:nth-child(9),
-        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(9) { width: 12% !important; }
+        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(9) { width: 7% !important; }
 
+        /* 1 caixa: Data | OP | Caixas | Cor | Kgs | Prioridade | OK */
         #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(1),
         #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(1) { width: 14% !important; }
         #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(2),
@@ -283,15 +274,15 @@
         #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(3),
         #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(3) { width: 11% !important; }
         #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(4),
-        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(4) { width: 25% !important; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(4) { width: 30% !important; }
         #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(5),
         #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(5) { width: 11% !important; }
         #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(6),
-        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(6) { width: 18% !important; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(6) { width: 14% !important; }
         #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(7),
-        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(7) { width: 7% !important; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(7) { width: 6% !important; }
 
-        /* Na impressão usamos TEXTO, não o input: isso elimina placeholder e corte. */
+        /* Na impressão usa texto real, nunca o placeholder do input. */
         #programacaoSgqScreen .programacao-status-input {
           display: none !important;
         }
@@ -302,7 +293,7 @@
           text-align: center !important;
           white-space: nowrap !important;
           overflow: visible !important;
-          font-size: 7.8pt !important;
+          font-size: 8.5pt !important;
           font-weight: 700 !important;
           line-height: 1.1 !important;
           color: #111827 !important;
@@ -338,7 +329,6 @@
           td.appendChild(texto);
         }
 
-        /* Usa somente o VALOR REAL. Placeholder nunca entra na impressão. */
         texto.textContent = String(input.value || '').trim();
       });
   }
@@ -356,7 +346,6 @@
   }
 
   window.imprimirProgramacaoSgq = function () {
-    /* Primeiro atualiza a mesma estrutura que o Ctrl+P já imprime corretamente. */
     if (typeof atualizarDataProgramacaoSgq === 'function') {
       atualizarDataProgramacaoSgq();
     }
