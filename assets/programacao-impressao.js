@@ -7,12 +7,13 @@
    - Turno + data;
    - título "OPs de 1 caixa";
    - Turno + data;
-   - cabeçalhos das colunas.
+   - cabeçalhos das colunas;
+   - Prioridade com espaço suficiente para "URGENTE" completo.
    ============================================================ */
 
 (function () {
   const LOGO_URL = 'https://raw.githubusercontent.com/galvanicadanuta1-ai/canhoto-digital/main/logo.png';
-  const LINHAS_POR_PAGINA = 11;
+  const LINHAS_POR_PAGINA = 10;
 
   function esc_(valor) {
     return String(valor == null ? '' : valor)
@@ -50,8 +51,8 @@
     };
 
     return {
-      headersEsquerda: ['Data Entrada','OP','Qtd. Caixas','Qtd. Caçamba','Cor','Kgs','Status','OK','Enc.'],
-      headersDireita: ['Data Entrada','OP','Qtd. Caixas','Cor','Kgs','Status','OK'],
+      headersEsquerda: ['Data Entrada','OP','Qtd. Caixas','Qtd. Caçamba','Cor','Kgs','Prioridade','OK','Enc.'],
+      headersDireita: ['Data Entrada','OP','Qtd. Caixas','Cor','Kgs','Prioridade','OK'],
       principal: (grupos.principal || []).map(item => [
         curta(item.dataEntrada), item.op || '', item.qtdCaixas || '', item.qtdConteiner || '',
         item.cor || '', item.pesoDanuta || '', item.status || '', item.ok ? '✓' : '',
@@ -68,11 +69,18 @@
     return headers.map(h => '<th>' + esc_(h) + '</th>').join('');
   }
 
-  function trs_(rows, statusIndex) {
+  function trs_(rows, prioridadeIndex) {
     return rows.map(row => {
-      const urgente = String(row[statusIndex] || '').trim().toLocaleLowerCase('pt-BR') === 'urgente';
+      const urgente = String(row[prioridadeIndex] || '')
+        .trim()
+        .toLocaleLowerCase('pt-BR') === 'urgente';
+
       return '<tr' + (urgente ? ' class="urgente"' : '') + '>' +
-        row.map((valor, i) => '<td' + (i === statusIndex ? ' class="status"' : '') + '>' + esc_(valor) + '</td>').join('') +
+        row.map((valor, i) =>
+          '<td' + (i === prioridadeIndex ? ' class="prioridade"' : '') + '>' +
+            esc_(valor) +
+          '</td>'
+        ).join('') +
       '</tr>';
     }).join('');
   }
@@ -81,11 +89,12 @@
     return '' +
       '<section class="bloco ' + (direita ? 'direita' : 'esquerda') + '">' +
         '<div class="cabecalho">' +
-          '<img src="' + LOGO_URL + '" alt="Galvânica Danuta">' +
+          '<div class="logo-box"><img src="' + LOGO_URL + '" alt="Galvânica Danuta"></div>' +
           '<div class="titulos">' +
             '<div class="titulo">' + esc_(titulo) + '</div>' +
             '<div class="subtitulo">' + esc_(subtitulo) + '</div>' +
           '</div>' +
+          '<div class="cabecalho-espaco"></div>' +
         '</div>' +
         '<table>' +
           '<thead><tr>' + ths_(headers) + '</tr></thead>' +
@@ -126,55 +135,98 @@
       '<style>' +
         '@page{size:A4 landscape;margin:5mm}' +
         '*{box-sizing:border-box}' +
-        'html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff}' +
-        '.pagina{width:100%;min-height:196mm;display:grid;grid-template-columns:1.03fr .97fr;gap:2mm;page-break-after:always;break-after:page}' +
+        'html,body{margin:0;padding:0;width:100%;font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff}' +
+        '.pagina{width:100%;min-height:196mm;display:grid;grid-template-columns:1.03fr .97fr;gap:2mm;page-break-after:always;break-after:page;align-items:start}' +
         '.pagina:last-child{page-break-after:auto;break-after:auto}' +
-        '.bloco{min-width:0}' +
-        '.cabecalho{display:grid;grid-template-columns:22mm 1fr 22mm;align-items:center;min-height:13mm;padding:0 0 1.2mm;border-bottom:1px solid #222;margin-bottom:1mm}' +
-        '.cabecalho img{display:block;max-width:21mm;max-height:10mm;object-fit:contain;justify-self:start}' +
-        '.titulos{text-align:center;grid-column:2}' +
-        '.titulo{font-size:11pt;font-weight:800;line-height:1.05}' +
-        '.subtitulo{margin-top:1mm;font-size:7.8pt;font-weight:700;line-height:1}' +
+        '.bloco{min-width:0;break-inside:avoid;page-break-inside:avoid}' +
+        '.cabecalho{display:flex!important;align-items:center!important;width:100%!important;min-height:14mm!important;padding:0 0 1.4mm!important;border-bottom:1px solid #222!important;margin:0 0 1mm!important;visibility:visible!important}' +
+        '.logo-box,.cabecalho-espaco{width:24mm;min-width:24mm;display:flex;align-items:center}' +
+        '.logo-box{justify-content:flex-start}' +
+        '.cabecalho-espaco{justify-content:flex-end}' +
+        '.cabecalho img{display:block!important;width:auto!important;max-width:23mm!important;max-height:10.5mm!important;object-fit:contain!important;visibility:visible!important}' +
+        '.titulos{flex:1;min-width:0;text-align:center!important;visibility:visible!important}' +
+        '.titulo{font-size:11.5pt!important;font-weight:800!important;line-height:1.05!important;white-space:nowrap!important;visibility:visible!important}' +
+        '.subtitulo{margin-top:1mm!important;font-size:7.8pt!important;font-weight:700!important;line-height:1!important;white-space:nowrap!important;visibility:visible!important}' +
         'table{width:100%;border-collapse:collapse;table-layout:fixed}' +
+        'thead{display:table-header-group}' +
         'th,td{border:1px solid #45515c;text-align:center;vertical-align:middle;word-break:normal;overflow-wrap:anywhere}' +
-        'th{background:#e9eef2;font-size:6.6pt;font-weight:800;line-height:1.05;padding:.9mm .35mm}' +
-        'td{font-size:9pt;font-weight:600;line-height:1.02;padding:1.05mm .35mm;height:6.4mm}' +
+        'th{background:#e9eef2;font-size:6.5pt;font-weight:800;line-height:1.05;padding:.9mm .3mm}' +
+        'td{font-size:8.6pt;font-weight:600;line-height:1.02;padding:1.0mm .3mm;height:6.3mm}' +
+        'td.prioridade{white-space:nowrap!important;word-break:keep-all!important;overflow-wrap:normal!important;font-size:8pt!important;padding-left:.2mm!important;padding-right:.2mm!important}' +
         '.urgente td{background:#fff2f2}' +
-        '.urgente td.status{color:#b91c1c;font-weight:900}' +
+        '.urgente td.prioridade{color:#b91c1c;font-weight:900!important}' +
         '.esquerda th:nth-child(1),.esquerda td:nth-child(1){width:11%}' +
-        '.esquerda th:nth-child(2),.esquerda td:nth-child(2){width:11%}' +
+        '.esquerda th:nth-child(2),.esquerda td:nth-child(2){width:10%}' +
         '.esquerda th:nth-child(3),.esquerda td:nth-child(3){width:8%}' +
         '.esquerda th:nth-child(4),.esquerda td:nth-child(4){width:9%}' +
-        '.esquerda th:nth-child(5),.esquerda td:nth-child(5){width:23%}' +
+        '.esquerda th:nth-child(5),.esquerda td:nth-child(5){width:21%}' +
         '.esquerda th:nth-child(6),.esquerda td:nth-child(6){width:8%}' +
-        '.esquerda th:nth-child(7),.esquerda td:nth-child(7){width:14%}' +
+        '.esquerda th:nth-child(7),.esquerda td:nth-child(7){width:17%}' +
         '.esquerda th:nth-child(8),.esquerda td:nth-child(8){width:7%}' +
         '.esquerda th:nth-child(9),.esquerda td:nth-child(9){width:9%}' +
         '.direita th:nth-child(1),.direita td:nth-child(1){width:13%}' +
         '.direita th:nth-child(2),.direita td:nth-child(2){width:13%}' +
         '.direita th:nth-child(3),.direita td:nth-child(3){width:10%}' +
-        '.direita th:nth-child(4),.direita td:nth-child(4){width:32%}' +
+        '.direita th:nth-child(4),.direita td:nth-child(4){width:29%}' +
         '.direita th:nth-child(5),.direita td:nth-child(5){width:10%}' +
-        '.direita th:nth-child(6),.direita td:nth-child(6){width:15%}' +
+        '.direita th:nth-child(6),.direita td:nth-child(6){width:18%}' +
         '.direita th:nth-child(7),.direita td:nth-child(7){width:7%}' +
-        '@media print{.pagina{break-inside:avoid;page-break-inside:avoid}}' +
+        '@media print{' +
+          'html,body{width:297mm!important;min-height:210mm!important}' +
+          '.pagina{width:287mm!important;min-height:200mm!important;break-inside:avoid!important;page-break-inside:avoid!important}' +
+          '.cabecalho,.titulo,.subtitulo,.cabecalho img{visibility:visible!important;opacity:1!important}' +
+        '}' +
       '</style></head><body>' + paginas + '</body></html>';
   }
 
-  window.imprimirProgramacaoSgq = function () {
+  function aguardarImagens_(doc) {
+    const imagens = Array.from(doc.images || []);
+    const pendentes = imagens.filter(img => !img.complete);
+
+    if (!pendentes.length) return Promise.resolve();
+
+    return new Promise(resolve => {
+      let restantes = pendentes.length;
+      let finalizado = false;
+
+      const concluir = () => {
+        restantes -= 1;
+        if (restantes <= 0 && !finalizado) {
+          finalizado = true;
+          resolve();
+        }
+      };
+
+      pendentes.forEach(img => {
+        img.addEventListener('load', concluir, { once: true });
+        img.addEventListener('error', concluir, { once: true });
+      });
+
+      setTimeout(() => {
+        if (!finalizado) {
+          finalizado = true;
+          resolve();
+        }
+      }, 1800);
+    });
+  }
+
+  window.imprimirProgramacaoSgq = async function () {
     if (!(window.programacaoSgqRows || []).length) {
       alert('Não existem OPs na programação para imprimir.');
       return;
     }
 
     const iframe = document.createElement('iframe');
+    iframe.setAttribute('aria-hidden', 'true');
     iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
+    iframe.style.left = '-12000px';
+    iframe.style.top = '0';
+    iframe.style.width = '1123px';
+    iframe.style.height = '794px';
     iframe.style.border = '0';
-    iframe.style.visibility = 'hidden';
+    iframe.style.opacity = '0';
+    iframe.style.pointerEvents = 'none';
     document.body.appendChild(iframe);
 
     const doc = iframe.contentDocument || iframe.contentWindow.document;
@@ -182,36 +234,21 @@
     doc.write(montarHtml_());
     doc.close();
 
-    const imprimir = () => {
-      try {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-      } finally {
-        setTimeout(() => iframe.remove(), 1500);
+    try {
+      await aguardarImagens_(doc);
+
+      if (doc.fonts && doc.fonts.ready) {
+        try { await doc.fonts.ready; } catch (e) {}
       }
-    };
 
-    const imagens = Array.from(doc.images || []);
-    const pendentes = imagens.filter(img => !img.complete);
+      await new Promise(resolve => {
+        requestAnimationFrame(() => requestAnimationFrame(resolve));
+      });
 
-    if (!pendentes.length) {
-      setTimeout(imprimir, 120);
-      return;
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    } finally {
+      setTimeout(() => iframe.remove(), 2500);
     }
-
-    let restantes = pendentes.length;
-    const concluir = () => {
-      restantes -= 1;
-      if (restantes <= 0) setTimeout(imprimir, 120);
-    };
-
-    pendentes.forEach(img => {
-      img.addEventListener('load', concluir, { once: true });
-      img.addEventListener('error', concluir, { once: true });
-    });
-
-    setTimeout(() => {
-      if (iframe.isConnected) imprimir();
-    }, 2500);
   };
 })();
