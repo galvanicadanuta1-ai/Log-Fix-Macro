@@ -166,12 +166,12 @@
     const dateFinal = document.getElementById('selectedDate').value || hojeISO();
     const recebimento = pageKeyFinal === 'RECEBIMENTO';
     const cfg = getPageConfigByKey(pageKeyFinal);
+    const tituloPdf = recebimento
+      ? 'Relatório de Entrada - SGQ Fixpar'
+      : 'Relatório de Saída - SGQ Fixpar';
 
     const nomeArquivo = normalizarNomeArquivo_(
-      (recebimento
-        ? 'Relatório de Recebimento SGQ Fixpar - Data '
-        : 'Relatório de Saída SGQ - Fixpar - Data ') +
-        dataBR(dateFinal).replace(/\//g, '-'),
+      tituloPdf + ' - Data ' + dataBR(dateFinal).replace(/\//g, '-'),
       'pdf'
     );
 
@@ -227,7 +227,7 @@
       );
 
       const pdfBlob = await criarPdfTabelaLogo_({
-        titulo: recebimento ? 'Relatório de Entrada - SGQ Fixpar' : cfg.title,
+        titulo: tituloPdf,
         subtitulo: 'Data: ' + dataBR(dateFinal),
         headers,
         rows: dadosAtualizados,
@@ -320,6 +320,10 @@
       filtros.dataFinal
     );
 
+    const tituloPdf = currentHistoryPage === 'RECEBIMENTO'
+      ? 'Relatório de Entrada - SGQ Fixpar'
+      : 'Relatório de Saída - SGQ Fixpar';
+
     const nomePeriodo = filtros.dataInicial === filtros.dataFinal
       ? dataBR(filtros.dataInicial).replace(/\//g, '-')
       : dataBR(filtros.dataInicial).replace(/\//g, '-') +
@@ -327,7 +331,7 @@
         dataBR(filtros.dataFinal).replace(/\//g, '-');
 
     const nomeArquivo = normalizarNomeArquivo_(
-      info.prefixo + ' - ' + nomePeriodo,
+      tituloPdf + ' - ' + nomePeriodo,
       'pdf'
     );
 
@@ -364,9 +368,7 @@
         : -1;
 
       const pdfBlob = await criarPdfTabelaLogo_({
-        titulo: currentHistoryPage === 'RECEBIMENTO'
-          ? 'Relatório de Entrada - SGQ Fixpar'
-          : info.prefixo,
+        titulo: tituloPdf,
         subtitulo: info.periodo,
         headers,
         rows: dados,
