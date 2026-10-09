@@ -227,7 +227,7 @@
       );
 
       const pdfBlob = await criarPdfTabelaLogo_({
-        titulo: cfg.title,
+        titulo: recebimento ? 'Relatório de Entrada - SGQ Fixpar' : cfg.title,
         subtitulo: 'Data: ' + dataBR(dateFinal),
         headers,
         rows: dadosAtualizados,
@@ -364,7 +364,9 @@
         : -1;
 
       const pdfBlob = await criarPdfTabelaLogo_({
-        titulo: info.prefixo,
+        titulo: currentHistoryPage === 'RECEBIMENTO'
+          ? 'Relatório de Entrada - SGQ Fixpar'
+          : info.prefixo,
         subtitulo: info.periodo,
         headers,
         rows: dados,
