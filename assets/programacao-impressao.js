@@ -5,16 +5,19 @@
    exatamente com os dois blocos visuais atuais.
 
    Regras:
+   - botão da impressora usa a mesma impressão nativa do Ctrl+P;
    - mostra logo + título + turno/data dos dois blocos;
    - repete esses cabeçalhos em TODAS as páginas via THEAD;
    - mantém os cabeçalhos das colunas em todas as páginas;
    - mostra o resumo no topo da primeira página;
-   - garante espaço para a palavra URGENTE inteira;
+   - Prioridade vazia imprime vazia, sem placeholder;
+   - URGENTE é convertido para texto estático na impressão, evitando corte;
    - não altera dados, backend ou regras de ordenação.
    ============================================================ */
 
 (function () {
   const STYLE_ID = 'programacaoImpressaoFielStyle';
+  const PRINT_TEXT_CLASS = 'programacao-prioridade-print-text';
 
   function garantirEstilo_() {
     let style = document.getElementById(STYLE_ID);
@@ -23,28 +26,31 @@
     style = document.createElement('style');
     style.id = STYLE_ID;
     style.textContent = `
-      /* Prioridade também precisa caber inteira na própria tela. */
       #programacaoSgqScreen .programacao-status-input {
-        font-size: 11px !important;
-        padding-left: 2px !important;
-        padding-right: 2px !important;
-        letter-spacing: -0.15px !important;
+        font-size: 10px !important;
+        padding-left: 1px !important;
+        padding-right: 1px !important;
+        letter-spacing: -0.25px !important;
         text-overflow: clip !important;
+      }
+
+      #programacaoSgqScreen .${PRINT_TEXT_CLASS} {
+        display: none;
       }
 
       #programacaoSgqScreen .programacao-bloco-principal .programacao-table th:nth-child(7),
       #programacaoSgqScreen .programacao-bloco-principal .programacao-table td:nth-child(7) {
-        width: 12.5% !important;
+        width: 15% !important;
       }
 
       #programacaoSgqScreen .programacao-bloco-principal .programacao-table th:nth-child(5),
       #programacaoSgqScreen .programacao-bloco-principal .programacao-table td:nth-child(5) {
-        width: 20.5% !important;
+        width: 18% !important;
       }
 
       #programacaoSgqScreen .programacao-bloco-uma-caixa .programacao-table th:nth-child(6),
       #programacaoSgqScreen .programacao-bloco-uma-caixa .programacao-table td:nth-child(6) {
-        width: 14% !important;
+        width: 17% !important;
       }
 
       @media print {
@@ -99,7 +105,6 @@
           overflow: visible !important;
         }
 
-        /* Resumo exatamente como na tela, porém sem a mensagem de salvamento. */
         #programacaoSgqScreen .programacao-subinfo {
           display: flex !important;
           min-height: 5mm !important;
@@ -141,11 +146,6 @@
           border-collapse: collapse !important;
         }
 
-        /*
-         * O cabeçalho visual está DENTRO do THEAD no layout atual.
-         * Repetir o THEAD é o que garante logo/título/turno/data e colunas
-         * novamente na página 2, 3, 4...
-         */
         #programacaoSgqScreen .programacao-table thead {
           display: table-header-group !important;
         }
@@ -164,7 +164,6 @@
           border-bottom: 1px solid #334155 !important;
         }
 
-        /* Esta regra corrige o CSS antigo que escondia exatamente estes títulos. */
         #programacaoSgqScreen .programacao-bloco-cabecalho {
           display: grid !important;
           grid-template-columns: 19mm 1fr 19mm !important;
@@ -258,25 +257,24 @@
           print-color-adjust: exact !important;
         }
 
-        /* Larguras equivalentes ao layout mostrado na tela. */
         #programacaoSgqScreen .programacao-bloco-principal th:nth-child(1),
         #programacaoSgqScreen .programacao-bloco-principal td:nth-child(1) { width: 11% !important; }
         #programacaoSgqScreen .programacao-bloco-principal th:nth-child(2),
-        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(2) { width: 11% !important; }
+        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(2) { width: 10% !important; }
         #programacaoSgqScreen .programacao-bloco-principal th:nth-child(3),
         #programacaoSgqScreen .programacao-bloco-principal td:nth-child(3) { width: 8% !important; }
         #programacaoSgqScreen .programacao-bloco-principal th:nth-child(4),
         #programacaoSgqScreen .programacao-bloco-principal td:nth-child(4) { width: 9% !important; }
         #programacaoSgqScreen .programacao-bloco-principal th:nth-child(5),
-        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(5) { width: 20% !important; }
+        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(5) { width: 18% !important; }
         #programacaoSgqScreen .programacao-bloco-principal th:nth-child(6),
         #programacaoSgqScreen .programacao-bloco-principal td:nth-child(6) { width: 8% !important; }
         #programacaoSgqScreen .programacao-bloco-principal th:nth-child(7),
-        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(7) { width: 14% !important; }
+        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(7) { width: 15% !important; }
         #programacaoSgqScreen .programacao-bloco-principal th:nth-child(8),
         #programacaoSgqScreen .programacao-bloco-principal td:nth-child(8) { width: 9% !important; }
         #programacaoSgqScreen .programacao-bloco-principal th:nth-child(9),
-        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(9) { width: 10% !important; }
+        #programacaoSgqScreen .programacao-bloco-principal td:nth-child(9) { width: 12% !important; }
 
         #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(1),
         #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(1) { width: 14% !important; }
@@ -285,39 +283,34 @@
         #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(3),
         #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(3) { width: 11% !important; }
         #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(4),
-        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(4) { width: 27% !important; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(4) { width: 25% !important; }
         #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(5),
         #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(5) { width: 11% !important; }
         #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(6),
-        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(6) { width: 16% !important; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(6) { width: 18% !important; }
         #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(7),
         #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(7) { width: 7% !important; }
 
+        /* Na impressão usamos TEXTO, não o input: isso elimina placeholder e corte. */
         #programacaoSgqScreen .programacao-status-input {
-          display: block !important;
-          width: 100% !important;
-          min-width: 0 !important;
-          height: 5.2mm !important;
-          min-height: 5.2mm !important;
-          padding: 0 .5mm !important;
-          border: 1px solid #b7c0c8 !important;
-          border-radius: .5mm !important;
-          background: #fff !important;
-          color: #111827 !important;
-          font-size: 7.2pt !important;
-          font-weight: 700 !important;
-          line-height: 5mm !important;
-          white-space: nowrap !important;
-          overflow: visible !important;
-          text-overflow: clip !important;
-          box-sizing: border-box !important;
+          display: none !important;
         }
 
-        #programacaoSgqScreen tr.programacao-urgente .programacao-status-input {
+        #programacaoSgqScreen .${PRINT_TEXT_CLASS} {
+          display: block !important;
+          width: 100% !important;
+          text-align: center !important;
+          white-space: nowrap !important;
+          overflow: visible !important;
+          font-size: 7.8pt !important;
+          font-weight: 700 !important;
+          line-height: 1.1 !important;
+          color: #111827 !important;
+        }
+
+        #programacaoSgqScreen tr.programacao-urgente .${PRINT_TEXT_CLASS} {
           color: #b91c1c !important;
-          font-size: 7pt !important;
           font-weight: 900 !important;
-          letter-spacing: -.1pt !important;
           text-transform: uppercase !important;
         }
 
@@ -331,13 +324,39 @@
     document.head.appendChild(style);
   }
 
-  window.imprimirProgramacaoSgq = function () {
-    if (!(window.programacaoSgqRows || []).length) {
-      alert('Não existem OPs na programação para imprimir.');
-      return;
-    }
+  function prepararPrioridadesParaImpressao_() {
+    document
+      .querySelectorAll('#programacaoSgqScreen .programacao-status-input')
+      .forEach(input => {
+        const td = input.closest('td');
+        if (!td) return;
 
-    /* Atualiza a própria tela e imprime exatamente essa estrutura. */
+        let texto = td.querySelector('.' + PRINT_TEXT_CLASS);
+        if (!texto) {
+          texto = document.createElement('span');
+          texto.className = PRINT_TEXT_CLASS;
+          td.appendChild(texto);
+        }
+
+        /* Usa somente o VALOR REAL. Placeholder nunca entra na impressão. */
+        texto.textContent = String(input.value || '').trim();
+      });
+  }
+
+  function temDadosProgramacao_() {
+    try {
+      if (typeof programacaoSgqRows !== 'undefined' && Array.isArray(programacaoSgqRows)) {
+        return programacaoSgqRows.length > 0;
+      }
+    } catch (e) {}
+
+    return document.querySelectorAll(
+      '#programacaoSgqBody tr, #programacaoSgqBodyUmaCaixa tr'
+    ).length > 0;
+  }
+
+  window.imprimirProgramacaoSgq = function () {
+    /* Primeiro atualiza a mesma estrutura que o Ctrl+P já imprime corretamente. */
     if (typeof atualizarDataProgramacaoSgq === 'function') {
       atualizarDataProgramacaoSgq();
     }
@@ -350,12 +369,24 @@
       renderProgramacaoSgq();
     }
 
+    if (!temDadosProgramacao_()) {
+      alert('Não existem OPs na programação para imprimir.');
+      return;
+    }
+
     garantirEstilo_();
+    prepararPrioridadesParaImpressao_();
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => window.print());
     });
   };
+
+  /* Também vale para Ctrl+P nativo. */
+  window.addEventListener('beforeprint', () => {
+    garantirEstilo_();
+    prepararPrioridadesParaImpressao_();
+  });
 
   garantirEstilo_();
 })();
