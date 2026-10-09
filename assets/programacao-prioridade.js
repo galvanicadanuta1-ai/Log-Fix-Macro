@@ -6,15 +6,19 @@
 
    Regras:
    - cabeçalho "Prioridade" nas duas grades;
-   - sugestão "Urgente" em lista;
-   - continua permitindo digitar qualquer texto;
+   - sugestões "Urgente" e "Vazio";
+   - "Vazio" limpa realmente o campo e não é salvo como texto;
+   - continua permitindo digitar qualquer texto livremente;
+   - campo sem valor fica VISUALMENTE vazio (sem placeholder);
+   - mantém o valor local atualizado enquanto o usuário digita, evitando
+     que um re-render recoloque "Urgente" antes do salvamento;
    - PDFs/Excel usam o cabeçalho "Prioridade";
-   - formulário de OS manual segue o mesmo padrão;
-   - "Urgente" continua subindo para o topo pela regra já existente.
+   - formulário de OS manual segue o mesmo padrão.
    ============================================================ */
 
 (function () {
   const DATALIST_ID = 'programacaoPrioridadeList';
+  const VALOR_LIMPAR = 'Vazio';
 
   function garantirDatalistPrioridade_() {
     let list = document.getElementById(DATALIST_ID);
@@ -25,7 +29,10 @@
       document.body.appendChild(list);
     }
 
-    list.innerHTML = '<option value="Urgente"></option>';
+    list.innerHTML =
+      '<option value="Urgente"></option>' +
+      '<option value="Vazio"></option>';
+
     return list;
   }
 
@@ -39,14 +46,54 @@
       });
   }
 
+  function atualizarEstadoLocal_(input) {
+    if (!input) return;
+
+    const tr = input.closest('tr');
+    const op = tr ? String(tr.dataset.op || '') : '';
+    if (!op) return;
+
+    try {
+      if (typeof programacaoSgqRows !== 'undefined' && Array.isArray(programacaoSgqRows)) {
+        const item = programacaoSgqRows.find(row => String(row && row.op || '') === op);
+        if (item) item.status = String(input.value || '').trim();
+      }
+    } catch (e) {}
+  }
+
+  function normalizarSelecao_(input) {
+    if (!input) return;
+
+    if (String(input.value || '').trim().toLocaleLowerCase('pt-BR') === VALOR_LIMPAR.toLocaleLowerCase('pt-BR')) {
+      input.value = '';
+    }
+
+    atualizarEstadoLocal_(input);
+  }
+
   function ajustarInputPrioridade_(input) {
     if (!input) return;
 
     input.setAttribute('list', DATALIST_ID);
     input.setAttribute('autocomplete', 'off');
-    input.placeholder = 'Prioridade';
-    input.title = 'Selecione Urgente ou digite livremente';
+    input.placeholder = '';
+    input.title = 'Selecione Urgente, Vazio ou digite livremente';
     input.setAttribute('aria-label', 'Prioridade');
+
+    if (input.dataset.prioridadeAjustada === '1') return;
+    input.dataset.prioridadeAjustada = '1';
+
+    input.addEventListener('input', () => {
+      normalizarSelecao_(input);
+    });
+
+    input.addEventListener('change', () => {
+      const eraVazio = String(input.value || '').trim().toLocaleLowerCase('pt-BR') === VALOR_LIMPAR.toLocaleLowerCase('pt-BR');
+      normalizarSelecao_(input);
+      if (eraVazio) {
+        setTimeout(() => input.blur(), 0);
+      }
+    });
   }
 
   function ajustarModalManual_() {
@@ -61,12 +108,13 @@
       input.id = 'manualOsStatus';
       input.type = 'text';
       input.value = atual.value || '';
-      input.placeholder = 'Prioridade';
+      input.placeholder = '';
       input.autocomplete = 'off';
       input.setAttribute('list', DATALIST_ID);
       input.setAttribute('aria-label', 'Prioridade');
-      input.title = 'Selecione Urgente ou digite livremente';
+      input.title = 'Selecione Urgente, Vazio ou digite livremente';
       atual.replaceWith(input);
+      ajustarInputPrioridade_(input);
     } else {
       ajustarInputPrioridade_(atual);
     }
