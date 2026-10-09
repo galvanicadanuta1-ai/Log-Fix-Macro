@@ -14,7 +14,7 @@ let historyNextOffset = null;
 let historyTotal = 0;
 let historyHeadersCache = [];
 let historyPageSize = window.matchMedia('(max-width: 800px)').matches ? 25 : 60;
-const GLOBAL_ASSET_VERSION = '20261005-1536';
+const GLOBAL_ASSET_VERSION = '20261009-1017';
 
 /*
  * Impede qualquer clique durante os poucos instantes em que as camadas
@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'assets/relatorio-padrao.js',
     'assets/operacional-estavel.js',
     'assets/relatorio-operacional-v3.js',
+    'assets/relatorio-logo.js',
     'assets/navegacao.js',
     'assets/programacao-ajustes.js',
     'assets/programacao-exportacao-dividida.js',
@@ -245,4 +246,3 @@ function renderHeaders(headers) {
 function renderHistoryHeaders(headers) {
   // Mantido por compatibilidade. Os cabeçalhos agora são criados em cada card.
 }
-
