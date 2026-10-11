@@ -927,3 +927,78 @@
   }
 }
 
+
+/* Visual flutuante global. Apenas tela: impressão e lógica permanecem intactas. */
+@media screen {
+  :root { --bg:#eef3f8; --border:#d2dce7; --border-strong:#b8c8d8; --header:#eaf0f7; --blue:#245b91; --blue-hover:#194775; }
+  body { padding:20px; background:linear-gradient(135deg,#f5f8fc,#eaf0f7); }
+  #mainMenu, #mainMenu .main-menu-wrapper { background:transparent; }
+  .main-menu-wrapper { min-height:calc(100dvh - 40px); }
+  .main-menu-stack { max-width:860px; padding:28px; border:1px solid #ffffff; border-radius:28px; background:#ffffff; box-shadow:0 16px 48px #18365516; flex-direction:row; flex-wrap:wrap; gap:14px; }
+  .main-brand { width:100%; margin-bottom:16px; }
+  .main-menu-button { flex:1 1 180px; min-width:0; width:auto; min-height:72px; border-radius:18px; font-size:18px; box-shadow:0 5px 14px #18365518; }
+  .menu-screen { max-width:880px; margin:40px auto; padding:30px; border:1px solid #fff; border-radius:26px; box-shadow:0 16px 48px #18365516; min-height:0; }
+  .menu-title { color:#193b59; margin-bottom:24px; }
+  .menu-grid { max-width:none; gap:14px; }
+  .menu-button, .history-button { border-radius:16px; padding:16px; box-shadow:0 4px 12px #18365512; }
+  .menu-back button, .back-button { border:1px solid #d2dce7; border-radius:12px; background:#f6f9fc; padding:10px 16px; min-height:40px; }
+  .app, #systemScreen .app, #historyScreen .app { background:transparent; border:0; box-shadow:none; }
+  .system-header { background:white; border:1px solid #dce5ef; border-radius:20px; margin-bottom:14px; min-height:76px; box-shadow:0 8px 24px #1836550d; }
+  .page-title { color:#193b59; white-space:normal; }
+  .toolbar, .history-toolbar, .programacao-actions { background:white; border:1px solid #dce5ef; border-radius:18px; padding:14px; gap:12px; margin-bottom:16px; box-shadow:0 8px 24px #18365512; }
+  .toolbar { grid-template-columns:minmax(0,1fr) auto auto; }
+  .history-toolbar { position:relative; z-index:35; }
+  .grid-wrap { border:1px solid #dce5ef; border-radius:16px; background:white; max-height:calc(100dvh - 230px); }
+  .report-button, .consult-button, .export-excel-button, .icon-action-button, .history-load-more, .programacao-actions button, .programacao-add-os-button, .programacao-modal-actions button { border-radius:12px; min-height:40px; height:auto; box-shadow:0 3px 9px #18365510; }
+  .report-button, .consult-button, .export-excel-button { padding:10px 14px; }
+  .icon-action-button { min-width:40px; }
+  button { transition:background-color .15s,box-shadow .15s; }
+  button:hover:not(:disabled) { box-shadow:0 5px 15px #18365524; }
+  button:disabled { opacity:.6; }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline:3px solid #397fbc; outline-offset:3px; }
+  input[type=date], .history-search, .history-edit-input, .programacao-title-screen select, .programacao-modal-field input, .programacao-modal-field select { border-radius:10px; border-color:#bcccdc; background:#f9fbfe; min-height:38px; }
+  .history-card { border-color:#d2dce7; border-radius:16px; box-shadow:0 4px 12px #1836550a; }
+  .history-card-title { background:#eaf1f8; color:#193b59; }
+  .history-suggestions { border-radius:12px; }
+  .edit-history-btn, .save-history-btn, .cancel-history-btn { border-radius:8px; min-width:32px; min-height:32px; }
+  .programacao-actions { position:sticky; top:12px; z-index:40; flex-wrap:wrap; }
+  .programacao-sheet { border:1px solid #dce5ef; border-radius:20px; box-shadow:0 8px 24px #1836550d; }
+  .programacao-header { border-bottom-color:#d2dce7; }
+  .programacao-modal-overlay .programacao-modal { border-radius:22px; }
+  .programacao-modal-overlay .programacao-modal-actions { border-radius:14px; background:#f4f8fc; padding:10px; }
+  .programacao-date-actions .programacao-date { border-radius:10px; background:#fff2f2; color:#991b1b; border-color:#edc4c4; }
+  .programacao-date-actions .programacao-add-os-button { border-radius:10px; min-height:36px; padding:7px 10px; }
+  .programacao-check { accent-color:#22935c; }
+  .success-toast { border-radius:16px; }
+}
+@media screen and (max-width:800px) {
+  body { padding:10px; }
+  .main-menu-wrapper { min-height:calc(100dvh - 20px); padding:0; }
+  .main-menu-stack { padding:20px; flex-direction:column; border-radius:22px; }
+  .main-menu-button { flex:none; width:100%; min-height:64px; }
+  .menu-screen { margin:16px auto; padding:22px 16px; }
+  .menu-grid { grid-template-columns:1fr; }
+  #systemScreen .system-header, #historyScreen .system-header { position:relative; top:auto; grid-template-columns:80px minmax(0,1fr) 0; min-height:64px; padding:8px; margin-bottom:10px; }
+  #systemScreen .toolbar, #historyScreen .history-toolbar { position:relative; top:auto; padding:10px; margin-bottom:12px; }
+  #systemScreen .toolbar { grid-template-columns:minmax(0,1fr); }
+  #systemScreen .statusbar { display:block; text-align:left; min-width:0; }
+  #systemScreen .date-area { flex-wrap:wrap; }
+  #systemScreen .report-button { width:100%; }
+  #systemScreen .grid-wrap, #historyScreen .grid-wrap { max-height:none; }
+  #historyScreen .history-filter-item { width:calc(50% - 6px); min-width:0; }
+  #historyScreen .history-filter-item input { width:100%; min-width:0; }
+  #historyScreen .history-filter-item.search-item { width:100%; }
+  #historyScreen .consult-button, #historyScreen .report-button { width:calc(50% - 6px); min-height:44px; }
+  #historyScreen .export-excel-button { flex:1; }
+  .programacao-actions { top:8px; padding:10px; gap:8px; }
+  .programacao-actions-right { gap:6px; min-width:0; }
+  .programacao-actions button { font-size:10px; padding:8px; }
+  .programacao-sheet { padding:10px; }
+  .programacao-header { grid-template-columns:70px minmax(0,1fr); gap:8px; }
+  .programacao-logo { max-width:68px; }
+  .programacao-date-actions { grid-column:1 / -1; flex-direction:row; flex-wrap:wrap; align-items:center; }
+  .programacao-subinfo { flex-wrap:wrap; }
+  .programacao-modal-overlay { padding:10px; }
+  .programacao-modal-overlay .programacao-modal { max-height:calc(100dvh - 20px); }
+}
+@media screen and (prefers-reduced-motion:reduce) { button { transition:none; } }
