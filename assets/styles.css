@@ -1002,3 +1002,45 @@
   .programacao-modal-overlay .programacao-modal { max-height:calc(100dvh - 20px); }
 }
 @media screen and (prefers-reduced-motion:reduce) { button { transition:none; } }
+
+/* Prioridade visual sobre os estilos de programação carregados após o boot. */
+@media screen {
+  #mainMenu, #mainMenu .main-menu-wrapper { background:transparent; }
+  #programacaoSgqScreen .programacao-actions button,
+  #programacaoSgqScreen .programacao-add-os-button,
+  #historyScreen .history-toolbar > button,
+  #systemScreen .toolbar > button {
+    border-radius:14px !important; min-height:44px !important;
+    padding:10px 16px !important; box-shadow:0 5px 16px #1836551a;
+  }
+  #programacaoSgqScreen .programacao-actions .programacao-print-button {
+    padding:0 !important; width:44px !important; min-width:44px !important;
+  }
+  #programacaoSgqScreen .programacao-title-screen select,
+  #programacaoSgqScreen .programacao-actions input {
+    border:1px solid #bcccdc; border-radius:12px !important;
+    min-height:40px; background:#f6f9fc; padding:8px 12px;
+  }
+  #programacaoSgqScreen .programacao-header { border-bottom:1px solid #d2dce7; }
+  #programacaoSgqScreen .programacao-date-actions .programacao-date {
+    border-radius:10px; padding:6px 10px; color:#991b1b; background:#fff2f2; border-color:#edc4c4;
+  }
+}
+@media screen and (min-width:1101px) {
+  #programacaoSgqScreen .programacao-page { padding-right:200px; }
+  #programacaoSgqScreen .programacao-actions {
+    position:fixed; top:24px; right:20px; width:180px;
+    flex-direction:column; align-items:stretch; gap:16px;
+    padding:16px; border-radius:24px; box-shadow:0 12px 32px #18365520;
+  }
+  #programacaoSgqScreen .programacao-actions-left,
+  #programacaoSgqScreen .programacao-actions-right {
+    width:100%; flex-direction:column; align-items:stretch; gap:12px;
+  }
+  #programacaoSgqScreen .programacao-actions input { width:100%; min-width:0; }
+  #programacaoSgqScreen .programacao-actions button { width:100%; }
+}
+@media screen and (max-width:800px) {
+  #programacaoSgqScreen .programacao-actions { position:relative; top:auto; }
+  #programacaoSgqScreen .programacao-actions button { padding:8px 10px !important; }
+}
