@@ -1095,3 +1095,12 @@
  #programacaoSgqScreen .programacao-actions button::after{right:auto;top:auto;bottom:calc(100% + 10px);transform:none;}
  #historyScreen .history-toolbar > button{width:48px!important;min-width:48px!important;}
 }
+
+@media screen and (min-width:801px){
+ #programacaoSgqScreen .programacao-page{padding-right:210px;}
+ #programacaoSgqScreen .programacao-actions input{position:fixed;top:24px;right:20px;width:180px;transform:none;}
+}
+/* Um elemento transformado cria referência própria para filhos fixos. */
+@media screen and (min-width:801px){
+ #programacaoSgqScreen .programacao-actions{top:calc(50% - 154px);transform:none;}
+}
