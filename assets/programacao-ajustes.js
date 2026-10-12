@@ -75,7 +75,6 @@
     overlay.innerHTML =
       '<div class="programacao-modal" role="dialog" aria-modal="true" aria-labelledby="programacaoOsManualTitulo">' +
         '<h2 id="programacaoOsManualTitulo" class="programacao-modal-title">Adicionar OP manual</h2>' +
-        '<p class="programacao-modal-help">Somente o número da OP é obrigatório. Preencha apenas as informações que você já recebeu.</p>' +
         '<div class="programacao-modal-grid">' +
           '<div class="programacao-modal-field">' +
             '<label for="manualOsData">Data</label>' +
