@@ -1044,3 +1044,54 @@
   #programacaoSgqScreen .programacao-actions { position:relative; top:auto; }
   #programacaoSgqScreen .programacao-actions button { padding:8px 10px !important; }
 }
+
+@media screen {
+ #programacaoSgqScreen .programacao-actions button,#programacaoSgqScreen .programacao-add-os-button,
+ #historyScreen .history-toolbar > button,#systemScreen .toolbar > button {
+ width:52px!important;min-width:52px!important;height:52px!important;min-height:52px!important;padding:0!important;
+ border:0!important;border-radius:50%!important;font-size:0!important;display:inline-flex;align-items:center;justify-content:center;
+ position:relative;color:white;background:#245b91;box-shadow:0 5px 14px #18365530;
+ }
+ #programacaoSgqScreen .programacao-actions button::before,#programacaoSgqScreen .programacao-add-os-button::before,
+ #historyScreen .history-toolbar > button::before,#systemScreen .toolbar > button::before {font:24px Arial,sans-serif;color:inherit;}
+ #programacaoSgqScreen .programacao-actions-left button::before{content:'←';}
+ #programacaoSgqScreen .programacao-actions-left button{background:#52657a;}
+ #programacaoSgqScreen .programacao-report-button::before,#historyReportButton::before,#reportButton::before{content:'▤';}
+ #programacaoSgqScreen .programacao-report-button,#historyReportButton,#reportButton{background:#22965b!important;color:white!important;}
+ #programacaoSgqScreen .programacao-excel-button::before,#historyExcelButton::before{content:'⇩';}
+ #programacaoSgqScreen .programacao-excel-button,#historyExcelButton{background:#e78b20!important;color:white!important;}
+ #programacaoSgqScreen .programacao-print-button::before,#historyPrintButton::before{content:'⎙';}
+ #programacaoSgqScreen .programacao-print-button,#historyPrintButton{background:#7859c8!important;color:white!important;}
+ #historyConsultButton::before{content:'⌕';}
+ #programacaoSgqScreen .programacao-add-os-button::before{content:'+';font-size:30px;}
+ #programacaoSgqScreen .programacao-actions button::after,#programacaoSgqScreen .programacao-add-os-button::after,
+ #historyScreen .history-toolbar > button::after,#systemScreen .toolbar > button::after {
+ content:attr(title);position:absolute;right:calc(100% + 12px);top:50%;transform:translateY(-50%);padding:8px 12px;
+ border-radius:8px;background:#203449;color:white;font:13px Arial,sans-serif;white-space:nowrap;pointer-events:none;opacity:0;z-index:100;
+ }
+ #programacaoSgqScreen .programacao-add-os-button::after{content:'Adicionar OS';}
+ #programacaoSgqScreen .programacao-actions button:hover::after,#programacaoSgqScreen .programacao-actions button:focus-visible::after,
+ #programacaoSgqScreen .programacao-add-os-button:hover::after,#historyScreen .history-toolbar > button:hover::after,
+ #historyScreen .history-toolbar > button:focus-visible::after,#systemScreen .toolbar > button:hover::after{opacity:1;}
+}
+@media screen and (min-width:801px){
+ #programacaoSgqScreen .programacao-page{padding-right:100px;}
+ #programacaoSgqScreen .programacao-actions{position:fixed;top:50%;transform:translateY(-50%);right:20px;width:76px;padding:12px;border-radius:38px;flex-direction:column;align-items:center;gap:12px;overflow:visible;z-index:100;}
+ #programacaoSgqScreen .programacao-actions-left,#programacaoSgqScreen .programacao-actions-right{display:flex;flex-direction:column;align-items:center;width:auto;gap:12px;}
+ #programacaoSgqScreen .programacao-actions input{position:absolute;right:96px;top:0;width:180px;}
+ #programacaoSgqScreen .programacao-actions .programacao-print-button{width:52px!important;min-width:52px!important;}
+ #systemScreen .app,#historyScreen .app{padding-right:94px;}
+ #systemScreen .toolbar > button{position:fixed;right:26px;top:45%;z-index:100;}
+ #historyScreen .history-toolbar > button{position:fixed;right:26px;z-index:100;}
+ #historyConsultButton{top:calc(50% - 118px);}#historyReportButton{top:calc(50% - 54px);}
+ #historyExcelButton{top:calc(50% + 10px);}#historyPrintButton{top:calc(50% + 74px);}
+ #historyScreen .app::after{content:'';position:fixed;right:14px;top:calc(50% - 130px);width:76px;height:268px;background:white;border:1px solid #dce5ef;border-radius:38px;box-shadow:0 12px 32px #18365520;z-index:90;}
+}
+@media screen and (max-width:800px){
+ #programacaoSgqScreen .programacao-page{padding-right:0;padding-bottom:110px;}
+ #programacaoSgqScreen .programacao-actions{position:fixed;top:auto;bottom:calc(12px + env(safe-area-inset-bottom));left:12px;right:12px;width:auto;transform:none;display:flex;flex-wrap:nowrap;justify-content:center;border-radius:36px;z-index:100;padding:10px;gap:10px;}
+ #programacaoSgqScreen .programacao-actions-left,#programacaoSgqScreen .programacao-actions-right{width:auto;display:flex;flex-direction:row;gap:10px;}
+ #programacaoSgqScreen .programacao-actions input{position:absolute;bottom:calc(100% + 12px);left:0;width:180px;}
+ #programacaoSgqScreen .programacao-actions button::after{right:auto;top:auto;bottom:calc(100% + 10px);transform:none;}
+ #historyScreen .history-toolbar > button{width:48px!important;min-width:48px!important;}
+}
