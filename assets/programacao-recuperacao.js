@@ -360,7 +360,11 @@
 
   function garantirBusca_() {
     const area = document.querySelector('#programacaoSgqScreen .programacao-actions-right');
-    if (!area || document.getElementById('programacaoSgqSearch')) return;
+    if (!area) return;
+    // Move o mesmo botão: seus eventos e estado permanecem intactos.
+    const addButton = document.querySelector('#programacaoSgqScreen .programacao-add-os-button');
+    if (addButton && addButton.parentElement !== area) area.appendChild(addButton);
+    if (document.getElementById('programacaoSgqSearch')) return;
 
     const report = area.querySelector('.programacao-report-button');
     const wrap = document.createElement('div');
@@ -378,6 +382,19 @@
     });
 
     wrap.appendChild(input);
+    const clear = document.createElement('button');
+    clear.type = 'button';
+    clear.className = 'programacao-search-clear';
+    clear.title = 'Limpar busca';
+    clear.setAttribute('aria-label', 'Limpar busca da programação');
+    clear.textContent = '×';
+    clear.addEventListener('click', () => {
+      input.value = '';
+      // Reutiliza o evento de pesquisa existente para remover o filtro.
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.focus();
+    });
+    wrap.appendChild(clear);
     area.insertBefore(wrap, report || area.firstChild);
 
     const style = document.createElement('style');
