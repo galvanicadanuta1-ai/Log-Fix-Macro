@@ -8,7 +8,7 @@
   >
   <meta name="theme-color" content="#1f4e78">
   <title>SGQ Fixpar</title>
-  <link rel="stylesheet" href="assets/styles.css?v=20261011-flutuante-2">
+  <link rel="stylesheet" href="assets/styles.css?v=20261012-circular-1">
   <link rel="stylesheet" href="assets/programacao.css">
   <style>
     .main-brand{display:flex;justify-content:center;align-items:center;min-height:84px;margin-bottom:4px}.main-brand-logo{display:block;max-width:220px;max-height:72px;width:auto;height:auto;object-fit:contain}.api-setup-notice{display:none;width:min(760px,calc(100% - 28px));margin:10px auto;padding:10px 14px;border:1px solid #e1b954;border-radius:6px;background:#fff8dd;color:#72580e;font-size:12px;line-height:1.35;text-align:center;box-sizing:border-box}
@@ -169,11 +169,11 @@
     <div class="programacao-page">
       <div class="programacao-actions no-print">
         <div class="programacao-actions-left">
-          <button type="button" onclick="voltarMenuProgramacao()">← Voltar</button>
+          <button title="Voltar" type="button" onclick="voltarMenuProgramacao()">← Voltar</button>
         </div>
 
         <div class="programacao-actions-right">
-          <button
+          <button title="Gerar relatório"
             type="button"
             class="programacao-report-button"
             onclick="gerarRelatorioProgramacaoSgq()"
@@ -181,7 +181,7 @@
             GERAR RELATÓRIO
           </button>
 
-          <button
+          <button title="Exportar Excel"
             type="button"
             class="programacao-excel-button"
             onclick="exportarProgramacaoSgqExcel()"
@@ -278,7 +278,7 @@
           <input type="date" id="selectedDate" onchange="alterarData()">
         </div>
         <div id="statusbar" class="statusbar">Pronto</div>
-        <button id="reportButton" class="report-button" onclick="gerarRelatorio()">GERAR RELATÓRIO</button>
+        <button title="Gerar relatório" id="reportButton" class="report-button" onclick="gerarRelatorio()">GERAR RELATÓRIO</button>
       </div>
 
       <div class="grid-wrap">
@@ -316,9 +316,9 @@
             <div id="historySuggestions" class="history-suggestions"></div>
           </div>
         </div>
-        <button id="historyConsultButton" class="consult-button" onclick="consultarHistorico(true)">CONSULTAR</button>
-        <button id="historyReportButton" class="report-button" onclick="gerarRelatorioHistoricoTela()">GERAR RELATÓRIO</button>
-        <button id="historyExcelButton" class="export-excel-button" type="button" onclick="exportarHistoricoExcel()">EXPORTAR EXCEL</button>
+        <button title="Consultar" id="historyConsultButton" class="consult-button" onclick="consultarHistorico(true)">CONSULTAR</button>
+        <button title="Gerar relatório" id="historyReportButton" class="report-button" onclick="gerarRelatorioHistoricoTela()">GERAR RELATÓRIO</button>
+        <button title="Exportar Excel" id="historyExcelButton" class="export-excel-button" type="button" onclick="exportarHistoricoExcel()">EXPORTAR EXCEL</button>
         <button id="historyPrintButton" class="icon-action-button" type="button" title="Imprimir" aria-label="Imprimir" onclick="imprimirHistoricoTela()">🖨</button>
         <div id="historyInfo" class="history-info"></div>
       </div>
