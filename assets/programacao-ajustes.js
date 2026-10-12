@@ -58,7 +58,7 @@
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'programacao-add-os-button no-print';
-      button.textContent = '+ ADICIONAR OS';
+      button.textContent = '+ ADICIONAR OP';
       button.addEventListener('click', abrirModalOsManual_);
       wrap.appendChild(button);
     }
@@ -74,15 +74,15 @@
     overlay.className = 'programacao-modal-overlay no-print';
     overlay.innerHTML =
       '<div class="programacao-modal" role="dialog" aria-modal="true" aria-labelledby="programacaoOsManualTitulo">' +
-        '<h2 id="programacaoOsManualTitulo" class="programacao-modal-title">Adicionar OS manual</h2>' +
-        '<p class="programacao-modal-help">Somente o número da OS é obrigatório. Preencha apenas as informações que você já recebeu.</p>' +
+        '<h2 id="programacaoOsManualTitulo" class="programacao-modal-title">Adicionar OP manual</h2>' +
+        '<p class="programacao-modal-help">Somente o número da OP é obrigatório. Preencha apenas as informações que você já recebeu.</p>' +
         '<div class="programacao-modal-grid">' +
           '<div class="programacao-modal-field">' +
             '<label for="manualOsData">Data</label>' +
             '<input id="manualOsData" type="date">' +
           '</div>' +
           '<div class="programacao-modal-field">' +
-            '<label for="manualOsNumero">OS / OP *</label>' +
+            '<label for="manualOsNumero">OP *</label>' +
             '<input id="manualOsNumero" type="text" autocomplete="off" placeholder="Ex.: 45123">' +
           '</div>' +
           '<div class="programacao-modal-field">' +
@@ -112,7 +112,7 @@
         '<div id="manualOsErro" class="programacao-modal-error"></div>' +
         '<div class="programacao-modal-actions">' +
           '<button type="button" class="programacao-modal-cancel" id="manualOsCancelar">CANCELAR</button>' +
-          '<button type="button" class="programacao-modal-save" id="manualOsSalvar">ADICIONAR OS</button>' +
+          '<button type="button" class="programacao-modal-save" id="manualOsSalvar">ADICIONAR OP</button>' +
         '</div>' +
       '</div>';
 
@@ -189,7 +189,7 @@
     const botao = document.getElementById('manualOsSalvar');
 
     if (!op) {
-      if (erro) erro.textContent = 'Informe o número da OS / OP.';
+      if (erro) erro.textContent = 'Informe o número da OP.';
       document.getElementById('manualOsNumero')?.focus();
       return;
     }
@@ -213,7 +213,7 @@
       .withSuccessHandler(() => {
         if (botao) {
           botao.disabled = false;
-          botao.textContent = 'ADICIONAR OS';
+          botao.textContent = 'ADICIONAR OP';
         }
 
         fecharModalOsManual_();
@@ -225,13 +225,13 @@
       .withFailureHandler(error => {
         if (botao) {
           botao.disabled = false;
-          botao.textContent = 'ADICIONAR OS';
+          botao.textContent = 'ADICIONAR OP';
         }
 
         if (erro) {
           erro.textContent = error && error.message
             ? error.message
-            : 'Não foi possível adicionar a OS.';
+            : 'Não foi possível adicionar a OP.';
         }
       })
       .salvarProgramacaoSgq(op, status, false, false, manualData);
