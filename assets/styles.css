@@ -1174,3 +1174,21 @@
 #programacaoSgqScreen .programacao-actions-left button::before{content:''!important;display:block;width:23px;height:23px;background:center/contain no-repeat url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22white%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m10%205-7%207%207%207M3%2012h18%22%2F%3E%3C%2Fsvg%3E");}
 #programacaoSgqScreen .programacao-add-os-button::before{content:''!important;display:block;width:23px;height:23px;background:center/contain no-repeat url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22white%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%204v16M4%2012h16%22%2F%3E%3C%2Fsvg%3E");}
 }
+
+@media screen{
+ #programacaoSgqScreen .programacao-search-wrap{position:relative;}
+ #programacaoSgqScreen .programacao-actions .programacao-search-wrap input{padding-right:32px!important;}
+ #programacaoSgqScreen .programacao-actions .programacao-search-wrap .programacao-search-clear,
+ #historyScreen .history-search-wrap .history-search-clear {
+   position:absolute!important;top:50%!important;right:5px!important;left:auto!important;bottom:auto!important;
+   transform:translateY(-50%)!important;display:inline-flex!important;align-items:center;justify-content:center;
+   width:26px!important;min-width:26px!important;height:26px!important;min-height:26px!important;
+   padding:0!important;border:0!important;border-radius:7px!important;
+   font:22px/1 Arial,sans-serif!important;color:#42546a!important;background:transparent!important;box-shadow:none!important;cursor:pointer;
+ }
+ #programacaoSgqScreen .programacao-actions .programacao-search-wrap .programacao-search-clear::before,
+ #programacaoSgqScreen .programacao-actions .programacao-search-wrap .programacao-search-clear::after{display:none!important;}
+ #programacaoSgqScreen .programacao-actions .programacao-search-wrap .programacao-search-clear:hover,
+ #historyScreen .history-search-wrap .history-search-clear:hover{background:#e5edf5!important;color:#142c46!important;}
+ #programacaoSgqScreen .programacao-search-input::-webkit-search-cancel-button{-webkit-appearance:none;}
+}
