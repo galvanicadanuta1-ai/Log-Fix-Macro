@@ -1069,7 +1069,7 @@
  content:attr(title);position:absolute;right:calc(100% + 12px);top:50%;transform:translateY(-50%);padding:8px 12px;
  border-radius:8px;background:#203449;color:white;font:13px Arial,sans-serif;white-space:nowrap;pointer-events:none;opacity:0;z-index:100;
  }
- #programacaoSgqScreen .programacao-add-os-button::after{content:'Adicionar OS';}
+ #programacaoSgqScreen .programacao-add-os-button::after{content:'Adicionar OP';}
  #programacaoSgqScreen .programacao-actions button:hover::after,#programacaoSgqScreen .programacao-actions button:focus-visible::after,
  #programacaoSgqScreen .programacao-add-os-button:hover::after,#historyScreen .history-toolbar > button:hover::after,
  #historyScreen .history-toolbar > button:focus-visible::after,#systemScreen .toolbar > button:hover::after{opacity:1;}
