@@ -65,6 +65,7 @@
 
       #programacaoSgqScreen .programacao-bloco-titulo {
         font-size: 19px !important;
+        font-weight: 500 !important;
       }
 
       #programacaoSgqScreen .programacao-bloco-subtitulo {
@@ -198,6 +199,7 @@
 
         #programacaoSgqScreen .programacao-bloco-titulo {
           font-size: 12pt !important;
+          font-weight: 500 !important;
         }
 
         #programacaoSgqScreen .programacao-bloco-subtitulo {
