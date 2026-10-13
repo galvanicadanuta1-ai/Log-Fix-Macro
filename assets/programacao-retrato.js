@@ -70,6 +70,7 @@
 
       #programacaoSgqScreen .programacao-bloco-subtitulo {
         font-size: 11px !important;
+        font-weight: 500 !important;
       }
 
       #programacaoSgqScreen .programacao-table th {
@@ -204,6 +205,7 @@
 
         #programacaoSgqScreen .programacao-bloco-subtitulo {
           font-size: 8pt !important;
+          font-weight: 500 !important;
         }
 
         #programacaoSgqScreen .programacao-column-head th,
