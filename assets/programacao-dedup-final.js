@@ -1,13 +1,20 @@
 /* ============================================================
-   PROGRAMAÇÃO SGQ - DEDUPLICAÇÃO FINAL DE SEGURANÇA
+   PROGRAMAÇÃO SGQ - CARGA RÁPIDA + DEDUPLICAÇÃO
    ============================================================
-   Corrige duplicações históricas sem depender do backend.
-   A lista de OPs pendentes continua vindo do backend, mas os
-   quantitativos são reconstruídos pelo Histórico Entrada com
-   deduplicação por conteúdo visível.
+   - mostra a última programação salva imediatamente;
+   - busca primeiro somente a lista atual de OPs pendentes;
+   - não bloqueia mais a tela esperando o histórico completo;
+   - mantém a correção histórica/deduplicação em segundo plano;
+   - em falha de atualização, preserva o que já estava na tela.
    ============================================================ */
 
 (function () {
+  const CACHE_KEY = 'sgqProgramacaoFixparCacheV4';
+  const CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
+  const DEDUP_STAMP_KEY = 'sgqProgramacaoFixparDedupStampV4';
+  const DEDUP_INTERVAL = 30 * 60 * 1000;
+  let cargaSeq_ = 0;
+
   function chaveOp_(valor) {
     return String(valor == null ? '' : valor)
       .trim()
@@ -38,7 +45,6 @@
     if (!temValor) return '';
 
     const numero = Number(valor || 0);
-
     if (Math.abs(numero - Math.round(numero)) < 0.0000001) {
       return String(Math.round(numero));
     }
@@ -171,7 +177,100 @@
     });
   }
 
+  function lerCache_() {
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+      const cache = JSON.parse(raw);
+      if (!cache || !Array.isArray(cache.rows)) return null;
+      const idade = Date.now() - Number(cache.savedAt || 0);
+      if (!Number.isFinite(idade) || idade > CACHE_MAX_AGE) return null;
+      return cache;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function salvarCache_(rows) {
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        savedAt: Date.now(),
+        rows: Array.isArray(rows) ? rows : []
+      }));
+    } catch (e) {}
+  }
+
+  function aplicarRows_(rows, statusTexto, statusClasse) {
+    programacaoSgqRows = Array.isArray(rows) ? rows.slice() : [];
+
+    if (typeof ordenarProgramacaoSgqRows_ === 'function') {
+      ordenarProgramacaoSgqRows_();
+    }
+
+    const loading = document.getElementById('programacaoSgqLoading');
+    const empty = document.getElementById('programacaoSgqEmpty');
+    if (loading) loading.style.display = 'none';
+    if (empty) empty.style.display = 'none';
+
+    if (typeof renderProgramacaoSgq === 'function') {
+      renderProgramacaoSgq();
+    }
+
+    if (typeof setProgramacaoStatus === 'function' && statusTexto) {
+      setProgramacaoStatus(statusTexto, statusClasse || 'saved');
+    }
+  }
+
+  function podeCorrigirHistoricoAgora_() {
+    try {
+      const ultimo = Number(localStorage.getItem(DEDUP_STAMP_KEY) || 0);
+      return !ultimo || Date.now() - ultimo >= DEDUP_INTERVAL;
+    } catch (e) {
+      return true;
+    }
+  }
+
+  function marcarCorrecaoHistorica_() {
+    try {
+      localStorage.setItem(DEDUP_STAMP_KEY, String(Date.now()));
+    } catch (e) {}
+  }
+
+  function corrigirHistoricoEmSegundoPlano_(baseRows, seq) {
+    if (!podeCorrigirHistoricoAgora_()) return;
+
+    window.setTimeout(async () => {
+      try {
+        const ano = new Date().getFullYear();
+        const inicio = (ano - 2) + '-01-01';
+        const fim = (ano + 1) + '-12-31';
+
+        const historico = await chamarApiAppsScript('consultarHistorico', [
+          'RECEBIMENTO',
+          inicio,
+          fim,
+          ''
+        ]);
+
+        if (seq !== cargaSeq_) return;
+
+        const corrigido = corrigirBase_(baseRows, historico);
+        salvarCache_(corrigido);
+        marcarCorrecaoHistorica_();
+
+        const tela = document.getElementById('programacaoSgqScreen');
+        if (tela && tela.classList.contains('active')) {
+          aplicarRows_(corrigido, 'Programação atualizada', 'saved');
+        }
+      } catch (error) {
+        console.warn('Correção histórica da programação ficou para a próxima atualização:', error);
+      }
+    }, 500);
+  }
+
   window.carregarProgramacaoSgq = async function () {
+    const seq = ++cargaSeq_;
+
     if (typeof garantirLayoutProgramacaoDividida_ === 'function') {
       garantirLayoutProgramacaoDividida_();
     }
@@ -182,52 +281,46 @@
     const tbodyDireito = document.getElementById('programacaoSgqBodyUmaCaixa');
     const resumo = document.getElementById('programacaoSgqResumo');
 
-    if (loading) loading.style.display = 'block';
-    if (empty) empty.style.display = 'none';
-    if (tbodyEsquerdo) tbodyEsquerdo.innerHTML = '';
-    if (tbodyDireito) tbodyDireito.innerHTML = '';
-    if (resumo) resumo.textContent = '';
+    const cache = lerCache_();
 
-    if (typeof setProgramacaoStatus === 'function') {
-      setProgramacaoStatus('Carregando programação...', 'saving');
+    if (cache && cache.rows.length) {
+      aplicarRows_(cache.rows, 'Atualizando programação...', 'saving');
+    } else {
+      if (loading) loading.style.display = 'block';
+      if (empty) empty.style.display = 'none';
+      if (tbodyEsquerdo) tbodyEsquerdo.innerHTML = '';
+      if (tbodyDireito) tbodyDireito.innerHTML = '';
+      if (resumo) resumo.textContent = '';
+
+      if (typeof setProgramacaoStatus === 'function') {
+        setProgramacaoStatus('Carregando programação...', 'saving');
+      }
     }
 
     try {
-      const ano = new Date().getFullYear();
-      const inicio = (ano - 2) + '-01-01';
-      const fim = (ano + 1) + '-12-31';
+      /* A parte pesada do histórico não bloqueia mais a abertura da tela. */
+      const resultado = await chamarApiAppsScript('carregarProgramacaoSgq', []);
+      if (seq !== cargaSeq_) return;
 
-      const resultados = await Promise.all([
-        chamarApiAppsScript('carregarProgramacaoSgq', []),
-        chamarApiAppsScript('consultarHistorico', [
-          'RECEBIMENTO',
-          inicio,
-          fim,
-          ''
-        ])
-      ]);
-
-      const base = resultados[0] && Array.isArray(resultados[0].rows)
-        ? resultados[0].rows
+      const base = resultado && Array.isArray(resultado.rows)
+        ? resultado.rows
         : [];
 
-      programacaoSgqRows = corrigirBase_(base, resultados[1]);
+      aplicarRows_(base, 'Programação atualizada', 'saved');
+      salvarCache_(base);
 
-      if (typeof ordenarProgramacaoSgqRows_ === 'function') {
-        ordenarProgramacaoSgqRows_();
-      }
-
-      if (loading) loading.style.display = 'none';
-
-      if (typeof renderProgramacaoSgq === 'function') {
-        renderProgramacaoSgq();
-      }
-
-      if (typeof setProgramacaoStatus === 'function') {
-        setProgramacaoStatus('Programação atualizada', 'saved');
-      }
+      /* Mantém a antiga proteção contra duplicidades, mas fora do caminho crítico. */
+      corrigirHistoricoEmSegundoPlano_(base, seq);
     } catch (error) {
+      if (seq !== cargaSeq_) return;
       if (loading) loading.style.display = 'none';
+
+      if (cache && cache.rows.length) {
+        if (typeof setProgramacaoStatus === 'function') {
+          setProgramacaoStatus('Última programação disponível exibida. Atualização pendente.', 'error');
+        }
+        return;
+      }
 
       if (empty) {
         empty.style.display = 'block';
