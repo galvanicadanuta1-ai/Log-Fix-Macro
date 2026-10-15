@@ -58,6 +58,44 @@
       color: #ffffff;
     }
 
+    .client-program-wrap {
+      width: 100%;
+      max-width: 650px;
+      margin: 20px auto 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .client-program-button {
+      width: calc(50% - 9px);
+      min-height: 50px;
+      padding: 10px 22px;
+      border-radius: 24px;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,.08);
+    }
+
+    #logisticaMenu .client-program-button {
+      background: #22a85a;
+      border: 1px solid #198647;
+    }
+
+    #logisticaMenu .client-program-button:hover {
+      background: #198f4b;
+    }
+
+    #macrosulMenu .client-program-button {
+      background: #e53935;
+      border: 1px solid #c62828;
+    }
+
+    #macrosulMenu .client-program-button:hover {
+      background: #d32f2f;
+    }
+
     .export-excel-button {
       height: 32px;
       min-width: 125px;
@@ -95,7 +133,7 @@
       background: #f1f5f9;
     }
 
-    @media(max-width:800px){.main-brand{min-height:72px}.main-brand-logo{max-width:190px;max-height:62px}.api-setup-notice{width:calc(100% - 20px);font-size:11px}.export-excel-button{min-width:110px}.icon-action-button{width:38px;min-width:38px}}
+    @media(max-width:800px){.main-brand{min-height:72px}.main-brand-logo{max-width:190px;max-height:62px}.api-setup-notice{width:calc(100% - 20px);font-size:11px}.export-excel-button{min-width:110px}.icon-action-button{width:38px;min-width:38px}.client-program-wrap{margin-top:14px}.client-program-button{width:100%;max-width:360px;min-height:48px}}
   </style>
 </head>
 <body>
@@ -123,7 +161,6 @@
 
         <button class="main-menu-button" onclick="abrirMenuLogistica()">SGQ Fixpar</button>
         <button class="main-menu-button macrosul-main" onclick="abrirMenuMacrosul()">Macrosul</button>
-        <button class="main-menu-button" type="button" onclick="abrirMenuProgramacao()">Programação</button>
       </div>
     </div>
   </div>
@@ -137,6 +174,9 @@
         <button class="history-button" onclick="abrirHistorico('RECEBIMENTO')">Histórico Recebimento</button>
         <button class="history-button" onclick="abrirHistorico('SAIDA')">Histórico Saída</button>
       </div>
+      <div class="client-program-wrap">
+        <button class="client-program-button" type="button" onclick="abrirProgramacaoSgq()">Programação</button>
+      </div>
       <div class="menu-back"><button onclick="abrirMenuPrincipal()">← Voltar</button></div>
     </div>
   </div>
@@ -149,6 +189,9 @@
         <button class="menu-button secondary" type="button" onclick="funcaoEmBreve('Saída - Macrosul')">Saída - Macrosul</button>
         <button class="history-button" type="button" onclick="funcaoEmBreve('Histórico Recebimento - Macrosul')">Histórico Recebimento</button>
         <button class="history-button" type="button" onclick="funcaoEmBreve('Histórico Saída - Macrosul')">Histórico Saída</button>
+      </div>
+      <div class="client-program-wrap">
+        <button class="client-program-button" type="button" onclick="funcaoEmBreve('Programação - Macrosul')">Programação</button>
       </div>
       <div class="menu-back"><button onclick="abrirMenuPrincipal()">← Voltar</button></div>
     </div>
@@ -191,7 +234,7 @@
             </div>
       <div class="programacao-actions no-print">
         <div class="programacao-actions-left">
-          <button title="Voltar" type="button" onclick="voltarMenuProgramacao()">← Voltar</button>
+          <button title="Voltar" type="button" onclick="voltarMenuLogistica()">← Voltar</button>
         </div>
 
         <div class="programacao-actions-right">
@@ -284,7 +327,8 @@
       <div class="grid-wrap">
         <div id="loading" class="loading">Carregando...</div>
         <table id="grid" style="display:none;">
-          <thead><tr id="headerRow"></tr></thead>
+          <thead><tr id="headerRow"></tr>
+          </thead>
           <tbody id="tableBody"></tbody>
         </table>
       </div>
@@ -346,7 +390,7 @@
 
   <script src="assets/config.js"></script>
   <script src="assets/api.js"></script>
-  <script src="assets/core.js?v=20261012-limpar-1"></script>
+  <script src="assets/core.js?v=20261015-menu-clientes-1"></script>
   <script src="assets/programacao.js"></script>
   <script src="assets/operacional.js"></script>
   <script src="assets/relatorios.js"></script>
