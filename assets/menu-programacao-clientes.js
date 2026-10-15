@@ -92,7 +92,7 @@
 
   function criarBotaoProgramacao_(menuId, tipo) {
     const menu = document.getElementById(menuId);
-    if (!menu || menu.querySelector('.menu-programacao-cliente-wrap')) return;
+    if (!menu || menu.querySelector('.menu-programacao-cliente-wrap, .client-program-wrap')) return;
 
     const menuScreen = menu.querySelector('.menu-screen');
     const back = menu.querySelector('.menu-back');
@@ -127,15 +127,12 @@
   }
 
   function ajustarNavegacao_() {
-    /* Compatibilidade: qualquer chamada antiga de abrir o menu exclusivo
-       de Programação agora leva ao menu SGQ Fixpar. */
     window.abrirMenuProgramacao = function () {
       if (typeof window.abrirMenuLogistica === 'function') {
         window.abrirMenuLogistica();
       }
     };
 
-    /* O botão Voltar da tela Programação retorna para SGQ Fixpar. */
     window.voltarMenuProgramacao = function () {
       if (typeof window.voltarMenuLogistica === 'function') {
         window.voltarMenuLogistica();
