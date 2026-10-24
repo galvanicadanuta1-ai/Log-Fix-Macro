@@ -14,7 +14,7 @@ let historyNextOffset = null;
 let historyTotal = 0;
 let historyHeadersCache = [];
 let historyPageSize = window.matchMedia('(max-width: 800px)').matches ? 25 : 60;
-const GLOBAL_ASSET_VERSION = '20261015-programacao-rapida-1';
+const GLOBAL_ASSET_VERSION = '20261024-programacao-mobile-1';
 
 /*
  * Impede qualquer clique durante os poucos instantes em que as camadas
@@ -61,7 +61,8 @@ document.addEventListener('DOMContentLoaded', () => {
     'assets/programacao-impressao.js',
     'assets/programacao-retrato.js',
     'assets/tema.js',
-    'assets/menu-programacao-clientes.js'
+    'assets/menu-programacao-clientes.js',
+    'assets/programacao-mobile.js'
   ], () => {
     document.documentElement.classList.remove('sgq-booting');
   });
