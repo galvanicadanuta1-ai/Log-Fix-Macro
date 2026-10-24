@@ -5,8 +5,7 @@
    - cria uma barra própria de controles para toque;
    - mantém as funções já existentes (voltar, PDF, Excel, imprimir, +OP);
    - adiciona compartilhamento nativo com PDF (WhatsApp, e-mail etc.);
-   - mantém as tabelas completas com rolagem horizontal somente dentro
-     de cada bloco, sem estourar a largura da página.
+   - no celular, transforma as tabelas em cards legíveis, sem rolagem lateral.
    ============================================================ */
 
 (function () {
@@ -593,16 +592,12 @@
 
         #programacaoSgqScreen .programacao-bloco {
           position: relative !important;
-          overflow-x: auto !important;
-          overflow-y: hidden !important;
-          -webkit-overflow-scrolling: touch !important;
-          overscroll-behavior-x: contain !important;
-          touch-action: pan-x pan-y !important;
-          border: 1px solid #dbe4ec !important;
-          border-radius: 16px !important;
-          background: #fff !important;
+          overflow: visible !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          background: transparent !important;
           padding: 0 !important;
-          margin: 0 0 16px !important;
+          margin: 0 0 18px !important;
         }
 
         #programacaoSgqScreen .programacao-bloco + .programacao-bloco {
@@ -613,15 +608,14 @@
         }
 
         #programacaoSgqScreen .programacao-mobile-section-head {
-          position: sticky !important;
-          left: 0 !important;
-          z-index: 6 !important;
+          position: relative !important;
+          z-index: 2 !important;
           display: grid !important;
-          grid-template-columns: 82px minmax(0,1fr) 20px !important;
+          grid-template-columns: 82px minmax(0,1fr) 82px !important;
           align-items: center !important;
-          width: calc(100vw - 42px) !important;
-          min-width: calc(100vw - 42px) !important;
-          padding: 9px 8px !important;
+          width: 100% !important;
+          min-width: 0 !important;
+          padding: 9px 6px !important;
           background: #fff !important;
           border-bottom: 1px solid #334155 !important;
           box-sizing: border-box !important;
@@ -655,47 +649,112 @@
           color: #334155 !important;
         }
 
-        #programacaoSgqScreen .programacao-repeat-panel {
+        #programacaoSgqScreen .programacao-repeat-panel,
+        #programacaoSgqScreen .programacao-column-head {
           display: none !important;
         }
 
         #programacaoSgqScreen .programacao-table {
-          width: 860px !important;
-          min-width: 860px !important;
-          table-layout: fixed !important;
+          display: block !important;
+          width: 100% !important;
+          min-width: 0 !important;
+          table-layout: auto !important;
           margin: 0 !important;
+          background: transparent !important;
         }
 
-        #programacaoSgqScreen .programacao-table-uma-caixa,
-        #programacaoSgqScreen .programacao-bloco-uma-caixa .programacao-table {
-          width: 700px !important;
-          min-width: 700px !important;
+        #programacaoSgqScreen .programacao-table thead {
+          display: none !important;
         }
 
-        #programacaoSgqScreen .programacao-table th {
-          position: sticky !important;
-          top: 0 !important;
-          z-index: 4 !important;
-          background: #e8eef3 !important;
-          font-size: 11px !important;
-          padding: 9px 5px !important;
-          white-space: normal !important;
+        #programacaoSgqScreen .programacao-table tbody {
+          display: block !important;
+          width: 100% !important;
         }
 
-        #programacaoSgqScreen .programacao-table td {
-          font-size: 13px !important;
-          padding: 9px 5px !important;
-          height: auto !important;
+        #programacaoSgqScreen .programacao-table tbody tr {
+          display: grid !important;
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          width: 100% !important;
+          margin: 10px 0 0 !important;
+          border: 1px solid #d7e0e8 !important;
+          border-radius: 14px !important;
+          overflow: hidden !important;
+          background: #fff !important;
+          box-shadow: 0 3px 10px rgba(15,23,42,.05) !important;
+          box-sizing: border-box !important;
+        }
+
+        #programacaoSgqScreen .programacao-table tbody td {
+          display: flex !important;
+          align-items: center !important;
+          justify-content: space-between !important;
+          gap: 8px !important;
+          width: auto !important;
+          min-width: 0 !important;
+          min-height: 48px !important;
+          padding: 9px 10px !important;
+          border: 0 !important;
+          border-bottom: 1px solid #edf2f6 !important;
+          box-sizing: border-box !important;
+          font-size: 14px !important;
+          line-height: 1.2 !important;
+          text-align: right !important;
+          overflow-wrap: anywhere !important;
+        }
+
+        #programacaoSgqScreen .programacao-table tbody td:nth-child(odd) {
+          border-right: 1px solid #edf2f6 !important;
+        }
+
+        #programacaoSgqScreen .programacao-table tbody td::before {
+          flex: 0 0 auto !important;
+          color: #64748b !important;
+          font-size: 10px !important;
+          font-weight: 800 !important;
+          line-height: 1 !important;
+          letter-spacing: .2px !important;
+          text-transform: uppercase !important;
+          text-align: left !important;
+        }
+
+        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(1)::before { content: 'Data'; }
+        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(2)::before { content: 'OP'; }
+        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(3)::before { content: 'Caixas'; }
+        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(4)::before { content: 'Caçamba'; }
+        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(5)::before { content: 'Cor'; }
+        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(6)::before { content: 'Kgs'; }
+        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(7)::before { content: 'Prioridade'; }
+        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(8)::before { content: 'OK'; }
+        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(9)::before { content: 'Enc.'; }
+
+        #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(1)::before { content: 'Data'; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(2)::before { content: 'OP'; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(3)::before { content: 'Caixas'; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(4)::before { content: 'Cor'; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(5)::before { content: 'Kgs'; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(6)::before { content: 'Prioridade'; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(7)::before { content: 'OK'; }
+
+        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(5),
+        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(7),
+        #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(4),
+        #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(6) {
+          grid-column: 1 / -1 !important;
+          border-right: 0 !important;
         }
 
         #programacaoSgqScreen .programacao-status-input {
+          width: min(190px, 58vw) !important;
           min-height: 38px !important;
-          font-size: 13px !important;
+          font-size: 14px !important;
+          text-align: right !important;
         }
 
         #programacaoSgqScreen .programacao-check {
-          width: 21px !important;
-          height: 21px !important;
+          width: 22px !important;
+          height: 22px !important;
+          flex: 0 0 auto !important;
         }
 
         #programacaoSgqScreen .programacao-modal-overlay {
