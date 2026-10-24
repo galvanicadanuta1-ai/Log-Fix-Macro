@@ -577,6 +577,24 @@
           font-size: 12px !important;
         }
 
+        /* MOBILE: elimina a duplicação visual durante o carregamento.
+           O texto de status acima já informa "Carregando programação...". */
+        #programacaoSgqScreen .programacao-loading {
+          display: none !important;
+        }
+
+        /* Enquanto nenhuma OP foi renderizada, não exibe os blocos vazios
+           com logo/título. Assim a tela fica limpa durante a espera da API. */
+        #programacaoSgqScreen .programacao-table-wrap:not(:has(tbody tr)) {
+          display: none !important;
+        }
+
+        /* Se apenas um dos grupos estiver vazio após a carga, não deixa
+           um cabeçalho solto sem linhas abaixo. */
+        #programacaoSgqScreen .programacao-bloco:not(:has(tbody tr)) {
+          display: none !important;
+        }
+
         #programacaoSgqScreen .programacao-table-wrap,
         #programacaoSgqScreen .programacao-dual-grid,
         #programacaoSgqScreen .programacao-bloco {
