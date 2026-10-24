@@ -14,7 +14,7 @@ let historyNextOffset = null;
 let historyTotal = 0;
 let historyHeadersCache = [];
 let historyPageSize = window.matchMedia('(max-width: 800px)').matches ? 25 : 60;
-const GLOBAL_ASSET_VERSION = '20261024-mobile-cards-2';
+const GLOBAL_ASSET_VERSION = '20261024-mobile-linhas-1';
 
 /*
  * Impede qualquer clique durante os poucos instantes em que as camadas
