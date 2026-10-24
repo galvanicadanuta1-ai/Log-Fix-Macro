@@ -3,7 +3,7 @@
    ============================================================
    - esquerda: programação principal;
    - direita: OPs de 1 caixa;
-   - direita sem Contêiner e sem Enc.;
+   - direita sem Contêiner, mas com Enc.;
    - Urgentes no topo e depois data;
    - PDF em paisagem com dois blocos equilibrados.
    ============================================================ */
@@ -38,7 +38,8 @@
       'Cor',
       'Kgs',
       'Status',
-      'OK'
+      'OK',
+      'Enc.'
     ];
   }
 
@@ -64,7 +65,8 @@
       item.cor || '',
       item.pesoDanuta || '',
       item.status || '',
-      item.ok ? 'SIM' : ''
+      item.ok ? 'SIM' : '',
+      item.encaminhado ? 'SIM' : ''
     ];
   }
 
@@ -157,7 +159,7 @@
           subtitulo,
           dados.headersUmaCaixa,
           dados.umaCaixa,
-          [11, 12, 8, 28, 9, 14, 6]
+          [11, 12, 8, 25, 9, 14, 6, 7]
         ),
         'OPs 1 caixa'
       );
@@ -229,13 +231,14 @@
 
   function estilosUmaCaixa_() {
     return {
-      0: { cellWidth: 16 },
-      1: { cellWidth: 17 },
-      2: { cellWidth: 11 },
-      3: { cellWidth: 44 },
-      4: { cellWidth: 13 },
-      5: { cellWidth: 25 },
-      6: { cellWidth: 9 }
+      0: { cellWidth: 15 },
+      1: { cellWidth: 15 },
+      2: { cellWidth: 10 },
+      3: { cellWidth: 36 },
+      4: { cellWidth: 12 },
+      5: { cellWidth: 22 },
+      6: { cellWidth: 8 },
+      7: { cellWidth: 9 }
     };
   }
 
