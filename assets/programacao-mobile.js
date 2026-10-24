@@ -735,6 +735,7 @@
         #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(5)::before { content: 'Kgs'; }
         #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(6)::before { content: 'Prioridade'; }
         #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(7)::before { content: 'OK'; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(8)::before { content: 'Enc.'; }
 
         #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(5),
         #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(7),
