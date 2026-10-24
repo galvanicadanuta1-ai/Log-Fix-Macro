@@ -608,14 +608,20 @@
           display: block !important;
         }
 
+        /* Mobile volta ao formato original por LINHAS.
+           A rolagem horizontal acontece somente dentro de cada bloco. */
         #programacaoSgqScreen .programacao-bloco {
           position: relative !important;
-          overflow: visible !important;
-          border: 0 !important;
-          border-radius: 0 !important;
-          background: transparent !important;
+          overflow-x: auto !important;
+          overflow-y: hidden !important;
+          -webkit-overflow-scrolling: touch !important;
+          overscroll-behavior-x: contain !important;
+          touch-action: pan-x pan-y !important;
+          border: 1px solid #dbe4ec !important;
+          border-radius: 14px !important;
+          background: #fff !important;
           padding: 0 !important;
-          margin: 0 0 18px !important;
+          margin: 0 0 16px !important;
         }
 
         #programacaoSgqScreen .programacao-bloco + .programacao-bloco {
@@ -626,13 +632,14 @@
         }
 
         #programacaoSgqScreen .programacao-mobile-section-head {
-          position: relative !important;
-          z-index: 2 !important;
+          position: sticky !important;
+          left: 0 !important;
+          z-index: 6 !important;
           display: grid !important;
           grid-template-columns: 82px minmax(0,1fr) 82px !important;
           align-items: center !important;
-          width: 100% !important;
-          min-width: 0 !important;
+          width: calc(100vw - 42px) !important;
+          min-width: calc(100vw - 42px) !important;
           padding: 9px 6px !important;
           background: #fff !important;
           border-bottom: 1px solid #334155 !important;
@@ -667,132 +674,124 @@
           color: #334155 !important;
         }
 
-        #programacaoSgqScreen .programacao-repeat-panel,
-        #programacaoSgqScreen .programacao-column-head {
+        /* O cabeçalho com logo repetido é exclusivo da impressão.
+           No celular mostramos o cabeçalho compacto acima e as colunas da tabela. */
+        #programacaoSgqScreen .programacao-repeat-panel {
           display: none !important;
         }
 
         #programacaoSgqScreen .programacao-table {
-          display: block !important;
-          width: 100% !important;
-          min-width: 0 !important;
-          table-layout: auto !important;
+          display: table !important;
+          width: 900px !important;
+          min-width: 900px !important;
+          table-layout: fixed !important;
           margin: 0 !important;
-          background: transparent !important;
+          border-collapse: collapse !important;
+          background: #fff !important;
+        }
+
+        #programacaoSgqScreen .programacao-bloco-uma-caixa .programacao-table {
+          width: 780px !important;
+          min-width: 780px !important;
         }
 
         #programacaoSgqScreen .programacao-table thead {
-          display: none !important;
+          display: table-header-group !important;
+        }
+
+        #programacaoSgqScreen .programacao-column-head {
+          display: table-row !important;
+        }
+
+        #programacaoSgqScreen .programacao-column-head th {
+          display: table-cell !important;
+          position: sticky !important;
+          top: 0 !important;
+          z-index: 4 !important;
+          padding: 9px 5px !important;
+          border: 1px solid #aeb9c4 !important;
+          background: #e8eef3 !important;
+          color: #111827 !important;
+          font-size: 11px !important;
+          line-height: 1.1 !important;
+          font-weight: 700 !important;
+          text-align: center !important;
+          white-space: normal !important;
         }
 
         #programacaoSgqScreen .programacao-table tbody {
-          display: block !important;
-          width: 100% !important;
+          display: table-row-group !important;
         }
 
         #programacaoSgqScreen .programacao-table tbody tr {
-          display: grid !important;
-          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-          width: 100% !important;
-          margin: 10px 0 0 !important;
-          border: 1px solid #d7e0e8 !important;
-          border-radius: 14px !important;
-          overflow: hidden !important;
+          display: table-row !important;
+          width: auto !important;
+          margin: 0 !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          box-shadow: none !important;
           background: #fff !important;
-          box-shadow: 0 3px 10px rgba(15,23,42,.05) !important;
-          box-sizing: border-box !important;
         }
 
         #programacaoSgqScreen .programacao-table tbody td {
-          display: flex !important;
-          align-items: center !important;
-          justify-content: space-between !important;
-          gap: 8px !important;
+          display: table-cell !important;
           width: auto !important;
           min-width: 0 !important;
-          min-height: 48px !important;
-          padding: 9px 10px !important;
-          border: 0 !important;
-          border-bottom: 1px solid #edf2f6 !important;
+          height: 44px !important;
+          padding: 7px 5px !important;
+          border: 1px solid #cbd5e1 !important;
           box-sizing: border-box !important;
-          font-size: 14px !important;
-          line-height: 1.2 !important;
-          text-align: right !important;
+          color: #111827 !important;
+          font-size: 13px !important;
+          line-height: 1.15 !important;
+          font-weight: 600 !important;
+          text-align: center !important;
+          vertical-align: middle !important;
+          white-space: nowrap !important;
           overflow-wrap: normal !important;
           word-break: normal !important;
-          white-space: nowrap !important;
         }
 
-        /* Sobrescreve as larguras percentuais usadas no desktop/relatório.
-           No mobile cada célula precisa ocupar a coluna inteira do card. */
-        #programacaoSgqScreen .programacao-bloco.programacao-bloco-principal .programacao-table tbody td,
-        #programacaoSgqScreen .programacao-bloco.programacao-bloco-uma-caixa .programacao-table tbody td {
-          width: auto !important;
-          min-width: 0 !important;
-          max-width: none !important;
-        }
-
-        /* Cor pode ocupar a linha toda e quebrar somente entre palavras. */
-        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(5),
-        #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(4) {
-          white-space: normal !important;
-          overflow-wrap: break-word !important;
-          word-break: normal !important;
-        }
-
-        #programacaoSgqScreen .programacao-table tbody td:nth-child(odd) {
-          border-right: 1px solid #edf2f6 !important;
-        }
-
+        /* Remove os rótulos Data/OP/etc. criados para o modo card. */
         #programacaoSgqScreen .programacao-table tbody td::before {
-          flex: 0 0 auto !important;
-          color: #64748b !important;
-          font-size: 10px !important;
-          font-weight: 800 !important;
-          line-height: 1 !important;
-          letter-spacing: .2px !important;
-          text-transform: uppercase !important;
-          text-align: left !important;
+          content: none !important;
+          display: none !important;
         }
 
-        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(1)::before { content: 'Data'; }
-        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(2)::before { content: 'OP'; }
-        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(3)::before { content: 'Caixas'; }
-        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(4)::before { content: 'Caçamba'; }
-        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(5)::before { content: 'Cor'; }
-        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(6)::before { content: 'Kgs'; }
-        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(7)::before { content: 'Prioridade'; }
-        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(8)::before { content: 'OK'; }
-        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(9)::before { content: 'Enc.'; }
+        /* Principal: Data | OP | Caixas | Caçamba | Cor | Kgs | Prioridade | OK | Enc. */
+        #programacaoSgqScreen .programacao-bloco-principal .col-data { width: 90px !important; }
+        #programacaoSgqScreen .programacao-bloco-principal .col-op { width: 85px !important; }
+        #programacaoSgqScreen .programacao-bloco-principal .col-caixas { width: 80px !important; }
+        #programacaoSgqScreen .programacao-bloco-principal .col-conteiner { width: 90px !important; }
+        #programacaoSgqScreen .programacao-bloco-principal .col-cor { width: 220px !important; white-space: normal !important; }
+        #programacaoSgqScreen .programacao-bloco-principal .col-peso { width: 85px !important; }
+        #programacaoSgqScreen .programacao-bloco-principal .col-status { width: 140px !important; }
+        #programacaoSgqScreen .programacao-bloco-principal .col-ok { width: 55px !important; }
+        #programacaoSgqScreen .programacao-bloco-principal .col-enc { width: 55px !important; }
 
-        #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(1)::before { content: 'Data'; }
-        #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(2)::before { content: 'OP'; }
-        #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(3)::before { content: 'Caixas'; }
-        #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(4)::before { content: 'Cor'; }
-        #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(5)::before { content: 'Kgs'; }
-        #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(6)::before { content: 'Prioridade'; }
-        #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(7)::before { content: 'OK'; }
-        #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(8)::before { content: 'Enc.'; }
-
-        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(5),
-        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(7),
-        #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(4),
-        #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(6) {
-          grid-column: 1 / -1 !important;
-          border-right: 0 !important;
-        }
+        /* 1 caixa: Data | OP | Caixas | Cor | Kgs | Prioridade | OK | Enc. */
+        #programacaoSgqScreen .programacao-bloco-uma-caixa .col-data { width: 90px !important; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa .col-op { width: 85px !important; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa .col-caixas { width: 80px !important; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa .col-cor { width: 220px !important; white-space: normal !important; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa .col-peso { width: 85px !important; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa .col-status { width: 140px !important; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa .col-ok { width: 55px !important; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa .col-enc { width: 55px !important; }
 
         #programacaoSgqScreen .programacao-status-input {
-          width: min(220px, 62vw) !important;
+          width: 100% !important;
           min-width: 0 !important;
-          min-height: 38px !important;
-          font-size: 14px !important;
-          text-align: right !important;
+          min-height: 34px !important;
+          padding: 4px 5px !important;
+          font-size: 13px !important;
+          text-align: center !important;
+          box-sizing: border-box !important;
         }
 
         #programacaoSgqScreen .programacao-check {
-          width: 22px !important;
-          height: 22px !important;
+          width: 21px !important;
+          height: 21px !important;
           flex: 0 0 auto !important;
         }
 
