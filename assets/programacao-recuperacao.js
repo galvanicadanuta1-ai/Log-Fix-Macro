@@ -5,7 +5,7 @@
 
    Responsabilidades desta camada:
    - separar 1 caixa no bloco da direita;
-   - manter Enc. também no bloco de 1 caixa;
+   - remover Enc. do bloco de 1 caixa;
    - pesquisa por OP somente na tela;
    - PDF sempre com TODA a programação, ignorando pesquisa/data;
    - Excel sempre com TODA a programação;
@@ -14,7 +14,7 @@
 
 (function () {
   const LOGO_URL = 'https://raw.githubusercontent.com/galvanicadanuta1-ai/canhoto-digital/main/logo.png';
-  const LAYOUT_VERSION = '2026-10-24-estavel-v3-enc-1caixa';
+  const LAYOUT_VERSION = '2026-10-24-estavel-v2-enc-tela';
 
   window.programacaoSgqBusca = window.programacaoSgqBusca || '';
 
@@ -247,7 +247,7 @@
     tr.appendChild(okTd);
 
     const encTd = document.createElement('td');
-    encTd.className = 'col-enc';
+    encTd.className = 'col-enc programacao-enc-tela';
     const encInput = document.createElement('input');
     encInput.type = 'checkbox';
     encInput.className = 'programacao-check programacao-encaminhado';
@@ -428,8 +428,7 @@
       item.cor || '',
       item.pesoDanuta || '',
       item.status || '',
-      item.ok ? '✓' : '',
-      item.encaminhado ? '✓' : ''
+      item.ok ? '✓' : ''
     ];
   }
 
@@ -473,14 +472,13 @@
 
     const columnStyles = direita
       ? {
-          0: { cellWidth: 15 },
-          1: { cellWidth: 15 },
-          2: { cellWidth: 11 },
-          3: { cellWidth: 31 },
-          4: { cellWidth: 12 },
-          5: { cellWidth: 22 },
-          6: { cellWidth: 8 },
-          7: { cellWidth: 9 }
+          0: { cellWidth: 16 },
+          1: { cellWidth: 16 },
+          2: { cellWidth: 12 },
+          3: { cellWidth: 35 },
+          4: { cellWidth: 13 },
+          5: { cellWidth: 27 },
+          6: { cellWidth: 9 }
         }
       : {
           0: { cellWidth: 15 },
@@ -645,4 +643,36 @@
 
   garantirBusca_();
   garantirLayoutProgramacaoDividida_();
+
+  /* Enc. de OPs de 1 caixa é um controle de tela.
+     PDF/relatório/Excel mantêm exatamente o formato anterior. */
+  const estiloEncTela_ = document.createElement('style');
+  estiloEncTela_.textContent = `
+    @media screen {
+      #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(1),
+      #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(1) { width: 13% !important; }
+      #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(2),
+      #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(2) { width: 13% !important; }
+      #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(3),
+      #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(3) { width: 10% !important; }
+      #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(4),
+      #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(4) { width: 27% !important; }
+      #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(5),
+      #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(5) { width: 10% !important; }
+      #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(6),
+      #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(6) { width: 14% !important; }
+      #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(7),
+      #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(7) { width: 6.5% !important; }
+      #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(8),
+      #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(8) { width: 6.5% !important; }
+    }
+    @media print {
+      #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(8),
+      #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(8) {
+        display: none !important;
+      }
+    }
+  `;
+  document.head.appendChild(estiloEncTela_);
+
 })();
