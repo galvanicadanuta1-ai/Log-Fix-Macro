@@ -564,44 +564,11 @@
           display: block !important;
           width: 100% !important;
           min-height: 0 !important;
-          margin: 0 0 12px !important;
+          margin: 0 0 14px !important;
           padding: 0 2px !important;
           box-sizing: border-box !important;
           font-size: 13px !important;
           line-height: 1.35 !important;
-        }
-
-        /* No celular usamos somente a mensagem de status.
-           Evita a duplicação "Carregando programação..." da tela antiga. */
-        #programacaoSgqScreen .programacao-loading {
-          display: none !important;
-        }
-
-        /* Não mostra cabeçalhos/tabelas vazios enquanto a API ainda responde. */
-        #programacaoSgqScreen.programacao-mobile-loading .programacao-table-wrap,
-        #programacaoSgqScreen.programacao-mobile-sem-dados .programacao-table-wrap {
-          display: none !important;
-        }
-
-        #programacaoSgqScreen.programacao-mobile-loading .programacao-subinfo {
-          margin-top: 4px !important;
-          margin-bottom: 4px !important;
-          padding: 4px 2px 10px !important;
-        }
-
-        #programacaoSgqScreen.programacao-mobile-loading #programacaoSgqResumo {
-          display: none !important;
-        }
-
-        #programacaoSgqScreen.programacao-mobile-loading .programacao-status-message {
-          margin: 0 !important;
-          padding: 8px 2px !important;
-          text-align: left !important;
-          font-size: 13px !important;
-        }
-
-        #programacaoSgqScreen.programacao-mobile-sem-dados .programacao-subinfo {
-          margin-bottom: 4px !important;
         }
 
         #programacaoSgqScreen .programacao-status-message {
@@ -849,36 +816,9 @@
     document.head.appendChild(style);
   }
 
-  function atualizarEstadoMobile_() {
-    const screen = document.getElementById('programacaoSgqScreen');
-    if (!screen) return;
-
-    const loading = document.getElementById('programacaoSgqLoading');
-    const empty = document.getElementById('programacaoSgqEmpty');
-    const totalRows = screen.querySelectorAll(
-      '#programacaoSgqBody tr, #programacaoSgqBodyUmaCaixa tr'
-    ).length;
-
-    const loadingVisivel = Boolean(
-      loading &&
-      loading.style.display !== 'none' &&
-      totalRows === 0
-    );
-
-    const emptyVisivel = Boolean(
-      empty &&
-      empty.style.display !== 'none' &&
-      totalRows === 0
-    );
-
-    screen.classList.toggle('programacao-mobile-loading', loadingVisivel);
-    screen.classList.toggle('programacao-mobile-sem-dados', emptyVisivel);
-  }
-
   function sincronizar_() {
     garantirToolbarMobile_();
     garantirCabecalhosMobile_();
-    atualizarEstadoMobile_();
 
     const mobileSearch = document.getElementById('programacaoSgqSearchMobile');
     if (mobileSearch && mobileSearch.value !== String(window.programacaoSgqBusca || '')) {
@@ -906,26 +846,4 @@
   }
 
   window.addEventListener('resize', sincronizar_, { passive: true });
-
-  const estadoObserver = new MutationObserver(() => {
-    atualizarEstadoMobile_();
-  });
-
-  const loadingEl = document.getElementById('programacaoSgqLoading');
-  const emptyEl = document.getElementById('programacaoSgqEmpty');
-  const bodyPrincipal = document.getElementById('programacaoSgqBody');
-  const bodyUmaCaixa = document.getElementById('programacaoSgqBodyUmaCaixa');
-
-  [loadingEl, emptyEl, bodyPrincipal, bodyUmaCaixa].forEach(el => {
-    if (el) {
-      estadoObserver.observe(el, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['style', 'class']
-      });
-    }
-  });
-
-  atualizarEstadoMobile_();
 })();
