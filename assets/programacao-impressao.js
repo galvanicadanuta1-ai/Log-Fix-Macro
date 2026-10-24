@@ -266,23 +266,21 @@
         #programacaoSgqScreen .programacao-bloco-principal th:nth-child(9),
         #programacaoSgqScreen .programacao-bloco-principal td:nth-child(9) { width: 7% !important; }
 
-        /* 1 caixa: Data | OP | Caixas | Cor | Kgs | Prioridade | OK | Enc. */
+        /* 1 caixa: Data | OP | Caixas | Cor | Kgs | Prioridade | OK */
         #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(1),
-        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(1) { width: 13% !important; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(1) { width: 14% !important; }
         #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(2),
-        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(2) { width: 13% !important; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(2) { width: 14% !important; }
         #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(3),
-        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(3) { width: 10% !important; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(3) { width: 11% !important; }
         #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(4),
-        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(4) { width: 28% !important; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(4) { width: 30% !important; }
         #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(5),
-        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(5) { width: 10% !important; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(5) { width: 11% !important; }
         #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(6),
-        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(6) { width: 13% !important; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(6) { width: 14% !important; }
         #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(7),
-        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(7) { width: 6.5% !important; }
-        #programacaoSgqScreen .programacao-bloco-uma-caixa th:nth-child(8),
-        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(8) { width: 6.5% !important; }
+        #programacaoSgqScreen .programacao-bloco-uma-caixa td:nth-child(7) { width: 6% !important; }
 
         /* Na impressão usa texto real, nunca o placeholder do input. */
         #programacaoSgqScreen .programacao-status-input {
