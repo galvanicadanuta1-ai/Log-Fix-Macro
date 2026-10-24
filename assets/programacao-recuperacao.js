@@ -5,7 +5,7 @@
 
    Responsabilidades desta camada:
    - separar 1 caixa no bloco da direita;
-   - remover Enc. do bloco de 1 caixa;
+   - manter Enc. também no bloco de 1 caixa;
    - pesquisa por OP somente na tela;
    - PDF sempre com TODA a programação, ignorando pesquisa/data;
    - Excel sempre com TODA a programação;
@@ -14,7 +14,7 @@
 
 (function () {
   const LOGO_URL = 'https://raw.githubusercontent.com/galvanicadanuta1-ai/canhoto-digital/main/logo.png';
-  const LAYOUT_VERSION = '2026-10-05-estavel-v2';
+  const LAYOUT_VERSION = '2026-10-24-estavel-v3-enc-1caixa';
 
   window.programacaoSgqBusca = window.programacaoSgqBusca || '';
 
@@ -76,7 +76,8 @@
       'Cor',
       'Kgs',
       'Status',
-      'OK'
+      'OK',
+      'Enc.'
     ];
   }
 
@@ -245,17 +246,15 @@
     okTd.appendChild(okInput);
     tr.appendChild(okTd);
 
-    if (!ladoDireito) {
-      const encTd = document.createElement('td');
-      encTd.className = 'col-enc';
-      const encInput = document.createElement('input');
-      encInput.type = 'checkbox';
-      encInput.className = 'programacao-check programacao-encaminhado';
-      encInput.checked = Boolean(item.encaminhado);
-      encInput.addEventListener('change', () => salvarEstadoLinhaProgramacaoSgq(tr));
-      encTd.appendChild(encInput);
-      tr.appendChild(encTd);
-    }
+    const encTd = document.createElement('td');
+    encTd.className = 'col-enc';
+    const encInput = document.createElement('input');
+    encInput.type = 'checkbox';
+    encInput.className = 'programacao-check programacao-encaminhado';
+    encInput.checked = Boolean(item.encaminhado);
+    encInput.addEventListener('change', () => salvarEstadoLinhaProgramacaoSgq(tr));
+    encTd.appendChild(encInput);
+    tr.appendChild(encTd);
 
     return tr;
   };
@@ -429,7 +428,8 @@
       item.cor || '',
       item.pesoDanuta || '',
       item.status || '',
-      item.ok ? '✓' : ''
+      item.ok ? '✓' : '',
+      item.encaminhado ? '✓' : ''
     ];
   }
 
@@ -473,13 +473,14 @@
 
     const columnStyles = direita
       ? {
-          0: { cellWidth: 16 },
-          1: { cellWidth: 16 },
-          2: { cellWidth: 12 },
-          3: { cellWidth: 35 },
-          4: { cellWidth: 13 },
-          5: { cellWidth: 27 },
-          6: { cellWidth: 9 }
+          0: { cellWidth: 15 },
+          1: { cellWidth: 15 },
+          2: { cellWidth: 11 },
+          3: { cellWidth: 31 },
+          4: { cellWidth: 12 },
+          5: { cellWidth: 22 },
+          6: { cellWidth: 8 },
+          7: { cellWidth: 9 }
         }
       : {
           0: { cellWidth: 15 },
