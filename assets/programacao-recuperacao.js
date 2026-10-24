@@ -81,6 +81,20 @@
     ];
   }
 
+  /* Relatórios/exportações mantêm o formato anterior de 7 colunas.
+     O Enc. novo existe somente como controle da tela. */
+  function headersDireitaRelatorio_() {
+    return [
+      'Data Entrada',
+      'OP',
+      'Qtd. Caixas',
+      'Cor',
+      'Kgs',
+      'Status',
+      'OK'
+    ];
+  }
+
   function htmlCabecalho_(titulo, subtituloId, headers) {
     return '<thead>' +
       '<tr class="programacao-repeat-panel">' +
@@ -439,9 +453,9 @@
     return {
       headers: headersEsquerda_(),
       headersEsquerda: headersEsquerda_(),
-      headersDireita: headersDireita_(),
+      headersDireita: headersDireitaRelatorio_(),
       headersPrincipal: headersEsquerda_(),
-      headersUmaCaixa: headersDireita_(),
+      headersUmaCaixa: headersDireitaRelatorio_(),
       principal: grupos.principal.map(linhaEsquerda_),
       umaCaixa: grupos.umaCaixa.map(linhaDireita_),
       dados: grupos.principal.map(linhaEsquerda_)
