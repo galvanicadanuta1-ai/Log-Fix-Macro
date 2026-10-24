@@ -718,7 +718,26 @@
           font-size: 14px !important;
           line-height: 1.2 !important;
           text-align: right !important;
-          overflow-wrap: anywhere !important;
+          overflow-wrap: normal !important;
+          word-break: normal !important;
+          white-space: nowrap !important;
+        }
+
+        /* Sobrescreve as larguras percentuais usadas no desktop/relatório.
+           No mobile cada célula precisa ocupar a coluna inteira do card. */
+        #programacaoSgqScreen .programacao-bloco.programacao-bloco-principal .programacao-table tbody td,
+        #programacaoSgqScreen .programacao-bloco.programacao-bloco-uma-caixa .programacao-table tbody td {
+          width: auto !important;
+          min-width: 0 !important;
+          max-width: none !important;
+        }
+
+        /* Cor pode ocupar a linha toda e quebrar somente entre palavras. */
+        #programacaoSgqScreen .programacao-bloco-principal tbody td:nth-child(5),
+        #programacaoSgqScreen .programacao-bloco-uma-caixa tbody td:nth-child(4) {
+          white-space: normal !important;
+          overflow-wrap: break-word !important;
+          word-break: normal !important;
         }
 
         #programacaoSgqScreen .programacao-table tbody td:nth-child(odd) {
@@ -764,7 +783,8 @@
         }
 
         #programacaoSgqScreen .programacao-status-input {
-          width: min(190px, 58vw) !important;
+          width: min(220px, 62vw) !important;
+          min-width: 0 !important;
           min-height: 38px !important;
           font-size: 14px !important;
           text-align: right !important;
