@@ -141,6 +141,8 @@ async function syncSheetsBatch(env, body) {
         source = excluded.source,
         version = program_states.version + 1,
         raw_json = excluded.raw_json
+      WHERE program_states.raw_json <> excluded.raw_json
+         OR program_states.raw_json IS NULL
     `);
 
     const stmts = rows
@@ -152,7 +154,7 @@ async function syncSheetsBatch(env, body) {
         bool01(row.ok),
         bool01(row.encaminhado),
         text(row.updatedAt) || now,
-        JSON.stringify(row)
+        JSON.stringify({ ...row, updatedAt: undefined })
       ));
 
     if (stmts.length) await env.DB.batch(stmts);
@@ -187,6 +189,8 @@ async function syncSheetsBatch(env, body) {
       updated_at = excluded.updated_at,
       deleted = excluded.deleted,
       raw_json = excluded.raw_json
+    WHERE operational_records.raw_json <> excluded.raw_json
+       OR operational_records.raw_json IS NULL
   `);
 
   const stmts = rows
@@ -211,7 +215,7 @@ async function syncSheetsBatch(env, body) {
       text(row.anotacao),
       text(row.updatedAt) || now,
       row.deleted ? 1 : 0,
-      JSON.stringify(row)
+      JSON.stringify({ ...row, updatedAt: undefined })
     ));
 
   if (stmts.length) await env.DB.batch(stmts);
