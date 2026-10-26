@@ -34,3 +34,18 @@ Esta pasta prepara a migração do SGQ Fixpar para Cloudflare Workers + D1 sem i
 ## Segurança
 
 O endpoint de sincronização exige Bearer token. Não coloque esse token no front-end público.
+
+
+## Deploy automático pelo GitHub
+
+O workflow `.github/workflows/deploy-sgq-d1.yml` está pronto.
+
+Cadastre em **GitHub > Settings > Secrets and variables > Actions**:
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_D1_DATABASE_ID`
+
+Depois execute manualmente **Deploy TechDall SGQ D1 API** em Actions ou faça um push em `cloudflare/sgq-api/**`.
+
+O segredo de sincronização `SHEETS_SYNC_TOKEN` deve ser configurado no Worker e repetido na propriedade `D1_SYNC_TOKEN` do Apps Script. Ele nunca deve ficar no JavaScript público do site.
