@@ -1,0 +1,52 @@
+name: Deploy TechDall SGQ D1 API
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "cloudflare/sgq-api/**"
+      - ".github/workflows/deploy-sgq-d1.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cloudflare/sgq-api
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Wrangler
+        run: npm install
+
+      - name: Inject D1 database id
+        env:
+          D1_DATABASE_ID: ${{ secrets.CLOUDFLARE_D1_DATABASE_ID }}
+        run: |
+          if [ -z "$D1_DATABASE_ID" ]; then
+            echo "CLOUDFLARE_D1_DATABASE_ID não configurado."
+            exit 1
+          fi
+          sed -i "s/REPLACE_WITH_D1_DATABASE_ID/$D1_DATABASE_ID/g" wrangler.jsonc
+
+      - name: Apply D1 schema
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler d1 execute techdall-sgq --remote --file=./schema.sql
+
+      - name: Deploy Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy
