@@ -1,0 +1,2 @@
+# Somente desenvolvimento local. Nunca commitar o arquivo .dev.vars real.
+SHEETS_SYNC_TOKEN=gere-um-segredo-longo-e-aleatorio
