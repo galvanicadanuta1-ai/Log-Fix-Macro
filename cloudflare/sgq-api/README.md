@@ -55,3 +55,6 @@ O segredo de sincronização `SHEETS_SYNC_TOKEN` deve ser configurado no Worker 
 - D1 Database ID: f86a88f8-bfd3-41ab-842f-831ae68449a3
 
 Esses identificadores não são segredos. O único Secret obrigatório no GitHub Actions para o deploy é `CLOUDFLARE_API_TOKEN`.
+
+
+Deploy trigger: 2026-10-28
