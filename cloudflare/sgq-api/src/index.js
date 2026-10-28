@@ -239,6 +239,57 @@ async function syncSheetsBatch(env, body) {
   return { ok: true, received: stmts.length, dataset };
 }
 
+
+async function markGenerated(env, body) {
+  const clientKey = text(body?.clientKey || "FIXPAR").toUpperCase();
+  const dataset = text(body?.dataset).toUpperCase();
+  const recordIds = Array.from(new Set(
+    (Array.isArray(body?.recordIds) ? body.recordIds : [])
+      .map(text)
+      .filter(Boolean)
+  ));
+  const generated = body?.generated === false ? 0 : 1;
+
+  if (!["RECEBIMENTO", "SAIDA"].includes(dataset)) {
+    throw httpError(400, "dataset inválido.");
+  }
+
+  if (!recordIds.length) {
+    return { ok: true, updated: 0, dataset, generated: Boolean(generated) };
+  }
+
+  const now = isoNow();
+  const base = env.DB.prepare(`
+    UPDATE operational_records
+    SET generated = ?,
+        version = version + 1,
+        updated_at = ?
+    WHERE client_key = ?
+      AND dataset = ?
+      AND record_id = ?
+      AND deleted = 0
+      AND generated <> ?
+  `);
+
+  const stmts = recordIds.map(recordId =>
+    base.bind(generated, now, clientKey, dataset, recordId, generated)
+  );
+
+  const results = await env.DB.batch(stmts);
+  const updated = (results || []).reduce(
+    (sum, item) => sum + Number(item?.meta?.changes || 0),
+    0
+  );
+
+  return {
+    ok: true,
+    updated,
+    received: recordIds.length,
+    dataset,
+    generated: Boolean(generated)
+  };
+}
+
 async function listRecords(env, url) {
   const clientKey = text(url.searchParams.get("client") || "FIXPAR").toUpperCase();
   const dataset = text(url.searchParams.get("dataset")).toUpperCase();
