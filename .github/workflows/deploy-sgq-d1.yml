@@ -104,14 +104,21 @@ jobs:
           set -e
           BASE="https://danuta-sgq-api.$WORKERS_DEV_SUBDOMAIN.workers.dev"
 
-          RECORDS=$(curl -fsS "$BASE/api/records?client=FIXPAR&dataset=RECEBIMENTO&limit=2")
-          echo "$RECORDS" | grep -q '"ok":true'
+          check_endpoint() {
+            NAME="$1"
+            URL="$2"
+            STATUS=$(curl -sS -o "/tmp/$NAME.json" -w "%{http_code}" "$URL")
+            echo "$NAME HTTP $STATUS"
+            if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
+              cat "/tmp/$NAME.json"
+              exit 1
+            fi
+            grep -q '"ok":true' "/tmp/$NAME.json"
+          }
 
-          HISTORY=$(curl -fsS "$BASE/api/history?client=FIXPAR&dataset=RECEBIMENTO&start=2026-10-01&end=2026-10-31&limit=2")
-          echo "$HISTORY" | grep -q '"ok":true'
-
-          PROGRAM=$(curl -fsS "$BASE/api/programacao?client=FIXPAR")
-          echo "$PROGRAM" | grep -q '"ok":true'
+          check_endpoint records "$BASE/api/records?client=FIXPAR&dataset=RECEBIMENTO&limit=2"
+          check_endpoint history "$BASE/api/history?client=FIXPAR&dataset=RECEBIMENTO&start=2026-10-01&end=2026-10-31&limit=2"
+          check_endpoint programacao "$BASE/api/programacao?client=FIXPAR"
 
       - name: Show D1 mirror counts
         env:
