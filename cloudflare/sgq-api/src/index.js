@@ -95,6 +95,10 @@ function text(v) {
   return String(v ?? "").trim();
 }
 
+function opKey(v) {
+  return text(v).toUpperCase().replace(/\s+/g, "");
+}
+
 function numberOrNull(v) {
   if (v === null || v === undefined || v === "") return null;
   if (typeof v === "number" && Number.isFinite(v)) return v;
@@ -237,8 +241,8 @@ async function listRecords(env, url) {
   let where = "client_key = ? AND dataset = ? AND deleted = 0";
 
   if (op) {
-    where += " AND op = ?";
-    params.push(op);
+    where += " AND REPLACE(UPPER(TRIM(op)), ' ', '') = ?";
+    params.push(opKey(op));
   }
 
   params.push(limit, offset);
@@ -271,10 +275,11 @@ async function getProgramacao(env, url) {
         AND dataset = 'RECEBIMENTO'
         AND deleted = 0
         AND TRIM(COALESCE(op, '')) <> ''
-      GROUP BY op
+      GROUP BY REPLACE(UPPER(TRIM(op)), ' ', '')
     ),
     saida AS (
-      SELECT DISTINCT op
+      SELECT DISTINCT
+        REPLACE(UPPER(TRIM(op)), ' ', '') AS op_key
       FROM operational_records
       WHERE client_key = ?
         AND dataset = 'SAIDA'
@@ -292,9 +297,12 @@ async function getProgramacao(env, url) {
       COALESCE(p.ok, 0) AS ok,
       COALESCE(p.encaminhado, 0) AS encaminhado
     FROM entrada e
-    LEFT JOIN saida s ON s.op = e.op
+    LEFT JOIN saida s
+      ON s.op_key = REPLACE(UPPER(TRIM(e.op)), ' ', '')
     LEFT JOIN program_states p
-      ON p.client_key = ? AND p.op = e.op
+      ON p.client_key = ?
+     AND REPLACE(UPPER(TRIM(p.op)), ' ', '') =
+         REPLACE(UPPER(TRIM(e.op)), ' ', '')
     WHERE s.op IS NULL
     ORDER BY
       CASE WHEN LOWER(COALESCE(p.status, '')) = 'urgente' THEN 0 ELSE 1 END,
