@@ -1,10 +1,11 @@
 /**
  * ============================================================
- * TECHDALL SGQ - SINCRONIZAÇÃO GOOGLE SHEETS -> CLOUDFLARE D1
+ * DANUTA SGQ - SINCRONIZAÇÃO GOOGLE SHEETS -> CLOUDFLARE D1
  * ============================================================
  * Fase 1:
  * - NÃO substitui o backend atual;
  * - edição manual na planilha envia a linha ao D1;
+ * - edição manual é enviada imediatamente via gatilho onEdit;
  * - reconciliação periódica cobre alterações feitas por scripts;
  * - carga inicial pode ser executada manualmente.
  *
@@ -34,7 +35,7 @@ function d1SyncInstalarTriggers() {
   if (!handlers.has('d1SyncReconciliarFixpar')) {
     ScriptApp.newTrigger('d1SyncReconciliarFixpar')
       .timeBased()
-      .everyMinutes(5)
+      .everyMinutes(15)
       .create();
   }
 
