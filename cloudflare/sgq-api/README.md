@@ -1,4 +1,4 @@
-# TechDall SGQ API — Fase 1 (D1 espelho)
+# Danuta SGQ API — Fase 1 (D1 espelho)
 
 Esta pasta prepara a migração do SGQ Fixpar para Cloudflare Workers + D1 sem interromper o sistema atual.
 
@@ -19,7 +19,7 @@ Esta pasta prepara a migração do SGQ Fixpar para Cloudflare Workers + D1 sem i
 
 ## Implantação Cloudflare
 
-1. Crie o D1 `techdall-sgq`.
+1. Crie o D1 `danuta-sgq`.
 2. Copie o `database_id` para `wrangler.jsonc`.
 3. Aplique `schema.sql`.
 4. Configure o segredo `SHEETS_SYNC_TOKEN` no Worker.
@@ -46,6 +46,6 @@ Cadastre em **GitHub > Settings > Secrets and variables > Actions**:
 - `CLOUDFLARE_ACCOUNT_ID`
 - `CLOUDFLARE_D1_DATABASE_ID`
 
-Depois execute manualmente **Deploy TechDall SGQ D1 API** em Actions ou faça um push em `cloudflare/sgq-api/**`.
+Depois execute manualmente **Deploy Danuta SGQ D1 API** em Actions ou faça um push em `cloudflare/sgq-api/**`.
 
 O segredo de sincronização `SHEETS_SYNC_TOKEN` deve ser configurado no Worker e repetido na propriedade `D1_SYNC_TOKEN` do Apps Script. Ele nunca deve ficar no JavaScript público do site.
