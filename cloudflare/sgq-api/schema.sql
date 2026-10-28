@@ -51,9 +51,6 @@ CREATE INDEX IF NOT EXISTS ix_operational_client_dataset_nf
 CREATE INDEX IF NOT EXISTS ix_operational_client_dataset_date
   ON operational_records(client_key, dataset, business_date);
 
-CREATE INDEX IF NOT EXISTS ix_operational_pending_date
-  ON operational_records(client_key, dataset, generated, deleted, business_date);
-
 CREATE INDEX IF NOT EXISTS ix_operational_updated_at
   ON operational_records(updated_at);
 
