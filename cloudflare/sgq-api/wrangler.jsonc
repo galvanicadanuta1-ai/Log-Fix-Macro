@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "techdall-sgq-api",
+  "name": "danuta-sgq-api",
   "main": "src/index.js",
   "compatibility_date": "2026-10-26",
   "vars": {
@@ -9,7 +9,7 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "techdall-sgq",
+      "database_name": "danuta-sgq",
       "database_id": "REPLACE_WITH_D1_DATABASE_ID"
     }
   ]
