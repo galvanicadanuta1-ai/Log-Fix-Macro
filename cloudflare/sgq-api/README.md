@@ -43,9 +43,15 @@ O workflow `.github/workflows/deploy-sgq-d1.yml` está pronto.
 Cadastre em **GitHub > Settings > Secrets and variables > Actions**:
 
 - `CLOUDFLARE_API_TOKEN`
-- `CLOUDFLARE_ACCOUNT_ID`
-- `CLOUDFLARE_D1_DATABASE_ID`
 
 Depois execute manualmente **Deploy Danuta SGQ D1 API** em Actions ou faça um push em `cloudflare/sgq-api/**`.
 
 O segredo de sincronização `SHEETS_SYNC_TOKEN` deve ser configurado no Worker e repetido na propriedade `D1_SYNC_TOKEN` do Apps Script. Ele nunca deve ficar no JavaScript público do site.
+
+
+## IDs Cloudflare da Danuta configurados
+
+- Account ID: f18eaea1c83abc8958146975896817c7
+- D1 Database ID: f86a88f8-bfd3-41ab-842f-831ae68449a3
+
+Esses identificadores não são segredos. O único Secret obrigatório no GitHub Actions para o deploy é `CLOUDFLARE_API_TOKEN`.
