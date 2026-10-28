@@ -619,6 +619,44 @@ function apiV3SalvarPdfRapidoDrive_(nomeArquivo, pdfBase64) {
   return { ok: true, fileName: file.getName(), fileId: file.getId(), url: file.getUrl() };
 }
 
+
+function apiV3MarcarGeradosD1_(pageKey, sheet, savedRows) {
+  try {
+    if (typeof d1SyncPost_ !== 'function') return false;
+
+    const cfg = getConfig_(pageKey);
+    const uidCol = cfg.headers.length + 2;
+    const rows = Array.from(new Set(
+      (savedRows || [])
+        .map(item => Number(item && item.sheetRow || 0))
+        .filter(row => row >= 3)
+    ));
+
+    if (!rows.length) return true;
+
+    const recordIds = rows
+      .map(row => String(sheet.getRange(row, uidCol).getDisplayValue() || '').trim())
+      .filter(Boolean);
+
+    if (!recordIds.length) return false;
+
+    d1SyncPost_('/sync/sheets/generated', {
+      clientKey: 'FIXPAR',
+      dataset: String(pageKey || '').toUpperCase(),
+      recordIds: recordIds,
+      generated: true
+    });
+
+    return true;
+  } catch (error) {
+    console.warn(
+      'Não foi possível marcar GERADO diretamente no D1; será feita tentativa de espelhamento completo.',
+      error
+    );
+    return false;
+  }
+}
+
 function apiV3FinalizarRelatorio_(pageKey, isoDate, linhasTela, nomeArquivo, pdfBase64, reportId) {
   const id = apiV3UidTexto_(reportId) || Utilities.getUuid();
   const propKey = API_V3_REPORT_PROP_PREFIX + id;
@@ -673,8 +711,13 @@ function apiV3FinalizarRelatorio_(pageKey, isoDate, linhasTela, nomeArquivo, pdf
     props.setProperty(propKey, JSON.stringify({ state: 'done', result: result, createdAt: pdfState.createdAt || Date.now() }));
     apiV3LimparEstadosRelatoriosAntigos_(props);
 
-    // Mantém o D1 atualizado imediatamente após a consolidação do relatório.
-    apiV3TentarEspelharOperacionalD1_(pageKey, persistencia.rows);
+    // Marca somente o estado GERADO no D1: mais rápido que reenviar cada linha completa.
+    const marcouGeradoD1 = apiV3MarcarGeradosD1_(pageKey, sheet, persistencia.rows);
+
+    // Fallback: se a marcação direta falhar, reenviamos os registros completos.
+    if (!marcouGeradoD1) {
+      apiV3TentarEspelharOperacionalD1_(pageKey, persistencia.rows);
+    }
 
     return result;
   } finally {
