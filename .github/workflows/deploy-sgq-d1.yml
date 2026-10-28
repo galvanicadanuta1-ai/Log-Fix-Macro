@@ -140,6 +140,24 @@ jobs:
           check_endpoint history "$BASE/api/history?client=FIXPAR&dataset=RECEBIMENTO&start=2026-10-01&end=2026-10-31&limit=2"
           check_endpoint programacao "$BASE/api/programacao?client=FIXPAR"
 
+      - name: Smoke test generated marker
+        env:
+          SHEETS_SYNC_TOKEN: ${{ secrets.SHEETS_SYNC_TOKEN }}
+        run: |
+          set -e
+          BASE="https://danuta-sgq-api.$WORKERS_DEV_SUBDOMAIN.workers.dev"
+          STATUS=$(curl -sS -o /tmp/generated-marker.json -w "%{http_code}" \
+            -X POST "$BASE/sync/sheets/generated" \
+            -H "Authorization: Bearer $SHEETS_SYNC_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data '{"clientKey":"FIXPAR","dataset":"RECEBIMENTO","recordIds":["row-1791551479955-49"],"generated":true}')
+          echo "generated marker HTTP $STATUS"
+          cat /tmp/generated-marker.json
+          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
+            exit 1
+          fi
+          grep -q '"ok":true' /tmp/generated-marker.json
+
       - name: Show D1 mirror counts
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
