@@ -77,19 +77,6 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: "f18eaea1c83abc8958146975896817c7"
         run: npx wrangler deploy
 
-      - name: Configure Sheets sync secret
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: "f18eaea1c83abc8958146975896817c7"
-          SHEETS_SYNC_TOKEN: ${{ secrets.SHEETS_SYNC_TOKEN }}
-        run: |
-          if [ -z "$SHEETS_SYNC_TOKEN" ]; then
-            echo "SHEETS_SYNC_TOKEN ainda não configurado; sincronização Sheets permanece desativada."
-          else
-            printf '%s' "$SHEETS_SYNC_TOKEN" | npx wrangler secret put SHEETS_SYNC_TOKEN
-          fi
-
-
       - name: Verify Worker health
         run: |
           set -e
