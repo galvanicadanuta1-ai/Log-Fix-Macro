@@ -11,7 +11,7 @@ export default {
 
       if (url.pathname === "/health" && request.method === "GET") {
         const db = await env.DB.prepare("SELECT 1 AS ok").first();
-        return json({ ok: true, service: "techdall-sgq-api", d1: db?.ok === 1 });
+        return json({ ok: true, service: "danuta-sgq-api", d1: db?.ok === 1 });
       }
 
       if (url.pathname === "/sync/sheets/batch" && request.method === "POST") {
