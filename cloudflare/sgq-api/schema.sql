@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS operational_records (
   source TEXT NOT NULL DEFAULT 'GOOGLE_SHEETS',
   version INTEGER NOT NULL DEFAULT 1,
   updated_at TEXT NOT NULL,
+  generated INTEGER NOT NULL DEFAULT 0,
   deleted INTEGER NOT NULL DEFAULT 0,
   raw_json TEXT
 );
@@ -49,6 +50,9 @@ CREATE INDEX IF NOT EXISTS ix_operational_client_dataset_nf
 
 CREATE INDEX IF NOT EXISTS ix_operational_client_dataset_date
   ON operational_records(client_key, dataset, business_date);
+
+CREATE INDEX IF NOT EXISTS ix_operational_pending_date
+  ON operational_records(client_key, dataset, generated, deleted, business_date);
 
 CREATE INDEX IF NOT EXISTS ix_operational_updated_at
   ON operational_records(updated_at);
