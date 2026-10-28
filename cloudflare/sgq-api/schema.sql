@@ -29,9 +29,10 @@ CREATE TABLE IF NOT EXISTS operational_records (
   raw_json TEXT
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS ux_operational_sheet_row
-  ON operational_records(client_key, dataset, sheet_row)
-  WHERE sheet_row IS NOT NULL;
+DROP INDEX IF EXISTS ux_operational_sheet_row;
+
+CREATE INDEX IF NOT EXISTS ix_operational_sheet_row
+  ON operational_records(client_key, dataset, sheet_row);
 
 CREATE INDEX IF NOT EXISTS ix_operational_client_dataset_op
   ON operational_records(client_key, dataset, op);
