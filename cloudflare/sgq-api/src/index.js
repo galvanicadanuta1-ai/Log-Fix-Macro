@@ -504,7 +504,7 @@ async function getProgramacao(env, url) {
       ON p.client_key = ?
      AND REPLACE(UPPER(TRIM(p.op)), ' ', '') =
          REPLACE(UPPER(TRIM(e.op)), ' ', '')
-    WHERE s.op IS NULL
+    WHERE s.op_key IS NULL
     ORDER BY
       CASE WHEN LOWER(COALESCE(p.status, '')) = 'urgente' THEN 0 ELSE 1 END,
       e.data_entrada ASC,
