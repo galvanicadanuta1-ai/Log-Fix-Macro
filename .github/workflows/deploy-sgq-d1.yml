@@ -91,9 +91,8 @@ jobs:
           set -e
           APPS_SCRIPT_URL="https://script.google.com/macros/s/AKfycbwBimN8eXQFB3CkV-xv557oOiHjC8Htce9yUAiKjJhayao7-WXyxjOaiNHqm7NX4P3G8Q/exec"
           STATUS=$(curl -sS -L -o /tmp/apps-script-health.json -w "%{http_code}" \
-            -X POST "$APPS_SCRIPT_URL" \
-            -H "Content-Type: application/json" \
-            --data '{"method":"healthCheck","args":[]}')
+            --data-binary '{"method":"healthCheck","args":[]}' \
+            "$APPS_SCRIPT_URL")
           echo "Apps Script HTTP $STATUS"
           cat /tmp/apps-script-health.json
           if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
