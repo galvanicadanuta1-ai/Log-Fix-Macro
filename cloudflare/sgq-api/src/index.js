@@ -1,3 +1,4 @@
+// deploy-check: d1-read-v2
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
 
 export default {
