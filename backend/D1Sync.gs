@@ -100,6 +100,7 @@ function d1SyncEnviarOperacional_(sheet, dataset, startRow, numRows) {
   );
   if (to < from) return;
 
+  const statusCol = cfg.headers.length + 1;
   const uidCol = cfg.headers.length + 2;
   const width = Math.max(cfg.headers.length, uidCol);
   const qtd = to - from + 1;
@@ -127,6 +128,9 @@ function d1SyncEnviarOperacional_(sheet, dataset, startRow, numRows) {
     const record = dataset === 'RECEBIMENTO'
       ? d1SyncMapRecebimento_(sheetRow, uid, r, d)
       : d1SyncMapSaida_(sheetRow, uid, r, d);
+
+    record.generated =
+      String(d[statusCol - 1] || '').trim().toUpperCase() === 'GERADO';
 
     rows.push(record);
   }
