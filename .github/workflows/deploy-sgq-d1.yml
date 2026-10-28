@@ -86,6 +86,23 @@ jobs:
           echo "$BODY" | grep -q '"ok":true'
           echo "$BODY" | grep -q '"d1":true'
 
+      - name: Verify Apps Script D1 mirror
+        run: |
+          set -e
+          APPS_SCRIPT_URL="https://script.google.com/macros/s/AKfycbwBimN8eXQFB3CkV-xv557oOiHjC8Htce9yUAiKjJhayao7-WXyxjOaiNHqm7NX4P3G8Q/exec"
+          STATUS=$(curl -sS -L -o /tmp/apps-script-health.json -w "%{http_code}" \
+            -X POST "$APPS_SCRIPT_URL" \
+            -H "Content-Type: application/json" \
+            --data '{"method":"healthCheck","args":[]}')
+          echo "Apps Script HTTP $STATUS"
+          cat /tmp/apps-script-health.json
+          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
+            exit 1
+          fi
+          grep -q '"api":"SGQ_FIXPAR_V3"' /tmp/apps-script-health.json
+          grep -q '"d1Mirror":true' /tmp/apps-script-health.json
+          grep -q '"d1SyncConfigured":true' /tmp/apps-script-health.json
+
       - name: Smoke test D1 read endpoints
         run: |
           set -e
