@@ -150,7 +150,7 @@ jobs:
             -X POST "$BASE/sync/sheets/generated" \
             -H "Authorization: Bearer $SHEETS_SYNC_TOKEN" \
             -H "Content-Type: application/json" \
-            --data '{"clientKey":"FIXPAR","dataset":"RECEBIMENTO","recordIds":["row-1791551479955-49"],"generated":true}')
+            --data '{"clientKey":"FIXPAR","dataset":"RECEBIMENTO","recordIds":["__sgq_smoke_nonexistent__"],"generated":true}')
           echo "generated marker HTTP $STATUS"
           cat /tmp/generated-marker.json
           if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
