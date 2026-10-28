@@ -1,13 +1,13 @@
 {
-  "name": "techdall-sgq-api",
+  "name": "danuta-sgq-api",
   "private": true,
   "version": "0.1.0",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "db:create": "wrangler d1 create techdall-sgq",
-    "db:migrate:remote": "wrangler d1 execute techdall-sgq --remote --file=./schema.sql",
-    "db:migrate:local": "wrangler d1 execute techdall-sgq --local --file=./schema.sql"
+    "db:create": "wrangler d1 create danuta-sgq",
+    "db:migrate:remote": "wrangler d1 execute danuta-sgq --remote --file=./schema.sql",
+    "db:migrate:local": "wrangler d1 execute danuta-sgq --local --file=./schema.sql"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"
