@@ -334,6 +334,9 @@ async function garantirBackendV3_() {
       if (!result || result.api !== 'SGQ_FIXPAR_V3') {
         throw new Error('Backend diferente da versão SGQ_FIXPAR_V3.');
       }
+      if (result.d1Mirror !== true || result.d1SyncConfigured !== true) {
+        throw new Error('Backend V3 ainda não está com o espelhamento D1 ativo.');
+      }
       return result;
     })
     .catch(error => {
