@@ -12,7 +12,7 @@ const D1_API_URL = 'https://danuta-sgq-api.galvanicadanuta1.workers.dev';
  * estiver publicado no Apps Script.
  */
 const D1_FEATURES = {
-  operationalReads: true,
+  operationalReads: false,
   historyReads: true,
   programacaoReads: true
 };
