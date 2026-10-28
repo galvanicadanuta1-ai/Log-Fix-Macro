@@ -1192,3 +1192,234 @@
  #historyScreen .history-search-wrap .history-search-clear:hover{background:#e5edf5!important;color:#142c46!important;}
  #programacaoSgqScreen .programacao-search-input::-webkit-search-cancel-button{-webkit-appearance:none;}
 }
+
+
+/* ============================================================
+   EXCEL-LIKE GRID EXPERIENCE
+   Recebimento / Saída / Históricos
+   ============================================================ */
+
+/* Mais legível e mais próximo de uma planilha de desktop. */
+#systemScreen #grid thead th,
+#historyScreen .history-table thead th {
+  text-align: center !important;
+  vertical-align: middle !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: #05070a !important;
+}
+
+#systemScreen #grid tbody td,
+#historyScreen .history-table tbody td {
+  text-align: center !important;
+  vertical-align: middle !important;
+  font-size: 14.5px !important;
+  color: #05070a !important;
+}
+
+#systemScreen #grid .cell-input,
+#historyScreen .history-edit-input {
+  text-align: center !important;
+  font-size: 14.5px !important;
+  color: #05070a !important;
+  font-weight: 500;
+}
+
+#historyScreen .history-card .history-table th {
+  font-size: 13px !important;
+}
+
+#historyScreen .history-card .history-table td {
+  font-size: 14px !important;
+  text-align: center !important;
+}
+
+#systemScreen #grid thead th,
+#historyScreen .history-table thead th {
+  cursor: cell;
+}
+
+#systemScreen #grid tbody td,
+#historyScreen .history-table tbody td:not(.edit-col) {
+  cursor: cell;
+}
+
+/* Seleção por mouse/teclado. */
+#systemScreen #grid tbody td.excel-cell-selected,
+#historyScreen .history-table tbody td.excel-cell-selected {
+  background: #d1d8df !important;
+}
+
+#systemScreen #grid tbody td.excel-cell-selected .cell-input,
+#historyScreen .history-table tbody td.excel-cell-selected .history-edit-input {
+  background: transparent !important;
+}
+
+#systemScreen #grid tbody td.excel-cell-active,
+#historyScreen .history-table tbody td.excel-cell-active {
+  background: #b4c0cb !important;
+  box-shadow: inset 0 0 0 2px #52687d !important;
+}
+
+#systemScreen #grid thead th.excel-header-selected,
+#historyScreen .history-table thead th.excel-header-selected {
+  background: #b9c4ce !important;
+  color: #05070a !important;
+  box-shadow: inset 0 -3px 0 #52687d !important;
+}
+
+.excel-selection-top {
+  border-top: 2px solid #52687d !important;
+}
+
+.excel-selection-bottom {
+  border-bottom: 2px solid #52687d !important;
+}
+
+.excel-selection-left {
+  border-left: 2px solid #52687d !important;
+}
+
+.excel-selection-right {
+  border-right: 2px solid #52687d !important;
+}
+
+body.excel-grid-selecting,
+body.excel-grid-selecting * {
+  user-select: none !important;
+}
+
+/* Barra pequena de ação, sem ocupar a barra principal. */
+.excel-selection-popover {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 99998;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 36px);
+  padding: 8px 9px 8px 12px;
+  border: 1px solid #8796a5;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #05070a;
+  box-shadow: 0 6px 22px rgba(0,0,0,.18);
+}
+
+.excel-selection-popover.show {
+  display: flex;
+}
+
+.excel-selection-info {
+  min-width: 108px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.excel-selection-popover button {
+  height: 30px;
+  border: 1px solid #52687d;
+  border-radius: 5px;
+  background: #f4f6f8;
+  color: #111827;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#excelSelectionCopy {
+  padding: 0 11px;
+}
+
+#excelSelectionClear {
+  width: 30px;
+  padding: 0;
+  font-size: 17px;
+}
+
+.excel-selection-popover button:hover {
+  background: #e6ebef;
+}
+
+/* Tema escuro: texto branco e seleção mais escura. */
+html[data-sgq-theme="dark"] #systemScreen #grid thead th,
+html[data-sgq-theme="dark"] #historyScreen .history-table thead th,
+html[data-sgq-theme="dark"] #systemScreen #grid tbody td,
+html[data-sgq-theme="dark"] #historyScreen .history-table tbody td,
+html[data-sgq-theme="dark"] #systemScreen #grid .cell-input,
+html[data-sgq-theme="dark"] #historyScreen .history-edit-input {
+  color: #ffffff !important;
+}
+
+html[data-sgq-theme="dark"] #systemScreen #grid tbody td.excel-cell-selected,
+html[data-sgq-theme="dark"] #historyScreen .history-table tbody td.excel-cell-selected {
+  background: #2c3948 !important;
+  color: #ffffff !important;
+}
+
+html[data-sgq-theme="dark"] #systemScreen #grid tbody td.excel-cell-active,
+html[data-sgq-theme="dark"] #historyScreen .history-table tbody td.excel-cell-active {
+  background: #405166 !important;
+  box-shadow: inset 0 0 0 2px #91a8bf !important;
+}
+
+html[data-sgq-theme="dark"] #systemScreen #grid thead th.excel-header-selected,
+html[data-sgq-theme="dark"] #historyScreen .history-table thead th.excel-header-selected {
+  background: #334355 !important;
+  color: #ffffff !important;
+  box-shadow: inset 0 -3px 0 #91a8bf !important;
+}
+
+html[data-sgq-theme="dark"] .excel-selection-top {
+  border-top-color: #91a8bf !important;
+}
+
+html[data-sgq-theme="dark"] .excel-selection-bottom {
+  border-bottom-color: #91a8bf !important;
+}
+
+html[data-sgq-theme="dark"] .excel-selection-left {
+  border-left-color: #91a8bf !important;
+}
+
+html[data-sgq-theme="dark"] .excel-selection-right {
+  border-right-color: #91a8bf !important;
+}
+
+html[data-sgq-theme="dark"] .excel-selection-popover {
+  background: #18222d;
+  color: #ffffff;
+  border-color: #526173;
+}
+
+html[data-sgq-theme="dark"] .excel-selection-popover button {
+  background: #243243;
+  color: #ffffff;
+  border-color: #66788b;
+}
+
+html[data-sgq-theme="dark"] .excel-selection-popover button:hover {
+  background: #314357;
+}
+
+/* No mobile mantemos a leitura em cards, mas valores seguem centralizados. */
+@media (max-width: 800px) {
+  #systemScreen #grid .cell-input,
+  #historyScreen .history-table tbody td,
+  #historyScreen .history-edit-input {
+    font-size: 13.5px !important;
+    text-align: center !important;
+  }
+
+  .excel-selection-popover {
+    right: 8px;
+    bottom: 8px;
+    max-width: calc(100vw - 16px);
+  }
+
+  .excel-selection-info {
+    display: none;
+  }
+}
