@@ -31,6 +31,16 @@ export default {
         return cors(json(result), request, env);
       }
 
+      if (url.pathname === "/api/history" && request.method === "GET") {
+        const result = await getHistory(env, url);
+        return cors(json(result), request, env);
+      }
+
+      if (url.pathname === "/api/suggestions" && request.method === "GET") {
+        const result = await getSuggestions(env, url);
+        return cors(json(result), request, env);
+      }
+
       return cors(json({ ok: false, error: "Rota não encontrada." }, 404), request, env);
     } catch (error) {
       const status = Number(error?.status || 500);
@@ -230,7 +240,10 @@ async function listRecords(env, url) {
   const clientKey = text(url.searchParams.get("client") || "FIXPAR").toUpperCase();
   const dataset = text(url.searchParams.get("dataset")).toUpperCase();
   const op = text(url.searchParams.get("op"));
-  const limit = Math.min(Math.max(Number(url.searchParams.get("limit") || 100), 1), 500);
+  const date = text(url.searchParams.get("date"));
+  const startDate = text(url.searchParams.get("start"));
+  const endDate = text(url.searchParams.get("end"));
+  const limit = Math.min(Math.max(Number(url.searchParams.get("limit") || 100), 1), 1000);
   const offset = Math.max(Number(url.searchParams.get("offset") || 0), 0);
 
   if (!["RECEBIMENTO", "SAIDA"].includes(dataset)) {
@@ -245,17 +258,205 @@ async function listRecords(env, url) {
     params.push(opKey(op));
   }
 
+  if (date) {
+    where += " AND business_date = ?";
+    params.push(date);
+  } else {
+    if (startDate) {
+      where += " AND business_date >= ?";
+      params.push(startDate);
+    }
+    if (endDate) {
+      where += " AND business_date <= ?";
+      params.push(endDate);
+    }
+  }
+
   params.push(limit, offset);
 
   const result = await env.DB.prepare(`
     SELECT *
     FROM operational_records
     WHERE ${where}
-    ORDER BY business_date DESC, sheet_row DESC
+    ORDER BY business_date ASC, sheet_row ASC
     LIMIT ? OFFSET ?
   `).bind(...params).all();
 
   return { ok: true, rows: result.results || [], limit, offset };
+}
+
+function dateBr(iso) {
+  const value = text(iso);
+  const m = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : value;
+}
+
+function valueText(v) {
+  return v === null || v === undefined ? "" : String(v);
+}
+
+function recordValues(row, dataset) {
+  if (dataset === "RECEBIMENTO") {
+    return [
+      dateBr(row.business_date),
+      valueText(row.op),
+      row.qtd_caixas ?? "",
+      row.qtd_conteiner ?? "",
+      row.peso_nf ?? "",
+      row.peso ?? "",
+      row.diferenca ?? "",
+      row.diferenca_pct === null || row.diferenca_pct === undefined ? "" : valueText(row.diferenca_pct) + "%",
+      valueText(row.cor),
+      valueText(row.nota_fiscal),
+      valueText(row.nota_fiscal_caixa),
+      valueText(row.processo)
+    ];
+  }
+
+  return [
+    dateBr(row.business_date),
+    valueText(row.op),
+    row.qtd_caixas ?? "",
+    row.qtd_conteiner ?? "",
+    row.peso ?? "",
+    valueText(row.nota_fiscal),
+    valueText(row.nota_fiscal_caixa),
+    valueText(row.anotacao)
+  ];
+}
+
+function historyHeaders(dataset) {
+  return dataset === "RECEBIMENTO"
+    ? ["Data","OP","Qtd. Caixas","Qtd. Contêiner","Peso NF. Fixpar","Peso Danuta","Diferença","Diferença em %","Cor","Nota Fiscal","Nota Fiscal de Caixa","Processo"]
+    : ["Data","OP","Caixas","Contêiner","Peso","Nota fiscal","Nota fiscal de caixa","Anotação Fixpar"];
+}
+
+async function getHistory(env, url) {
+  const clientKey = text(url.searchParams.get("client") || "FIXPAR").toUpperCase();
+  const dataset = text(url.searchParams.get("dataset")).toUpperCase();
+  const startDate = text(url.searchParams.get("start"));
+  const endDate = text(url.searchParams.get("end"));
+  const q = text(url.searchParams.get("q"));
+  const offset = Math.max(Number(url.searchParams.get("offset") || 0), 0);
+  const limit = Math.min(Math.max(Number(url.searchParams.get("limit") || 60), 1), 5000);
+
+  if (!["RECEBIMENTO", "SAIDA"].includes(dataset)) {
+    throw httpError(400, "dataset inválido.");
+  }
+
+  const params = [clientKey, dataset];
+  let where = "client_key = ? AND dataset = ? AND deleted = 0";
+
+  if (startDate) {
+    where += " AND business_date >= ?";
+    params.push(startDate);
+  }
+  if (endDate) {
+    where += " AND business_date <= ?";
+    params.push(endDate);
+  }
+
+  if (q) {
+    const like = "%" + q.toUpperCase() + "%";
+    where += ` AND (
+      UPPER(COALESCE(op,'')) LIKE ? OR
+      UPPER(COALESCE(cor,'')) LIKE ? OR
+      UPPER(COALESCE(nota_fiscal,'')) LIKE ? OR
+      UPPER(COALESCE(nota_fiscal_caixa,'')) LIKE ? OR
+      UPPER(COALESCE(processo,'')) LIKE ? OR
+      UPPER(COALESCE(anotacao,'')) LIKE ?
+    )`;
+    params.push(like, like, like, like, like, like);
+  }
+
+  const count = await env.DB.prepare(`
+    SELECT COUNT(*) AS total
+    FROM operational_records
+    WHERE ${where}
+  `).bind(...params).first();
+
+  const result = await env.DB.prepare(`
+    SELECT *
+    FROM operational_records
+    WHERE ${where}
+    ORDER BY business_date ASC, sheet_row ASC
+    LIMIT ? OFFSET ?
+  `).bind(...params, limit, offset).all();
+
+  const total = Number(count?.total || 0);
+  const nextOffset = offset + limit < total ? offset + limit : null;
+
+  return {
+    ok: true,
+    rows: (result.results || []).map(row => ({
+      historyRow: Number(row.sheet_row || 0),
+      sourceRow: Number(row.sheet_row || 0),
+      recordId: row.record_id,
+      values: recordValues(row, dataset)
+    })),
+    headers: historyHeaders(dataset),
+    title: dataset === "RECEBIMENTO" ? "Histórico Recebimento" : "Histórico Saída",
+    total,
+    offset,
+    nextOffset,
+    hasMore: nextOffset !== null,
+    source: "CLOUDFLARE_D1"
+  };
+}
+
+async function getSuggestions(env, url) {
+  const clientKey = text(url.searchParams.get("client") || "FIXPAR").toUpperCase();
+  const dataset = text(url.searchParams.get("dataset")).toUpperCase();
+  const startDate = text(url.searchParams.get("start"));
+  const endDate = text(url.searchParams.get("end"));
+  const q = text(url.searchParams.get("q"));
+
+  if (!["RECEBIMENTO", "SAIDA"].includes(dataset) || q.length < 2) {
+    return { ok: true, rows: [] };
+  }
+
+  const like = "%" + q.toUpperCase() + "%";
+  const params = [clientKey, dataset];
+  let dateWhere = "";
+  if (startDate) {
+    dateWhere += " AND business_date >= ?";
+    params.push(startDate);
+  }
+  if (endDate) {
+    dateWhere += " AND business_date <= ?";
+    params.push(endDate);
+  }
+
+  const baseParams = params.slice();
+  const result = await env.DB.prepare(`
+    SELECT type, value
+    FROM (
+      SELECT 'OP' AS type, op AS value, 1 AS ord
+      FROM operational_records
+      WHERE client_key = ? AND dataset = ? AND deleted = 0 ${dateWhere}
+        AND UPPER(COALESCE(op,'')) LIKE ?
+      UNION
+      SELECT 'NF' AS type, nota_fiscal AS value, 2 AS ord
+      FROM operational_records
+      WHERE client_key = ? AND dataset = ? AND deleted = 0 ${dateWhere}
+        AND UPPER(COALESCE(nota_fiscal,'')) LIKE ?
+      UNION
+      SELECT 'Cor' AS type, cor AS value, 3 AS ord
+      FROM operational_records
+      WHERE client_key = ? AND dataset = ? AND deleted = 0 ${dateWhere}
+        AND UPPER(COALESCE(cor,'')) LIKE ?
+    )
+    WHERE TRIM(COALESCE(value,'')) <> ''
+    GROUP BY type, value
+    ORDER BY ord, value
+    LIMIT 12
+  `).bind(
+    ...baseParams, like,
+    ...baseParams, like,
+    ...baseParams, like
+  ).all();
+
+  return { ok: true, rows: result.results || [] };
 }
 
 async function getProgramacao(env, url) {
