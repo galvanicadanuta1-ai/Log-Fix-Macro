@@ -99,6 +99,20 @@ jobs:
           echo "$BODY" | grep -q '"ok":true'
           echo "$BODY" | grep -q '"d1":true'
 
+      - name: Smoke test D1 read endpoints
+        run: |
+          set -e
+          BASE="https://danuta-sgq-api.$WORKERS_DEV_SUBDOMAIN.workers.dev"
+
+          RECORDS=$(curl -fsS "$BASE/api/records?client=FIXPAR&dataset=RECEBIMENTO&limit=2")
+          echo "$RECORDS" | grep -q '"ok":true'
+
+          HISTORY=$(curl -fsS "$BASE/api/history?client=FIXPAR&dataset=RECEBIMENTO&start=2026-10-01&end=2026-10-31&limit=2")
+          echo "$HISTORY" | grep -q '"ok":true'
+
+          PROGRAM=$(curl -fsS "$BASE/api/programacao?client=FIXPAR")
+          echo "$PROGRAM" | grep -q '"ok":true'
+
       - name: Show D1 mirror counts
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
