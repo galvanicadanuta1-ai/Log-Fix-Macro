@@ -68,7 +68,7 @@ function carregar() {
     .withSuccessHandler(result => {
 
       rows = (result.rows || []).map(item => ({
-        id: criarId(),
+        id: item && item.clientId ? String(item.clientId) : criarId(),
         sheetRow: item.sheetRow,
         values: normalizeValues(item.values),
         saving: false
