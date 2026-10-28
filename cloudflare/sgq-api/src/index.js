@@ -22,6 +22,13 @@ export default {
         return json(result);
       }
 
+      if (url.pathname === "/sync/sheets/generated" && request.method === "POST") {
+        requireSyncAuth(request, env);
+        const body = await readJson(request);
+        const result = await markGenerated(env, body);
+        return json(result);
+      }
+
       if (url.pathname === "/api/records" && request.method === "GET") {
         const result = await listRecords(env, url);
         return cors(json(result), request, env);
