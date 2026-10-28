@@ -1,4 +1,4 @@
--- TechDall SGQ - Cloudflare D1
+-- Danuta SGQ - Cloudflare D1
 -- Fase 1: espelho seguro das planilhas atuais.
 -- D1 ainda NAO substitui o Apps Script nesta fase.
 
@@ -36,6 +36,16 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_operational_sheet_row
 CREATE INDEX IF NOT EXISTS ix_operational_client_dataset_op
   ON operational_records(client_key, dataset, op);
 
+CREATE INDEX IF NOT EXISTS ix_operational_client_dataset_op_norm
+  ON operational_records(
+    client_key,
+    dataset,
+    REPLACE(UPPER(TRIM(op)), ' ', '')
+  );
+
+CREATE INDEX IF NOT EXISTS ix_operational_client_dataset_nf
+  ON operational_records(client_key, dataset, nota_fiscal);
+
 CREATE INDEX IF NOT EXISTS ix_operational_client_dataset_date
   ON operational_records(client_key, dataset, business_date);
 
@@ -57,6 +67,12 @@ CREATE TABLE IF NOT EXISTS program_states (
 
 CREATE INDEX IF NOT EXISTS ix_program_states_updated_at
   ON program_states(updated_at);
+
+CREATE INDEX IF NOT EXISTS ix_program_states_op_norm
+  ON program_states(
+    client_key,
+    REPLACE(UPPER(TRIM(op)), ' ', '')
+  );
 
 CREATE TABLE IF NOT EXISTS sync_events (
   event_id TEXT PRIMARY KEY,
