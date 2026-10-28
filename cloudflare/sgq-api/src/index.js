@@ -181,9 +181,9 @@ async function syncSheetsBatch(env, body) {
       record_id, client_key, dataset, sheet_row, business_date, op,
       qtd_caixas, qtd_conteiner, peso_nf, peso, diferenca, diferenca_pct,
       cor, nota_fiscal, nota_fiscal_caixa, processo, anotacao,
-      source, version, updated_at, deleted, raw_json
+      source, version, updated_at, generated, deleted, raw_json
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-              'GOOGLE_SHEETS', 1, ?, ?, ?)
+              'GOOGLE_SHEETS', 1, ?, ?, ?, ?)
     ON CONFLICT(record_id) DO UPDATE SET
       sheet_row = excluded.sheet_row,
       business_date = excluded.business_date,
@@ -202,6 +202,7 @@ async function syncSheetsBatch(env, body) {
       source = excluded.source,
       version = operational_records.version + 1,
       updated_at = excluded.updated_at,
+      generated = excluded.generated,
       deleted = excluded.deleted,
       raw_json = excluded.raw_json
     WHERE operational_records.raw_json <> excluded.raw_json
@@ -229,6 +230,7 @@ async function syncSheetsBatch(env, body) {
       text(row.processo),
       text(row.anotacao),
       text(row.updatedAt) || now,
+      row.generated ? 1 : 0,
       row.deleted ? 1 : 0,
       JSON.stringify({ ...row, updatedAt: undefined })
     ));
@@ -252,7 +254,7 @@ async function listRecords(env, url) {
   }
 
   const params = [clientKey, dataset];
-  let where = "client_key = ? AND dataset = ? AND deleted = 0";
+  let where = "client_key = ? AND dataset = ? AND deleted = 0 AND generated = 0";
 
   if (op) {
     where += " AND REPLACE(UPPER(TRIM(op)), ' ', '') = ?";
