@@ -43,7 +43,7 @@ function executarMetodoApi_(method, args) {
     case 'healthCheck':
       return apiV3HealthCheck_();
     case 'carregarDados':
-      return carregarDados.apply(null, args);
+      return apiV3CarregarDadosComUid_.apply(null, args);
     case 'salvarLinha':
       return apiV3SalvarLinha_.apply(null, args);
     case 'salvarLinhasEmLote':
@@ -60,6 +60,8 @@ function executarMetodoApi_(method, args) {
       return buscarSugestoesHistorico.apply(null, args);
     case 'editarHistorico':
       return apiV3EditarHistorico_.apply(null, args);
+    case 'editarHistoricoPorSourceRow':
+      return apiV3EditarHistoricoPorSourceRow_.apply(null, args);
     case 'gerarRelatorio':
       return gerarRelatorio.apply(null, args);
     case 'gerarRelatorioHistorico':
@@ -71,7 +73,7 @@ function executarMetodoApi_(method, args) {
     case 'carregarProgramacaoSgq':
       return carregarProgramacaoSgq.apply(null, args);
     case 'salvarProgramacaoSgq':
-      return salvarProgramacaoSgq.apply(null, args);
+      return apiV3SalvarProgramacaoComD1_.apply(null, args);
     default:
       throw new Error('Método da API não permitido: ' + method);
   }
@@ -91,6 +93,161 @@ function apiV3HealthCheck_() {
     historicoSaida: Boolean(ss.getSheetByName(cfgSaida.historySheetName)),
     conciliacao: Boolean(ss.getSheetByName('Conciliação OP'))
   };
+}
+
+
+function apiV3CarregarDadosComUid_(pageKey, isoDate) {
+  const result = carregarDados(pageKey, isoDate) || {};
+  const cfg = getConfig_(pageKey);
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(cfg.sheetName);
+  const uidCol = cfg.headers.length + 2;
+  const uidMap = {};
+
+  if (sheet && sheet.getLastRow() >= 3) {
+    const values = sheet.getRange(3, uidCol, sheet.getLastRow() - 2, 1).getDisplayValues();
+    values.forEach((row, index) => {
+      const uid = String(row[0] || '').trim();
+      if (uid) uidMap[index + 3] = uid;
+    });
+  }
+
+  result.rows = (Array.isArray(result.rows) ? result.rows : []).map(item => {
+    const row = Number(item && item.sheetRow || 0);
+    return Object.assign({}, item, {
+      clientId: row && uidMap[row] ? uidMap[row] : String(item && item.clientId || '')
+    });
+  });
+
+  return result;
+}
+
+function apiV3AgruparLinhasContiguas_(rowsList) {
+  const rows = Array.from(new Set(
+    (rowsList || []).map(Number).filter(row => row >= 3)
+  )).sort((a, b) => a - b);
+
+  const groups = [];
+  let start = null;
+  let previous = null;
+
+  rows.forEach(row => {
+    if (start === null) {
+      start = row;
+      previous = row;
+      return;
+    }
+    if (row === previous + 1) {
+      previous = row;
+      return;
+    }
+    groups.push({ start: start, count: previous - start + 1 });
+    start = row;
+    previous = row;
+  });
+
+  if (start !== null) {
+    groups.push({ start: start, count: previous - start + 1 });
+  }
+
+  return groups;
+}
+
+function apiV3TentarEspelharOperacionalD1_(pageKey, savedRows) {
+  try {
+    if (typeof d1SyncEnviarOperacional_ !== 'function') return;
+    const cfg = getConfig_(pageKey);
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(cfg.sheetName);
+    if (!sheet) return;
+
+    const groups = apiV3AgruparLinhasContiguas_(
+      (savedRows || []).map(item => item && item.sheetRow)
+    );
+
+    groups.forEach(group => {
+      d1SyncEnviarOperacional_(sheet, pageKey, group.start, group.count);
+    });
+  } catch (error) {
+    console.warn('Espelhamento D1 pendente; reconciliação automática fará nova tentativa.', error);
+  }
+}
+
+function apiV3TentarExcluirOperacionalD1_(pageKey, recordId, sheetRow) {
+  try {
+    if (!recordId || typeof d1SyncEnviarEmLotes_ !== 'function') return;
+    d1SyncEnviarEmLotes_(pageKey, [{
+      recordId: String(recordId),
+      sheetRow: Number(sheetRow || 0) || null,
+      businessDate: '',
+      op: '',
+      qtdCaixas: null,
+      qtdConteiner: null,
+      pesoNf: null,
+      peso: null,
+      diferenca: null,
+      diferencaPct: null,
+      cor: '',
+      notaFiscal: '',
+      notaFiscalCaixa: '',
+      processo: '',
+      anotacao: '',
+      updatedAt: new Date().toISOString(),
+      deleted: true
+    }], 150);
+  } catch (error) {
+    console.warn('Exclusão D1 pendente; reconciliação automática fará nova tentativa.', error);
+  }
+}
+
+function apiV3EditarHistoricoPorSourceRow_(pageKey, sourceRow, novosValores) {
+  const cfg = getConfig_(pageKey);
+  const hist = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(cfg.historySheetName);
+  const source = Number(sourceRow || 0);
+
+  if (!hist || source < 3) {
+    throw new Error('Registro de origem inválido para edição.');
+  }
+
+  const sourceCol = cfg.headers.length + 1;
+  const lastRow = hist.getLastRow();
+  let historyRow = null;
+
+  if (lastRow >= 3) {
+    const values = hist.getRange(3, sourceCol, lastRow - 2, 1).getDisplayValues();
+    for (let i = 0; i < values.length; i++) {
+      if (Number(values[i][0] || 0) === source) {
+        historyRow = i + 3;
+        break;
+      }
+    }
+  }
+
+  if (!historyRow) {
+    throw new Error('Não foi encontrado o histórico correspondente ao registro.');
+  }
+
+  const result = apiV3EditarHistorico_(pageKey, historyRow, novosValores);
+  apiV3TentarEspelharOperacionalD1_(pageKey, [{ sheetRow: source }]);
+  return result;
+}
+
+function apiV3SalvarProgramacaoComD1_(op, status, ok, encaminhado) {
+  const result = salvarProgramacaoSgq(op, status, ok, encaminhado);
+
+  try {
+    if (typeof d1SyncEnviarEmLotes_ === 'function') {
+      d1SyncEnviarEmLotes_('PROGRAMACAO', [{
+        op: String(op == null ? '' : op).trim(),
+        status: String(status == null ? '' : status).trim(),
+        ok: Boolean(ok),
+        encaminhado: Boolean(encaminhado),
+        updatedAt: new Date().toISOString()
+      }], 150);
+    }
+  } catch (error) {
+    console.warn('Programação salva no Sheets; espelhamento D1 ficará para a reconciliação.', error);
+  }
+
+  return result;
 }
 
 function apiConsultarHistoricoPaginado_(pageKey, dataInicialIso, dataFinalIso, busca, offset, limit) {
@@ -130,15 +287,20 @@ function apiV3SalvarLinha_(pageKey, isoDate, values, sheetRow, clientId) {
 
 function apiV3SalvarLinhasEmLote_(pageKey, isoDate, registros) {
   const lock = LockService.getDocumentLock();
+  let result;
+
   lock.waitLock(30000);
   try {
-    return apiV3PersistirLoteSobLock_(pageKey, isoDate, registros, {
+    result = apiV3PersistirLoteSobLock_(pageKey, isoDate, registros, {
       atualizarHistorico: true,
       registrarCores: true
     });
   } finally {
     lock.releaseLock();
   }
+
+  apiV3TentarEspelharOperacionalD1_(pageKey, result && result.rows);
+  return result;
 }
 
 function apiV3PersistirLoteSobLock_(pageKey, isoDate, registros, options) {
@@ -359,19 +521,28 @@ function apiV3RegistrarCoresLote_(cores) {
 
 function apiV3LimparLinha_(pageKey, sheetRow) {
   const lock = LockService.getDocumentLock();
+  const cfg = getConfig_(pageKey);
+  const row = Number(sheetRow || 0);
+  let recordId = '';
+
+  if (row < 3) return { ok: true };
+
   lock.waitLock(30000);
   try {
-    const cfg = getConfig_(pageKey);
-    const row = Number(sheetRow || 0);
-    if (row < 3) return { ok: true };
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(cfg.sheetName);
     if (!sheet) throw new Error('A aba "' + cfg.sheetName + '" não foi encontrada.');
+
+    const uidCol = cfg.headers.length + 2;
+    recordId = String(sheet.getRange(row, uidCol).getDisplayValue() || '').trim();
+
     sheet.getRange(row, 1, 1, cfg.headers.length + 2).clearContent();
     apiV3RemoverHistoricoPorSourceRow_(pageKey, row);
-    return { ok: true };
   } finally {
     lock.releaseLock();
   }
+
+  apiV3TentarExcluirOperacionalD1_(pageKey, recordId, row);
+  return { ok: true };
 }
 
 function apiV3RemoverHistoricoPorSourceRow_(pageKey, sourceRow) {
