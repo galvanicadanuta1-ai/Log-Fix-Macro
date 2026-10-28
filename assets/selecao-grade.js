@@ -1,495 +1,692 @@
 /* ============================================================
-   SELEÇÃO ESTILO EXCEL - GRADES OPERACIONAIS
+   SGQ FIXPAR - EXPERIÊNCIA DE PLANILHA / SELEÇÃO ESTILO EXCEL
    ============================================================
-   - arrastar para selecionar um intervalo;
-   - clicar no cabeçalho para selecionar uma coluna;
-   - clicar na célula Data (primeira coluna) para selecionar a linha;
-   - Ctrl+A dentro da grade seleciona todos os dados;
-   - Delete apaga o intervalo selecionado;
-   - se já estiver salvo, a exclusão também é persistida na planilha,
-     Histórico e Conciliação pelas rotinas existentes.
+   Aplicado em:
+   - Recebimento
+   - Saída
+   - Histórico de Recebimento
+   - Histórico de Saída
+
+   Recursos:
+   - clique para célula ativa;
+   - arraste do mouse para selecionar intervalo;
+   - clique/arraste nos cabeçalhos para selecionar coluna(s);
+   - Shift + clique estende a seleção;
+   - Shift + setas estende uma célula;
+   - Ctrl + Shift + setas estende até a borda da tabela;
+   - Ctrl + C copia a seleção como TAB/linhas, pronto para Excel;
+   - botão flutuante "Copiar seleção";
+   - Esc limpa a seleção;
+   - Ctrl + A seleciona a tabela quando o foco não está editando texto;
+   - não apaga nem altera dados.
    ============================================================ */
 
 (function () {
-  let selecao = null;
-  let ancora = null;
-  let arrastando = false;
-  let moveuDuranteArrasto = false;
+  'use strict';
 
-  function gridAtiva_() {
-    const screen = document.getElementById('systemScreen');
-    return Boolean(screen && screen.classList.contains('active'));
+  const state = {
+    table: null,
+    anchor: null,
+    focus: null,
+    selection: null,
+    dragging: false,
+    draggingHeader: false
+  };
+
+  function screenAtiva_() {
+    const sistema = document.getElementById('systemScreen');
+    const historico = document.getElementById('historyScreen');
+
+    return Boolean(
+      (sistema && sistema.classList.contains('active')) ||
+      (historico && historico.classList.contains('active'))
+    );
   }
 
-  function grid_() {
-    return document.getElementById('grid');
+  function tabelaPermitida_(table) {
+    if (!table) return false;
+    if (table.id === 'grid') return true;
+    return table.classList.contains('history-table');
   }
 
-  function totalColunas_() {
-    try {
-      return getPageConfig().headers.length;
-    } catch (e) {
-      return 0;
+  function celulasDadosLinha_(tr) {
+    if (!tr) return [];
+    return Array.from(tr.children).filter(cell =>
+      cell.tagName === 'TD' &&
+      !cell.classList.contains('edit-col')
+    );
+  }
+
+  function cabecalhosDados_(table) {
+    if (!table) return [];
+    const row = table.querySelector('thead tr');
+    if (!row) return [];
+
+    return Array.from(row.children).filter(cell =>
+      cell.tagName === 'TH' &&
+      !cell.classList.contains('edit-col')
+    );
+  }
+
+  function linhasDados_(table) {
+    if (!table) return [];
+    return Array.from(table.querySelectorAll('tbody > tr'));
+  }
+
+  function ultimaLinhaComDados_(table) {
+    const rows = linhasDados_(table);
+    if (!rows.length) return -1;
+
+    if (table.id !== 'grid') return rows.length - 1;
+
+    for (let i = rows.length - 1; i >= 0; i--) {
+      if (!rows[i].classList.contains('blank-row')) return i;
     }
-  }
 
-  function totalLinhas_() {
-    return Array.isArray(rows) ? rows.length : 0;
+    return rows.length - 1;
   }
 
   function coordenadaCelula_(target) {
-    const grid = grid_();
-    if (!grid || !target) return null;
+    if (!target || !target.closest) return null;
 
-    const td = target.closest ? target.closest('#grid tbody td') : null;
-    if (!td || !grid.contains(td)) return null;
+    const td = target.closest('td');
+    const table = td && td.closest('table');
 
-    const tr = td.closest('tr[data-row-id]');
+    if (!td || !tabelaPermitida_(table) || td.classList.contains('edit-col')) {
+      return null;
+    }
+
+    const tr = td.closest('tbody > tr');
     if (!tr) return null;
 
-    const r = rows.findIndex(item => String(item.id) === String(tr.dataset.rowId));
-    if (r < 0) return null;
+    const rows = linhasDados_(table);
+    const cells = celulasDadosLinha_(tr);
+    const r = rows.indexOf(tr);
+    const c = cells.indexOf(td);
 
-    return {
-      r,
-      c: td.cellIndex,
-      td,
-      tr,
-      rowId: tr.dataset.rowId
-    };
+    if (r < 0 || c < 0) return null;
+
+    return { table, tr, td, r, c };
   }
 
-  function normalizarSelecao_(a, b, modo) {
-    if (!a || !b) return null;
+  function coordenadaCabecalho_(target) {
+    if (!target || !target.closest) return null;
 
-    const maxR = Math.max(totalLinhas_() - 1, 0);
-    const maxC = Math.max(totalColunas_() - 1, 0);
+    const th = target.closest('th');
+    const table = th && th.closest('table');
 
-    let r1 = Math.max(0, Math.min(a.r, b.r));
-    let r2 = Math.min(maxR, Math.max(a.r, b.r));
-    let c1 = Math.max(0, Math.min(a.c, b.c));
-    let c2 = Math.min(maxC, Math.max(a.c, b.c));
+    if (!th || !tabelaPermitida_(table) || th.classList.contains('edit-col')) {
+      return null;
+    }
 
-    if (modo === 'linha') {
+    const headers = cabecalhosDados_(table);
+    const c = headers.indexOf(th);
+
+    if (c < 0) return null;
+    return { table, th, c };
+  }
+
+  function limitar_(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function normalizarSelecao_(table, a, b, mode) {
+    if (!table || !a || !b) return null;
+
+    const rows = linhasDados_(table);
+    const cols = cabecalhosDados_(table).length;
+
+    if (!rows.length || !cols) return null;
+
+    const maxR = rows.length - 1;
+    const maxC = cols - 1;
+
+    let r1 = limitar_(Math.min(a.r, b.r), 0, maxR);
+    let r2 = limitar_(Math.max(a.r, b.r), 0, maxR);
+    let c1 = limitar_(Math.min(a.c, b.c), 0, maxC);
+    let c2 = limitar_(Math.max(a.c, b.c), 0, maxC);
+
+    if (mode === 'column') {
+      r1 = 0;
+      r2 = Math.max(ultimaLinhaComDados_(table), 0);
+    }
+
+    if (mode === 'all') {
+      r1 = 0;
+      r2 = Math.max(ultimaLinhaComDados_(table), 0);
       c1 = 0;
-      c2 = maxC;
-    } else if (modo === 'coluna') {
-      r1 = 0;
-      r2 = maxR;
-      c1 = c2 = a.c;
-    } else if (modo === 'tudo') {
-      r1 = 0;
-      r2 = maxR;
-      c1 = maxC >= 1 ? 1 : 0;
       c2 = maxC;
     }
 
-    return { r1, r2, c1, c2, modo: modo || 'intervalo' };
+    return { table, r1, r2, c1, c2, mode: mode || 'range' };
   }
 
-  function limparVisual_() {
-    const grid = grid_();
-    if (!grid) return;
-
-    grid.querySelectorAll('.grid-cell-selected').forEach(el => {
+  function limparClasses_() {
+    document.querySelectorAll(
+      '.excel-cell-selected, .excel-cell-active, .excel-selection-top,' +
+      '.excel-selection-bottom, .excel-selection-left, .excel-selection-right'
+    ).forEach(el => {
       el.classList.remove(
-        'grid-cell-selected',
-        'grid-selection-top',
-        'grid-selection-bottom',
-        'grid-selection-left',
-        'grid-selection-right'
+        'excel-cell-selected',
+        'excel-cell-active',
+        'excel-selection-top',
+        'excel-selection-bottom',
+        'excel-selection-left',
+        'excel-selection-right'
       );
     });
 
-    grid.querySelectorAll('thead th.grid-header-selected').forEach(el => {
-      el.classList.remove('grid-header-selected');
+    document.querySelectorAll('.excel-header-selected').forEach(el => {
+      el.classList.remove('excel-header-selected');
     });
   }
 
+  function celulaPorCoordenada_(table, r, c) {
+    const rows = linhasDados_(table);
+    const tr = rows[r];
+    if (!tr) return null;
+
+    const cells = celulasDadosLinha_(tr);
+    return cells[c] || null;
+  }
+
+  function atualizarPopover_() {
+    const pop = document.getElementById('excelSelectionPopover');
+    const info = document.getElementById('excelSelectionInfo');
+    const copy = document.getElementById('excelSelectionCopy');
+
+    if (!pop || !info || !copy) return;
+
+    if (!state.selection) {
+      pop.classList.remove('show');
+      return;
+    }
+
+    const rows = state.selection.r2 - state.selection.r1 + 1;
+    const cols = state.selection.c2 - state.selection.c1 + 1;
+    const total = rows * cols;
+
+    info.textContent =
+      rows + ' × ' + cols + ' • ' +
+      total + (total === 1 ? ' célula' : ' células');
+
+    pop.classList.add('show');
+    copy.disabled = false;
+  }
+
   function aplicarVisual_() {
-    limparVisual_();
-    if (!selecao) return;
+    limparClasses_();
 
-    const grid = grid_();
-    if (!grid) return;
+    const s = state.selection;
+    if (!s || !s.table || !document.documentElement.contains(s.table)) {
+      atualizarPopover_();
+      return;
+    }
 
-    const trs = Array.from(grid.querySelectorAll('tbody tr[data-row-id]'));
-
-    for (let r = selecao.r1; r <= selecao.r2; r++) {
-      const tr = trs[r];
-      if (!tr) continue;
-
-      const tds = Array.from(tr.children);
-
-      for (let c = selecao.c1; c <= selecao.c2; c++) {
-        const td = tds[c];
+    for (let r = s.r1; r <= s.r2; r++) {
+      for (let c = s.c1; c <= s.c2; c++) {
+        const td = celulaPorCoordenada_(s.table, r, c);
         if (!td) continue;
 
-        td.classList.add('grid-cell-selected');
-        if (r === selecao.r1) td.classList.add('grid-selection-top');
-        if (r === selecao.r2) td.classList.add('grid-selection-bottom');
-        if (c === selecao.c1) td.classList.add('grid-selection-left');
-        if (c === selecao.c2) td.classList.add('grid-selection-right');
+        td.classList.add('excel-cell-selected');
+
+        if (r === s.r1) td.classList.add('excel-selection-top');
+        if (r === s.r2) td.classList.add('excel-selection-bottom');
+        if (c === s.c1) td.classList.add('excel-selection-left');
+        if (c === s.c2) td.classList.add('excel-selection-right');
       }
     }
 
-    if (selecao.modo === 'coluna') {
-      const th = grid.querySelector('thead tr th:nth-child(' + (selecao.c1 + 1) + ')');
-      if (th) th.classList.add('grid-header-selected');
+    if (state.focus) {
+      const active = celulaPorCoordenada_(
+        s.table,
+        state.focus.r,
+        state.focus.c
+      );
+      if (active) active.classList.add('excel-cell-active');
     }
+
+    if (s.mode === 'column') {
+      const headers = cabecalhosDados_(s.table);
+      for (let c = s.c1; c <= s.c2; c++) {
+        if (headers[c]) headers[c].classList.add('excel-header-selected');
+      }
+    }
+
+    atualizarPopover_();
   }
 
-  function definirSelecao_(a, b, modo) {
-    selecao = normalizarSelecao_(a, b, modo);
+  function selecionar_(table, anchor, focus, mode) {
+    state.table = table;
+    state.anchor = { r: anchor.r, c: anchor.c };
+    state.focus = { r: focus.r, c: focus.c };
+    state.selection = normalizarSelecao_(table, anchor, focus, mode);
     aplicarVisual_();
   }
 
   function limparSelecao_() {
-    selecao = null;
-    ancora = null;
-    arrastando = false;
-    moveuDuranteArrasto = false;
-    document.body.classList.remove('grid-selecting');
-    limparVisual_();
+    state.table = null;
+    state.anchor = null;
+    state.focus = null;
+    state.selection = null;
+    state.dragging = false;
+    state.draggingHeader = false;
+
+    document.body.classList.remove('excel-grid-selecting');
+    limparClasses_();
+    atualizarPopover_();
   }
 
-  function cabecalhoClicado_(event) {
-    if (!gridAtiva_()) return;
+  function textoCelula_(td) {
+    if (!td) return '';
 
-    const th = event.target.closest ? event.target.closest('#grid thead th') : null;
-    if (!th) return;
+    const input = td.querySelector(
+      'input:not([type="checkbox"]):not([type="radio"]), textarea, select'
+    );
 
-    const c = th.cellIndex;
-    if (c < 0 || c >= totalColunas_()) return;
+    if (input) {
+      return String(input.value == null ? '' : input.value);
+    }
 
-    event.preventDefault();
-    ancora = { r: 0, c };
-    definirSelecao_({ r: 0, c }, { r: Math.max(totalLinhas_() - 1, 0), c }, 'coluna');
+    return String(td.textContent == null ? '' : td.textContent).trim();
   }
 
-  function iniciarSelecao_(event) {
-    if (!gridAtiva_() || event.button !== 0) return;
+  function textoSelecao_() {
+    const s = state.selection;
+    if (!s) return '';
+
+    const lines = [];
+
+    for (let r = s.r1; r <= s.r2; r++) {
+      const values = [];
+
+      for (let c = s.c1; c <= s.c2; c++) {
+        values.push(textoCelula_(celulaPorCoordenada_(s.table, r, c)));
+      }
+
+      lines.push(values.join('\t'));
+    }
+
+    return lines.join('\n');
+  }
+
+  function copiarFallback_(texto) {
+    const area = document.createElement('textarea');
+    area.value = texto;
+    area.setAttribute('readonly', '');
+    area.style.position = 'fixed';
+    area.style.left = '-9999px';
+    area.style.top = '0';
+    document.body.appendChild(area);
+    area.select();
+
+    try {
+      document.execCommand('copy');
+      return true;
+    } catch (error) {
+      return false;
+    } finally {
+      area.remove();
+    }
+  }
+
+  async function copiarSelecao_() {
+    const texto = textoSelecao_();
+    if (!state.selection) return false;
+
+    let ok = false;
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(texto);
+        ok = true;
+      }
+    } catch (error) {
+      ok = false;
+    }
+
+    if (!ok) ok = copiarFallback_(texto);
+
+    const copy = document.getElementById('excelSelectionCopy');
+    if (copy && ok) {
+      const old = copy.textContent;
+      copy.textContent = 'COPIADO ✓';
+      setTimeout(() => {
+        if (copy) copy.textContent = old;
+      }, 1100);
+    }
+
+    return ok;
+  }
+
+  function temSelecaoTextoNoInput_(target) {
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)) {
+      return false;
+    }
+
+    try {
+      return (
+        typeof target.selectionStart === 'number' &&
+        typeof target.selectionEnd === 'number' &&
+        target.selectionEnd > target.selectionStart
+      );
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function iniciarCelula_(event) {
+    if (!screenAtiva_() || event.button !== 0) return;
 
     const coord = coordenadaCelula_(event.target);
     if (!coord) return;
 
-    /* A primeira coluna é somente leitura: funciona como seletor da linha. */
-    if (coord.c === 0) {
-      event.preventDefault();
-      ancora = { r: coord.r, c: 0 };
-      definirSelecao_(ancora, ancora, 'linha');
+    state.dragging = true;
+    state.draggingHeader = false;
+    document.body.classList.add('excel-grid-selecting');
+
+    if (
+      event.shiftKey &&
+      state.anchor &&
+      state.table === coord.table
+    ) {
+      state.focus = { r: coord.r, c: coord.c };
+      state.selection = normalizarSelecao_(
+        coord.table,
+        state.anchor,
+        state.focus,
+        'range'
+      );
+      aplicarVisual_();
       return;
     }
 
-    arrastando = true;
-    moveuDuranteArrasto = false;
-    document.body.classList.add('grid-selecting');
-
-    if (event.shiftKey && ancora) {
-      definirSelecao_(ancora, coord, 'intervalo');
-    } else {
-      ancora = { r: coord.r, c: coord.c };
-      definirSelecao_(ancora, coord, 'intervalo');
-    }
+    selecionar_(
+      coord.table,
+      { r: coord.r, c: coord.c },
+      { r: coord.r, c: coord.c },
+      'range'
+    );
   }
 
-  function continuarSelecao_(event) {
-    if (!arrastando || !gridAtiva_()) return;
+  function iniciarCabecalho_(event) {
+    if (!screenAtiva_() || event.button !== 0) return false;
 
-    const coord = coordenadaCelula_(event.target);
-    if (!coord || !ancora) return;
+    const coord = coordenadaCabecalho_(event.target);
+    if (!coord) return false;
 
-    if (coord.r !== ancora.r || coord.c !== ancora.c) {
-      moveuDuranteArrasto = true;
-    }
+    event.preventDefault();
 
-    if (moveuDuranteArrasto) {
-      event.preventDefault();
-      definirSelecao_(ancora, coord, 'intervalo');
-    }
-  }
+    state.dragging = false;
+    state.draggingHeader = true;
+    document.body.classList.add('excel-grid-selecting');
 
-  function finalizarSelecao_() {
-    if (!arrastando) return;
-    arrastando = false;
-    document.body.classList.remove('grid-selecting');
-  }
-
-  function colunaEditavel_(colIndex) {
-    if (colIndex <= 0) return false;
-
-    const cfg = getPageConfig();
-    const header = cfg.headers[colIndex];
+    const last = Math.max(ultimaLinhaComDados_(coord.table), 0);
+    const anchor = { r: 0, c: coord.c };
+    let focus = { r: last, c: coord.c };
 
     if (
-      currentPage === 'RECEBIMENTO' &&
-      (header === 'Diferença' || header === 'Diferença em %')
+      event.shiftKey &&
+      state.anchor &&
+      state.table === coord.table
     ) {
-      return false;
+      anchor.c = state.anchor.c;
+      focus = { r: last, c: coord.c };
     }
 
+    state.table = coord.table;
+    state.anchor = { r: 0, c: anchor.c };
+    state.focus = focus;
+    state.selection = normalizarSelecao_(
+      coord.table,
+      { r: 0, c: anchor.c },
+      { r: last, c: focus.c },
+      'column'
+    );
+
+    aplicarVisual_();
     return true;
   }
 
-  function linhasSelecionadas_() {
-    if (!selecao) return [];
+  function continuarArrasto_(event) {
+    if (!screenAtiva_()) return;
 
-    const lista = [];
-    for (let r = selecao.r1; r <= selecao.r2; r++) {
-      if (rows[r]) lista.push(rows[r]);
+    if (state.draggingHeader) {
+      const header = coordenadaCabecalho_(event.target);
+      if (!header || header.table !== state.table || !state.anchor) return;
+
+      event.preventDefault();
+
+      state.focus = {
+        r: Math.max(ultimaLinhaComDados_(header.table), 0),
+        c: header.c
+      };
+
+      state.selection = normalizarSelecao_(
+        header.table,
+        { r: 0, c: state.anchor.c },
+        state.focus,
+        'column'
+      );
+
+      aplicarVisual_();
+      return;
     }
-    return lista;
+
+    if (!state.dragging || !state.anchor) return;
+
+    const coord = coordenadaCelula_(event.target);
+    if (!coord || coord.table !== state.table) return;
+
+    if (
+      coord.r === state.focus.r &&
+      coord.c === state.focus.c
+    ) return;
+
+    event.preventDefault();
+
+    state.focus = { r: coord.r, c: coord.c };
+    state.selection = normalizarSelecao_(
+      coord.table,
+      state.anchor,
+      state.focus,
+      'range'
+    );
+
+    aplicarVisual_();
   }
 
-  async function persistirExclusao_(afetadas) {
-    if (!afetadas.length) return;
-
-    cancelarTimers();
-    salvamentoEmLote = true;
-
-    const botao = document.getElementById('reportButton');
-    if (botao) {
-      botao.disabled = true;
-      botao.textContent = 'SALVANDO DADOS...';
-    }
-
-    setStatus('Atualizando dados apagados...', 'saving');
-
-    try {
-      const date = document.getElementById('selectedDate').value || hojeISO();
-      const apagar = afetadas.filter(row => row.sheetRow && linhaSemDados(row));
-      const manter = afetadas.filter(row => !linhaSemDados(row));
-
-      /* Exclui primeiro as linhas totalmente vazias para limpar também o Histórico. */
-      for (const row of apagar) {
-        await chamarApiAppsScript('limparLinha', [currentPage, row.sheetRow]);
-        row.sheetRow = null;
-        row.saving = false;
-      }
-
-      if (manter.length) {
-        const payload = manter.map(row => ({
-          clientId: row.id,
-          sheetRow: row.sheetRow,
-          values: row.values.slice()
-        }));
-
-        const result = await chamarApiAppsScript('salvarLinhasEmLote', [
-          currentPage,
-          date,
-          payload
-        ]);
-
-        const salvas = result && Array.isArray(result.rows) ? result.rows : [];
-
-        salvas.forEach(item => {
-          const row = rows.find(r => r.id === item.clientId);
-          if (!row) return;
-          row.sheetRow = item.sheetRow;
-          row.saving = false;
-          if (Array.isArray(item.values)) row.values = item.values.slice();
-        });
-      }
-
-      garantirDuasLinhasVazias();
-      renderTable();
-      setStatus('Alterações salvas • Histórico e Conciliação atualizados', 'saved');
-    } catch (error) {
-      setStatus(
-        error && error.message ? error.message : 'Erro ao apagar os dados selecionados.',
-        'error'
-      );
-      alert(
-        (error && error.message) ||
-        'Não foi possível apagar todos os dados selecionados.'
-      );
-    } finally {
-      salvamentoEmLote = false;
-
-      if (botao) {
-        botao.disabled = false;
-        botao.textContent = 'GERAR RELATÓRIO';
-      }
-
-      limparSelecao_();
-    }
+  function finalizarArrasto_() {
+    state.dragging = false;
+    state.draggingHeader = false;
+    document.body.classList.remove('excel-grid-selecting');
   }
 
-  function apagarSelecao_() {
-    if (!selecao || !gridAtiva_()) return false;
+  function focarCelula_(table, r, c) {
+    const td = celulaPorCoordenada_(table, r, c);
+    if (!td) return;
 
-    const afetadas = linhasSelecionadas_();
-    const unicas = new Map();
-
-    afetadas.forEach(row => {
-      if (!row) return;
-
-      for (let c = selecao.c1; c <= selecao.c2; c++) {
-        if (!colunaEditavel_(c)) continue;
-        row.values[c] = '';
-      }
-
-      if (currentPage === 'RECEBIMENTO' && typeof recalcularRecebimentoModelo === 'function') {
-        recalcularRecebimentoModelo(row);
-      }
-
-      unicas.set(row.id, row);
+    td.scrollIntoView({
+      block: 'nearest',
+      inline: 'nearest'
     });
 
-    garantirDuasLinhasVazias();
-    renderTable();
+    const input = td.querySelector(
+      'input:not([type="checkbox"]):not([type="radio"]), textarea, select'
+    );
 
-    persistirExclusao_(Array.from(unicas.values()));
+    if (input && typeof input.focus === 'function') {
+      input.focus({ preventScroll: true });
+    }
+  }
+
+  function estenderTeclado_(event) {
+    if (!state.selection || !state.table || !state.focus) return false;
+
+    const key = event.key;
+    if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {
+      return false;
+    }
+
+    if (!event.shiftKey) return false;
+
+    const rows = linhasDados_(state.table);
+    const cols = cabecalhosDados_(state.table).length;
+    if (!rows.length || !cols) return false;
+
+    let r = state.focus.r;
+    let c = state.focus.c;
+
+    const ctrl = event.ctrlKey || event.metaKey;
+
+    if (key === 'ArrowUp') {
+      r = ctrl ? 0 : r - 1;
+    } else if (key === 'ArrowDown') {
+      r = ctrl
+        ? Math.max(ultimaLinhaComDados_(state.table), 0)
+        : r + 1;
+    } else if (key === 'ArrowLeft') {
+      c = ctrl ? 0 : c - 1;
+    } else if (key === 'ArrowRight') {
+      c = ctrl ? cols - 1 : c + 1;
+    }
+
+    r = limitar_(r, 0, rows.length - 1);
+    c = limitar_(c, 0, cols - 1);
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    state.focus = { r, c };
+    state.selection = normalizarSelecao_(
+      state.table,
+      state.anchor,
+      state.focus,
+      'range'
+    );
+
+    aplicarVisual_();
+    focarCelula_(state.table, r, c);
     return true;
   }
 
-  function selecionarTudo_() {
-    const maxR = Math.max(totalLinhas_() - 1, 0);
-    const maxC = Math.max(totalColunas_() - 1, 0);
+  function selecionarTabelaInteira_() {
+    if (!state.table) return;
 
-    if (maxC < 1) return;
+    const maxR = Math.max(ultimaLinhaComDados_(state.table), 0);
+    const maxC = Math.max(cabecalhosDados_(state.table).length - 1, 0);
 
-    ancora = { r: 0, c: 1 };
-    definirSelecao_(ancora, { r: maxR, c: maxC }, 'tudo');
-  }
-
-  async function copiarSelecao_() {
-    if (!selecao || !navigator.clipboard || !navigator.clipboard.writeText) return false;
-
-    const linhas = [];
-
-    for (let r = selecao.r1; r <= selecao.r2; r++) {
-      const row = rows[r];
-      if (!row) continue;
-
-      const valores = [];
-      for (let c = selecao.c1; c <= selecao.c2; c++) {
-        valores.push(String(row.values[c] == null ? '' : row.values[c]));
-      }
-      linhas.push(valores.join('\t'));
-    }
-
-    try {
-      await navigator.clipboard.writeText(linhas.join('\n'));
-      return true;
-    } catch (e) {
-      return false;
-    }
+    selecionar_(
+      state.table,
+      { r: 0, c: 0 },
+      { r: maxR, c: maxC },
+      'all'
+    );
   }
 
   function tecladoGlobal_(event) {
-    if (!gridAtiva_()) return;
+    if (!screenAtiva_()) return;
 
-    const target = event.target;
-    const dentroGrid = target && target.closest && target.closest('#grid');
+    if (estenderTeclado_(event)) return;
 
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'a' && dentroGrid) {
+    const key = String(event.key || '').toLowerCase();
+    const ctrl = event.ctrlKey || event.metaKey;
+
+    if (ctrl && key === 'c' && state.selection) {
+      if (temSelecaoTextoNoInput_(event.target)) return;
+
       event.preventDefault();
-      selecionarTudo_();
+      copiarSelecao_();
       return;
     }
 
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'c' && selecao && dentroGrid) {
-      if (
-        selecao.r1 !== selecao.r2 ||
-        selecao.c1 !== selecao.c2 ||
-        selecao.modo === 'linha' ||
-        selecao.modo === 'coluna' ||
-        selecao.modo === 'tudo'
-      ) {
-        event.preventDefault();
-        copiarSelecao_();
-      }
+    if (
+      ctrl &&
+      key === 'a' &&
+      state.selection &&
+      !(
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement
+      )
+    ) {
+      event.preventDefault();
+      selecionarTabelaInteira_();
       return;
     }
 
-    if (event.key === 'Escape' && selecao) {
+    if (event.key === 'Escape' && state.selection) {
       event.preventDefault();
       limparSelecao_();
-      return;
-    }
-
-    const multipla = selecao && (
-      selecao.r1 !== selecao.r2 ||
-      selecao.c1 !== selecao.c2 ||
-      selecao.modo === 'linha' ||
-      selecao.modo === 'coluna' ||
-      selecao.modo === 'tudo'
-    );
-
-    if (selecao && (event.key === 'Delete' || (event.key === 'Backspace' && multipla))) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      apagarSelecao_();
     }
   }
 
-  function injetarCss_() {
-    if (document.getElementById('gridSelectionStyles')) return;
+  function criarPopover_() {
+    if (document.getElementById('excelSelectionPopover')) return;
 
-    const style = document.createElement('style');
-    style.id = 'gridSelectionStyles';
-    style.textContent = `
-      #grid tbody td.grid-cell-selected {
-        background: #dbeafe !important;
-      }
-      #grid tbody td.grid-cell-selected .cell-input {
-        background: transparent !important;
-      }
-      #grid tbody td.grid-selection-top { border-top: 2px solid #2563eb !important; }
-      #grid tbody td.grid-selection-bottom { border-bottom: 2px solid #2563eb !important; }
-      #grid tbody td.grid-selection-left { border-left: 2px solid #2563eb !important; }
-      #grid tbody td.grid-selection-right { border-right: 2px solid #2563eb !important; }
-      #grid thead th.grid-header-selected {
-        background: #bfdbfe !important;
-        box-shadow: inset 0 -2px 0 #2563eb;
-      }
-      #grid thead th { cursor: pointer; }
-      #grid tbody td.date-cell { cursor: pointer; }
-      #grid tbody td.date-cell::after {
-        content: '';
-        position: absolute;
-        left: 2px;
-        top: 50%;
-        width: 3px;
-        height: 18px;
-        transform: translateY(-50%);
-        border-radius: 2px;
-        background: #94a3b8;
-        opacity: .55;
-      }
-      body.grid-selecting, body.grid-selecting * {
-        user-select: none !important;
-      }
-    `;
+    const pop = document.createElement('div');
+    pop.id = 'excelSelectionPopover';
+    pop.className = 'excel-selection-popover';
+    pop.innerHTML =
+      '<div id="excelSelectionInfo" class="excel-selection-info"></div>' +
+      '<button id="excelSelectionCopy" type="button">COPIAR SELEÇÃO</button>' +
+      '<button id="excelSelectionClear" type="button" title="Limpar seleção">×</button>';
 
-    document.head.appendChild(style);
+    document.body.appendChild(pop);
+
+    document
+      .getElementById('excelSelectionCopy')
+      .addEventListener('click', copiarSelecao_);
+
+    document
+      .getElementById('excelSelectionClear')
+      .addEventListener('click', limparSelecao_);
+  }
+
+  function observarTabelas_() {
+    const observer = new MutationObserver(() => {
+      if (
+        state.selection &&
+        state.table &&
+        document.documentElement.contains(state.table)
+      ) {
+        requestAnimationFrame(aplicarVisual_);
+      } else if (
+        state.selection &&
+        state.table &&
+        !document.documentElement.contains(state.table)
+      ) {
+        limparSelecao_();
+      }
+    });
+
+    const system = document.getElementById('systemScreen');
+    const history = document.getElementById('historyScreen');
+
+    if (system) {
+      observer.observe(system, { childList: true, subtree: true });
+    }
+
+    if (history) {
+      observer.observe(history, { childList: true, subtree: true });
+    }
   }
 
   document.addEventListener('mousedown', event => {
-    if (event.target.closest && event.target.closest('#grid thead th')) {
-      cabecalhoClicado_(event);
-      return;
-    }
-    iniciarSelecao_(event);
+    if (iniciarCabecalho_(event)) return;
+    iniciarCelula_(event);
   }, true);
 
-  document.addEventListener('mouseover', continuarSelecao_, true);
-  document.addEventListener('mouseup', finalizarSelecao_, true);
+  document.addEventListener('mouseover', continuarArrasto_, true);
+  document.addEventListener('mouseup', finalizarArrasto_, true);
   document.addEventListener('keydown', tecladoGlobal_, true);
 
-  /* Se a grade for redesenhada, reaplica a marcação selecionada. */
-  const observer = new MutationObserver(() => {
-    if (selecao && gridAtiva_()) {
-      requestAnimationFrame(aplicarVisual_);
-    }
-  });
-
   document.addEventListener('DOMContentLoaded', () => {
-    injetarCss_();
-    const grid = grid_();
-    if (grid) observer.observe(grid, { childList: true, subtree: true });
+    criarPopover_();
+    observarTabelas_();
   });
 
-  window.limparSelecaoGradeOperacional = limparSelecao_;
+  window.sgqExcelSelection = {
+    copy: copiarSelecao_,
+    clear: limparSelecao_
+  };
 })();
