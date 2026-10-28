@@ -667,6 +667,10 @@ function apiV3FinalizarRelatorio_(pageKey, isoDate, linhasTela, nomeArquivo, pdf
 
     props.setProperty(propKey, JSON.stringify({ state: 'done', result: result, createdAt: pdfState.createdAt || Date.now() }));
     apiV3LimparEstadosRelatoriosAntigos_(props);
+
+    // Mantém o D1 atualizado imediatamente após a consolidação do relatório.
+    apiV3TentarEspelharOperacionalD1_(pageKey, persistencia.rows);
+
     return result;
   } finally {
     lock.releaseLock();
