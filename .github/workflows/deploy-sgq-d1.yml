@@ -84,10 +84,10 @@ jobs:
           SHEETS_SYNC_TOKEN: ${{ secrets.SHEETS_SYNC_TOKEN }}
         run: |
           if [ -z "$SHEETS_SYNC_TOKEN" ]; then
-            echo "SHEETS_SYNC_TOKEN não configurado no GitHub."
-            exit 1
+            echo "SHEETS_SYNC_TOKEN ainda não configurado; sincronização Sheets permanece desativada."
+          else
+            printf '%s' "$SHEETS_SYNC_TOKEN" | npx wrangler secret put SHEETS_SYNC_TOKEN
           fi
-          printf '%s' "$SHEETS_SYNC_TOKEN" | npx wrangler secret put SHEETS_SYNC_TOKEN
 
 
       - name: Verify Worker health
