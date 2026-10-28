@@ -11,8 +11,8 @@
    ============================================================ */
 
 (function () {
-  const SAVE_DELAY_MS = 1400;
-  const RESAVE_DELAY_MS = 300;
+  const SAVE_DELAY_MS = 650;
+  const RESAVE_DELAY_MS = 150;
 
   function linhaPorId_(rowId) {
     return rows.find(item => item.id === rowId) || null;
