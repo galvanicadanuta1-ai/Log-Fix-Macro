@@ -91,7 +91,12 @@ function apiV3HealthCheck_() {
     saida: Boolean(ss.getSheetByName(cfgSaida.sheetName)),
     historicoEntrada: Boolean(ss.getSheetByName(cfgEntrada.historySheetName)),
     historicoSaida: Boolean(ss.getSheetByName(cfgSaida.historySheetName)),
-    conciliacao: Boolean(ss.getSheetByName('Conciliação OP'))
+    conciliacao: Boolean(ss.getSheetByName('Conciliação OP')),
+    d1Mirror: true,
+    d1SyncConfigured: Boolean(
+      PropertiesService.getScriptProperties().getProperty('D1_SYNC_URL') &&
+      PropertiesService.getScriptProperties().getProperty('D1_SYNC_TOKEN')
+    )
   };
 }
 
