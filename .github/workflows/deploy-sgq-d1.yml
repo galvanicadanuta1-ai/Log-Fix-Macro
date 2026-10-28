@@ -29,15 +29,6 @@ jobs:
       - name: Install Wrangler
         run: npm install
 
-      - name: Inject D1 database id
-        env:
-          D1_DATABASE_ID: ${{ secrets.CLOUDFLARE_D1_DATABASE_ID }}
-        run: |
-          if [ -z "$D1_DATABASE_ID" ]; then
-            echo "CLOUDFLARE_D1_DATABASE_ID não configurado."
-            exit 1
-          fi
-          sed -i "s/REPLACE_WITH_D1_DATABASE_ID/$D1_DATABASE_ID/g" wrangler.jsonc
 
       - name: Apply D1 schema
         env:
