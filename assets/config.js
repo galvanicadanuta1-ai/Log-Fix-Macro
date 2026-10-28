@@ -4,6 +4,18 @@
  * Web App do Apps Script usado como API pelo GitHub Pages.
  */
 const API_URL = 'https://script.google.com/macros/s/AKfycbwBimN8eXQFB3CkV-xv557oOiHjC8Htce9yUAiKjJhayao7-WXyxjOaiNHqm7NX4P3G8Q/exec';
+const D1_API_URL = 'https://danuta-sgq-api.galvanicadanuta1.workers.dev';
+
+/*
+ * Corte seguro para o D1.
+ * Será ativado somente depois que o API.gs V3 com espelhamento imediato
+ * estiver publicado no Apps Script.
+ */
+const D1_FEATURES = {
+  operationalReads: false,
+  historyReads: false,
+  programacaoReads: false
+};
 
 const CONFIG = {
   recebimento: {
