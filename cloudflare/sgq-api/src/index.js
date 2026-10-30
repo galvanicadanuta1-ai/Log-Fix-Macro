@@ -29,6 +29,13 @@ export default {
         return json(result);
       }
 
+      if (url.pathname === "/sync/sheets/reconcile" && request.method === "POST") {
+        requireSyncAuth(request, env);
+        const body = await readJson(request);
+        const result = await reconcileSheetsDataset(env, body);
+        return json(result);
+      }
+
       if (url.pathname === "/api/records" && request.method === "GET") {
         const result = await listRecords(env, url);
         return cors(json(result), request, env);
@@ -294,6 +301,70 @@ async function markGenerated(env, body) {
     received: recordIds.length,
     dataset,
     generated: Boolean(generated)
+  };
+}
+
+async function reconcileSheetsDataset(env, body) {
+  const clientKey = text(body?.clientKey || "FIXPAR").toUpperCase();
+  const dataset = text(body?.dataset).toUpperCase();
+  const activeRecordIds = new Set(
+    (Array.isArray(body?.activeRecordIds) ? body.activeRecordIds : [])
+      .map(text)
+      .filter(Boolean)
+  );
+
+  if (!["RECEBIMENTO", "SAIDA"].includes(dataset)) {
+    throw httpError(400, "dataset inválido.");
+  }
+
+  const current = await env.DB.prepare(`
+    SELECT record_id
+    FROM operational_records
+    WHERE client_key = ?
+      AND dataset = ?
+      AND deleted = 0
+  `).bind(clientKey, dataset).all();
+
+  const missing = (current.results || [])
+    .map(row => text(row.record_id))
+    .filter(recordId => recordId && !activeRecordIds.has(recordId));
+
+  if (!missing.length) {
+    return {
+      ok: true,
+      dataset,
+      active: activeRecordIds.size,
+      deleted: 0
+    };
+  }
+
+  const now = isoNow();
+  const base = env.DB.prepare(`
+    UPDATE operational_records
+    SET deleted = 1,
+        version = version + 1,
+        updated_at = ?
+    WHERE client_key = ?
+      AND dataset = ?
+      AND record_id = ?
+      AND deleted = 0
+  `);
+
+  const stmts = missing.map(recordId =>
+    base.bind(now, clientKey, dataset, recordId)
+  );
+
+  const results = await env.DB.batch(stmts);
+  const deleted = (results || []).reduce(
+    (sum, item) => sum + Number(item?.meta?.changes || 0),
+    0
+  );
+
+  return {
+    ok: true,
+    dataset,
+    active: activeRecordIds.size,
+    deleted
   };
 }
 
