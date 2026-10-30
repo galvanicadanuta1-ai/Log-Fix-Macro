@@ -32,13 +32,6 @@ function d1SyncInstalarTriggers() {
       .create();
   }
 
-  if (!handlers.has('d1SyncOnChange')) {
-    ScriptApp.newTrigger('d1SyncOnChange')
-      .forSpreadsheet(ss)
-      .onChange()
-      .create();
-  }
-
   if (!handlers.has('d1SyncReconciliarFixpar')) {
     ScriptApp.newTrigger('d1SyncReconciliarFixpar')
       .timeBased()
@@ -59,13 +52,11 @@ function d1SyncOnEdit(e) {
 
   if (name === 'Recebimento Fixpar') {
     d1SyncEnviarOperacional_(sheet, 'RECEBIMENTO', startRow, numRows);
-    d1SyncReconciliarDataset_(sheet, 'RECEBIMENTO');
     return;
   }
 
   if (name === 'Entregas Fixpar') {
     d1SyncEnviarOperacional_(sheet, 'SAIDA', startRow, numRows);
-    d1SyncReconciliarDataset_(sheet, 'SAIDA');
     return;
   }
 
@@ -74,40 +65,8 @@ function d1SyncOnEdit(e) {
   }
 }
 
-function d1SyncOnChange(e) {
-  if (!e) return;
-
-  const tiposEstruturais = new Set([
-    'REMOVE_ROW',
-    'INSERT_ROW',
-    'REMOVE_COLUMN',
-    'INSERT_COLUMN',
-    'OTHER'
-  ]);
-
-  if (!tiposEstruturais.has(String(e.changeType || ''))) return;
-
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const entrada = ss.getSheetByName('Recebimento Fixpar');
-  const saida = ss.getSheetByName('Entregas Fixpar');
-
-  if (entrada) d1SyncReconciliarDataset_(entrada, 'RECEBIMENTO');
-  if (saida) d1SyncReconciliarDataset_(saida, 'SAIDA');
-}
-
 function d1SyncReconciliarFixpar() {
   d1SyncBootstrapFixpar();
-}
-
-function d1SyncReconciliarExclusoesFixpar() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const entrada = ss.getSheetByName('Recebimento Fixpar');
-  const saida = ss.getSheetByName('Entregas Fixpar');
-
-  if (entrada) d1SyncReconciliarDataset_(entrada, 'RECEBIMENTO');
-  if (saida) d1SyncReconciliarDataset_(saida, 'SAIDA');
-
-  return { ok: true };
 }
 
 function d1SyncBootstrapFixpar() {
@@ -117,13 +76,11 @@ function d1SyncBootstrapFixpar() {
   if (entrada && entrada.getLastRow() >= 3) {
     d1SyncEnviarOperacional_(entrada, 'RECEBIMENTO', 3, entrada.getLastRow() - 2);
   }
-  if (entrada) d1SyncReconciliarDataset_(entrada, 'RECEBIMENTO');
 
   const saida = ss.getSheetByName('Entregas Fixpar');
   if (saida && saida.getLastRow() >= 3) {
     d1SyncEnviarOperacional_(saida, 'SAIDA', 3, saida.getLastRow() - 2);
   }
-  if (saida) d1SyncReconciliarDataset_(saida, 'SAIDA');
 
   const prog = ss.getSheetByName('Programação SGQ Fixpar');
   if (prog && prog.getLastRow() >= 2) {
@@ -217,53 +174,6 @@ function d1SyncMapSaida_(sheetRow, uid, raw, display) {
     updatedAt: new Date().toISOString(),
     deleted: !display.slice(0, 8).some(v => d1SyncTexto_(v) !== '')
   };
-}
-
-function d1SyncReconciliarDataset_(sheet, dataset) {
-  const cfg = getConfig_(dataset);
-  const firstDataRow = 3;
-  const lastRow = sheet.getLastRow();
-  const uidCol = cfg.headers.length + 2;
-
-  if (lastRow < firstDataRow) {
-    d1SyncPost_('/sync/sheets/reconcile', {
-      clientKey: D1_SYNC_CLIENT_KEY,
-      dataset: dataset,
-      activeRecordIds: []
-    });
-    return;
-  }
-
-  const width = uidCol;
-  const qtd = lastRow - firstDataRow + 1;
-  const display = sheet
-    .getRange(firstDataRow, 1, qtd, width)
-    .getDisplayValues();
-
-  const activeRecordIds = [];
-
-  for (let i = 0; i < display.length; i++) {
-    const row = display[i] || [];
-    const temDados = row
-      .slice(0, cfg.headers.length)
-      .some(v => d1SyncTexto_(v) !== '');
-
-    if (!temDados) continue;
-
-    let uid = d1SyncTexto_(row[uidCol - 1]);
-    if (!uid) {
-      uid = Utilities.getUuid();
-      sheet.getRange(firstDataRow + i, uidCol).setValue(uid);
-    }
-
-    activeRecordIds.push(uid);
-  }
-
-  d1SyncPost_('/sync/sheets/reconcile', {
-    clientKey: D1_SYNC_CLIENT_KEY,
-    dataset: dataset,
-    activeRecordIds: activeRecordIds
-  });
 }
 
 function d1SyncEnviarProgramacao_(sheet, startRow, numRows) {
