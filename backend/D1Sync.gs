@@ -99,6 +99,17 @@ function d1SyncReconciliarFixpar() {
   d1SyncBootstrapFixpar();
 }
 
+function d1SyncReconciliarExclusoesFixpar() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const entrada = ss.getSheetByName('Recebimento Fixpar');
+  const saida = ss.getSheetByName('Entregas Fixpar');
+
+  if (entrada) d1SyncReconciliarDataset_(entrada, 'RECEBIMENTO');
+  if (saida) d1SyncReconciliarDataset_(saida, 'SAIDA');
+
+  return { ok: true };
+}
+
 function d1SyncBootstrapFixpar() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
