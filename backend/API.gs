@@ -230,9 +230,7 @@ function apiV3EditarHistoricoPorSourceRow_(pageKey, sourceRow, novosValores) {
     throw new Error('Não foi encontrado o histórico correspondente ao registro.');
   }
 
-  const result = apiV3EditarHistorico_(pageKey, historyRow, novosValores);
-  apiV3TentarEspelharOperacionalD1_(pageKey, [{ sheetRow: source }]);
-  return result;
+  return apiV3EditarHistorico_(pageKey, historyRow, novosValores);
 }
 
 function apiV3SalvarProgramacaoComD1_(op, status, ok, encaminhado) {
@@ -582,7 +580,10 @@ function apiV3EditarHistorico_(pageKey, historyRow, novosValores) {
     const novo = normalizarLinhaParaPlanilha_(pageKey, dataIso, novosValores);
     const opIndex = acharHeader_(cfg.headers, 'OP');
     const op = opIndex >= 0 ? novo[opIndex] : '';
-    const usuario = Session.getActiveUser().getEmail() || Session.getEffectiveUser().getEmail() || '';
+    const usuario = (function () {
+      try { return Session.getActiveUser().getEmail() || ''; }
+      catch (e) { return ''; }
+    })();
     const logs = [];
 
     for (let i = 0; i < cfg.headers.length; i++) {
@@ -608,6 +609,9 @@ function apiV3EditarHistorico_(pageKey, historyRow, novosValores) {
       if (corIndex >= 0 && novo[corIndex]) apiV3RegistrarCoresLote_([novo[corIndex]]);
     }
     apiV3SincronizarConciliacaoCompleta_();
+    if (sourceRow && sourceRow >= 3) {
+      apiV3TentarEspelharOperacionalD1_(pageKey, [{ sheetRow: sourceRow }]);
+    }
     return { ok: true, historyRow: row, values: linhaHistoricoParaCliente_(pageKey, novo), alteracoes: logs.length };
   } finally {
     lock.releaseLock();
