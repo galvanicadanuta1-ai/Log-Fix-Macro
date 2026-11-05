@@ -14,7 +14,8 @@ const D1_API_URL = 'https://danuta-sgq-api.galvanicadanuta1.workers.dev';
 const D1_FEATURES = {
   operationalReads: false,
   historyReads: true,
-  programacaoReads: true
+  // A leitura D1 ainda usa a regra antiga por OP; consultar Apps Script por ciclo.
+  programacaoReads: false
 };
 
 const CONFIG = {
