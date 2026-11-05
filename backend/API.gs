@@ -298,6 +298,7 @@ function apiV3SalvarLinhasEmLote_(pageKey, isoDate, registros) {
       atualizarHistorico: true,
       registrarCores: true
     });
+    if (result.rows && result.rows.length) apiV3SincronizarConciliacaoCompleta_();
   } finally {
     lock.releaseLock();
   }
@@ -540,6 +541,7 @@ function apiV3LimparLinha_(pageKey, sheetRow) {
 
     sheet.getRange(row, 1, 1, cfg.headers.length + 2).clearContent();
     apiV3RemoverHistoricoPorSourceRow_(pageKey, row);
+    apiV3SincronizarConciliacaoCompleta_();
   } finally {
     lock.releaseLock();
   }
@@ -780,30 +782,67 @@ function apiV3CriarPdf_(nomeArquivo, pdfBase64) {
   return file;
 }
 
+
+/**
+ * Concilia cada recebimento com a primeira saída da mesma OP ocorrida
+ * na sua data ou posteriormente. Uma saída antiga nunca encerra um
+ * recebimento posterior. Vários recebimentos anteriores à mesma saída
+ * podem integrar o mesmo lote/ciclo (não consome a saída por linha).
+ *
+ * Como as abas armazenam somente a DATA, entradas e saídas na mesma
+ * data não possuem ordenação intradiária confiável.
+ */
+function apiV3ConciliarCiclos_(entradas, saidas) {
+  const saidasPorOp = {};
+  (saidas || []).forEach(item => {
+    const key = apiV3OpKey_(item.op);
+    if (!key) return;
+    (saidasPorOp[key] = saidasPorOp[key] || []).push(item);
+  });
+  Object.keys(saidasPorOp).forEach(key =>
+    saidasPorOp[key].sort((a, b) => a.dataTime - b.dataTime || a.sheetRow - b.sheetRow)
+  );
+
+  return (entradas || []).slice()
+    .sort((a, b) => a.dataTime - b.dataTime || a.sheetRow - b.sheetRow)
+    .map(entrada => {
+      const candidatas = saidasPorOp[apiV3OpKey_(entrada.op)] || [];
+      // Busca binária: evita varrer todos os movimentos em cada recebimento.
+      let low = 0, high = candidatas.length;
+      while (low < high) {
+        const mid = (low + high) >> 1;
+        if (candidatas[mid].dataTime < entrada.dataTime) low = mid + 1;
+        else high = mid;
+      }
+      return { entrada: entrada, saida: candidatas[low] || null };
+    });
+}
+
 function apiV3SincronizarConciliacaoCompleta_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName('Conciliação OP');
   if (!sheet) return;
-  const entradas = apiV3LerOperacaoConciliacao_('RECEBIMENTO');
-  const saidas = apiV3LerOperacaoConciliacao_('SAIDA');
-  const saidasPorOp = {};
-  saidas.forEach(item => {
-    const key = apiV3OpKey_(item.op);
-    if (!key) return;
-    if (!saidasPorOp[key]) saidasPorOp[key] = [];
-    saidasPorOp[key].push(item);
-  });
-  Object.keys(saidasPorOp).forEach(key => {
-    saidasPorOp[key].sort((a, b) => a.dataTime - b.dataTime || a.sheetRow - b.sheetRow);
-  });
-  const dados = entradas.sort((a, b) => a.dataTime - b.dataTime || a.sheetRow - b.sheetRow).map(entrada => {
-    const candidatas = saidasPorOp[apiV3OpKey_(entrada.op)] || [];
-    const saida = candidatas.find(item => item.dataTime >= entrada.dataTime) || candidatas[0] || null;
-    return [entrada.dataBR, entrada.op, entrada.nf, entrada.nfCaixa, saida ? saida.op : '', saida ? saida.nf : '', saida ? saida.nfCaixa : '', saida ? saida.dataBR : ''];
+
+  const ciclos = apiV3ConciliarCiclos_(
+    apiV3LerOperacaoConciliacao_('RECEBIMENTO'),
+    apiV3LerOperacaoConciliacao_('SAIDA')
+  );
+  // A nova coluna fica ao final, sem deslocar as oito existentes.
+  if (sheet.getMaxColumns() < 9) sheet.insertColumnsAfter(sheet.getMaxColumns(), 9 - sheet.getMaxColumns());
+  sheet.getRange(2, 9).setValue('Processo').setFontWeight('bold');
+  const dados = ciclos.map(item => {
+    const entrada = item.entrada;
+    const saida = item.saida;
+    return [
+      entrada.dataBR, entrada.op, entrada.nf, entrada.nfCaixa,
+      saida ? saida.op : '', saida ? saida.nf : '',
+      saida ? saida.nfCaixa : '', saida ? saida.dataBR : '',
+      entrada.processo || ''
+    ];
   });
   const lastRow = sheet.getLastRow();
-  if (lastRow >= 3) sheet.getRange(3, 1, lastRow - 2, 8).clearContent();
-  if (dados.length) sheet.getRange(3, 1, dados.length, 8).setValues(dados);
+  if (lastRow >= 3) sheet.getRange(3, 1, lastRow - 2, 9).clearContent();
+  if (dados.length) sheet.getRange(3, 1, dados.length, 9).setValues(dados);
 }
 
 function apiV3LerOperacaoConciliacao_(pageKey) {
@@ -813,6 +852,8 @@ function apiV3LerOperacaoConciliacao_(pageKey) {
   const opIndex = acharHeader_(cfg.headers, 'OP');
   const nfIndex = acharHeader_(cfg.headers, 'Nota Fiscal');
   const nfCaixaIndex = acharHeader_(cfg.headers, 'Nota Fiscal de Caixa');
+  const processoIndex = pageKey === 'RECEBIMENTO'
+    ? acharHeader_(cfg.headers, 'Processo') : -1;
   if (opIndex < 0) return [];
   const values = sheet.getRange(3, 1, sheet.getLastRow() - 2, cfg.headers.length).getValues();
   return values.map((row, index) => {
@@ -825,7 +866,8 @@ function apiV3LerOperacaoConciliacao_(pageKey) {
       dataBR: Utilities.formatDate(date, Session.getScriptTimeZone(), 'dd/MM/yyyy'),
       op: op,
       nf: nfIndex >= 0 ? normalizarSaida_(row[nfIndex]) : '',
-      nfCaixa: nfCaixaIndex >= 0 ? normalizarSaida_(row[nfCaixaIndex]) : ''
+      nfCaixa: nfCaixaIndex >= 0 ? normalizarSaida_(row[nfCaixaIndex]) : '',
+      processo: processoIndex >= 0 ? normalizarSaida_(row[processoIndex]) : ''
     };
   }).filter(Boolean);
 }
@@ -843,13 +885,16 @@ function carregarProgramacaoSgq() {
   if (!entrada) throw new Error('A aba "' + cfgEntrada.sheetName + '" não foi encontrada.');
   if (!saida) throw new Error('A aba "' + cfgSaida.sheetName + '" não foi encontrada.');
 
-  const opsComSaida = new Set();
-  if (saida.getLastRow() >= 3) {
-    saida.getRange(3, 1, saida.getLastRow() - 2, cfgSaida.headers.length).getDisplayValues().forEach(row => {
-      const chave = apiProgChaveOp_(row[1]);
-      if (chave) opsComSaida.add(chave);
-    });
-  }
+  const ciclos = apiV3ConciliarCiclos_(
+    apiV3LerOperacaoConciliacao_('RECEBIMENTO'),
+    apiV3LerOperacaoConciliacao_('SAIDA')
+  );
+  const pendentesPorLinha = new Set(
+    ciclos.filter(item => !item.saida).map(item => item.entrada.sheetRow)
+  );
+  const opsComSaida = new Set(
+    apiV3LerOperacaoConciliacao_('SAIDA').map(item => apiV3OpKey_(item.op))
+  );
 
   const agrupado = {};
   if (entrada.getLastRow() >= 3) {
@@ -860,7 +905,7 @@ function carregarProgramacaoSgq() {
       const shown = display[index] || [];
       const op = apiProgTexto_(shown[1]);
       const chave = apiProgChaveOp_(op);
-      if (!chave || opsComSaida.has(chave)) return;
+      if (!chave || !pendentesPorLinha.has(index + 3)) return;
       const dataTime = apiProgDataTime_(row[0]);
       const dataTexto = apiProgTexto_(shown[0]);
       if (!agrupado[chave]) {
@@ -881,7 +926,7 @@ function carregarProgramacaoSgq() {
   const manualPorChave = {};
   manuais.forEach(item => {
     const chave = apiProgChaveOp_(item.op);
-    if (!chave || opsComSaida.has(chave)) return;
+    if (!chave || (opsComSaida.has(chave) && !agrupado[chave])) return;
     manualPorChave[chave] = item;
   });
 
@@ -890,7 +935,9 @@ function carregarProgramacaoSgq() {
   chaves.forEach(chave => {
     const automatico = agrupado[chave] || null;
     const manual = manualPorChave[chave] || null;
-    const estado = estados[chave] || {};
+    const anterior = estados[chave] || {};
+    const estado = automatico && anterior.atualizadoEm && anterior.atualizadoEm < automatico.primeiraData
+      ? {} : anterior;
     if (automatico) {
       const coresAuto = Object.keys(automatico.cores).map(key => automatico.cores[key]).join(' / ');
       rows.push({
@@ -958,10 +1005,11 @@ function apiProgLerEstados_() {
   const sheet = apiProgObterAbaEstados_();
   const estados = {};
   if (sheet.getLastRow() < 2) return estados;
-  sheet.getRange(2, 1, sheet.getLastRow() - 1, 4).getValues().forEach(row => {
+  sheet.getRange(2, 1, sheet.getLastRow() - 1, 5).getValues().forEach(row => {
     const chave = apiProgChaveOp_(row[0]);
     if (!chave) return;
-    estados[chave] = { status: apiProgTexto_(row[1]), ok: row[2] === true, encaminhado: row[3] === true };
+    estados[chave] = { status: apiProgTexto_(row[1]), ok: row[2] === true, encaminhado: row[3] === true,
+      atualizadoEm: apiProgDataTime_(row[4]) };
   });
   return estados;
 }
