@@ -2,7 +2,7 @@
    Preserva prioridade, pesquisa, seleção, gravação e os dados em memória. */
 (function () {
   'use strict';
-  const VERSAO = 'processo-larguras-final-20261109';
+  const VERSAO = 'processo-larguras-ampliadas-v12';
   const screen = document.getElementById('programacaoSgqScreen');
   if (!screen) return;
 
@@ -23,6 +23,31 @@
     });
   }
 
+  // Colgroup define a grade real de larguras, mesmo com o cabeçalho
+  // de título que ocupa todas as colunas e os CSS antigos com !important.
+  function definirLarguras_() {
+    screen.querySelectorAll('.programacao-bloco .programacao-table').forEach(table => {
+      const principal = !!table.closest('.programacao-bloco-principal');
+      const larguras = principal
+        ? [7, 6, 7, 8, 39, 7, 11, 9, 3, 3]
+        : [8, 7, 7, 43, 8, 11, 10, 3, 3];
+      const cab = table.querySelector('thead .programacao-column-head') ||
+                  table.querySelector('thead tr:last-child');
+      if (!cab || cab.querySelectorAll('th').length !== larguras.length) return;
+      let colgroup = table.querySelector('colgroup[data-ajuste-fixpar]');
+      if (!colgroup) {
+        colgroup = document.createElement('colgroup');
+        colgroup.dataset.ajusteFixpar = VERSAO;
+        table.insertBefore(colgroup, table.firstChild);
+      }
+      colgroup.replaceChildren(...larguras.map(pct => {
+        const col = document.createElement('col');
+        col.style.width = pct + '%';
+        return col;
+      }));
+    });
+  }
+
   function adicionarProcessoNaLinha_(tr, item) {
     if (!tr || tr.querySelector('.col-processo')) return tr;
     const peso = tr.querySelector('.col-peso');
@@ -40,6 +65,7 @@
     window.garantirLayoutProgramacaoDividida_ = function () {
       const resultado = layoutAnterior.apply(this, arguments);
       incluirCabecalhos_();
+      definirLarguras_();
       return resultado;
     };
   }
@@ -57,6 +83,7 @@
     window.renderProgramacaoSgq = function () {
       const resultado = renderAnterior.apply(this, arguments);
       incluirCabecalhos_();
+      definirLarguras_();
       return resultado;
     };
   }
@@ -175,6 +202,53 @@
         padding: 2px 1px !important;
       }
     }
+
+    /* v12: colunas compactas e leitura maior no desktop */
+    @media screen and (min-width: 801px) {
+      #programacaoSgqScreen .programacao-table {
+        width: 100% !important;
+        min-width: 960px !important;
+        table-layout: fixed !important;
+      }
+      #programacaoSgqScreen .programacao-table .programacao-column-head th,
+      #programacaoSgqScreen .programacao-table tbody td {
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        box-sizing: border-box !important;
+      }
+      #programacaoSgqScreen .programacao-table tbody td:not(.col-cor) {
+        font-size: 12px !important;
+        font-weight: 700 !important;
+        white-space: nowrap !important;
+      }
+      #programacaoSgqScreen .programacao-table tbody td.col-cor {
+        font-size: 12px !important;
+        line-height: 1.2 !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+      }
+      #programacaoSgqScreen .programacao-table .col-processo {
+        font-size: 11px !important;
+        white-space: normal !important;
+      }
+      #programacaoSgqScreen .programacao-table .programacao-status-input {
+        font-size: 12px !important;
+        font-weight: 650 !important;
+      }
+      #programacaoSgqScreen .programacao-table .programacao-column-head th {
+        font-size: 11px !important;
+        line-height: 1.1 !important;
+      }
+      #programacaoSgqScreen .programacao-table .col-ok,
+      #programacaoSgqScreen .programacao-table .col-enc {
+        padding: 1px 0 !important;
+      }
+      #programacaoSgqScreen .programacao-table .programacao-check {
+        width: 13px !important;
+        height: 13px !important;
+      }
+    }
     @media print {
       #programacaoSgqScreen .programacao-table .col-processo {
         white-space: normal !important;
@@ -190,4 +264,5 @@
   `;
   document.head.appendChild(css);
   incluirCabecalhos_();
+  definirLarguras_();
 })();
