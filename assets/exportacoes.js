@@ -597,6 +597,7 @@ function dadosProgramacaoParaExportar_() {
     'Qtd. Contêiner',
     'Cor',
     'Peso Danuta (Kg)',
+    'Processo',
     'Status',
     'OK',
     'Encaminhado'
@@ -609,6 +610,7 @@ function dadosProgramacaoParaExportar_() {
     item.qtdConteiner || '',
     item.cor || '',
     item.pesoDanuta || '',
+    item.processo || '',
     item.status || '',
     item.ok ? 'SIM' : '',
     item.encaminhado ? 'SIM' : ''
