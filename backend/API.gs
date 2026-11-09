@@ -86,7 +86,11 @@ function apiV3HealthCheck_() {
   return {
     ok: true,
     api: 'SGQ_FIXPAR_V3',
+    writeProtocol: 'SGQ_FIXPAR_VERIFIED_WRITE_20261109',
     time: new Date().toISOString(),
+    spreadsheetTitle: ss.getName(),
+    recebimentoAba: cfgEntrada.sheetName,
+    saidaAba: cfgSaida.sheetName,
     recebimento: Boolean(ss.getSheetByName(cfgEntrada.sheetName)),
     saida: Boolean(ss.getSheetByName(cfgSaida.sheetName)),
     historicoEntrada: Boolean(ss.getSheetByName(cfgEntrada.historySheetName)),
