@@ -410,6 +410,31 @@ function renderProgramacaoSgq() {
   });
 
   atualizarCabecalhosBlocosProgramacao_();
+  ajustarFonteValoresProgramacao_();
+}
+
+/* Reduz fonte apenas se necessário para caber nas colunas compactas.
+   Cor mantém o texto completo e pode ocupar mais de uma linha. */
+function ajustarFonteValoresProgramacao_() {
+  const tabelas = document.querySelectorAll(
+    '#programacaoSgqScreen .programacao-table-principal, ' +
+    '#programacaoSgqScreen .programacao-table-uma-caixa'
+  );
+  tabelas.forEach(tabela => {
+    tabela.querySelectorAll('tbody td:not(.col-cor):not(.col-ok):not(.col-enc):not(.col-status)').forEach(td => {
+      const texto = td.textContent || '';
+      td.title = texto;
+      td.style.fontSize = '';
+      let tamanho = Number.parseFloat(window.getComputedStyle(td).fontSize) || 10;
+      while (td.scrollWidth > td.clientWidth + 1 && tamanho > 8) {
+        tamanho -= 0.5;
+        td.style.fontSize = tamanho + 'px';
+      }
+    });
+    tabela.querySelectorAll('tbody .col-cor').forEach(td => {
+      td.title = td.textContent || '';
+    });
+  });
 }
 
 function criarLinhaProgramacaoSgq_(item, umaCaixa) {
