@@ -344,8 +344,10 @@ async function garantirBackendV3_() {
       if (!result || result.api !== 'SGQ_FIXPAR_V3') {
         throw new Error('Backend diferente da versão SGQ_FIXPAR_V3.');
       }
-      if (result.d1Mirror !== true || result.d1SyncConfigured !== true) {
-        throw new Error('Backend V3 ainda não está com o espelhamento D1 ativo.');
+      // O espelhamento D1 é independente: nunca bloquear um lançamento
+      // operacional no Google Sheets por falta de configuração do D1.
+      if (result.saida !== true || result.recebimento !== true) {
+        throw new Error('A API não localizou as abas operacionais de entrada e saída.');
       }
       return result;
     })
