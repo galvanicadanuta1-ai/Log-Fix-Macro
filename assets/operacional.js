@@ -807,7 +807,13 @@ function salvarAgora(rowId) {
   google.script.run
     .withSuccessHandler(result => {
       row.saving = false;
+      if (!result || result.persisted !== true || !(Number(result.sheetRow) >= 3)) {
+        row.saving = false;
+        setStatus('Salvamento NÃO confirmado na planilha. Não repita o lançamento sem conferir.', 'error');
+        return;
+      }
       row.sheetRow = result.sheetRow;
+      if (result.clientId) row.id = String(result.clientId);
 
       if (result.values && Array.isArray(result.values)) {
         row.values = result.values.slice();
@@ -827,7 +833,7 @@ function salvarAgora(rowId) {
         }
       }
 
-      setStatus('Alterações salvas', 'saved');
+      setStatus('Gravação confirmada na planilha • Conciliação em atualização', 'saved');
       garantirDuasLinhasNaTela();
 
       if (currentPage === 'RECEBIMENTO') {
@@ -847,7 +853,8 @@ function salvarAgora(rowId) {
       currentPage,
       date,
       row.values,
-      row.sheetRow
+      row.sheetRow,
+      row.id
     );
 }
 
