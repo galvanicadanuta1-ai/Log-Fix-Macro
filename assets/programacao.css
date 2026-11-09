@@ -354,58 +354,96 @@
 /* ============================================================
    LARGURAS OTIMIZADAS
    ============================================================ */
-/* Porcentagens somam 100% em cada bloco.
-   Processo após Kgs; OK e Enc. ocupam somente o necessário. */
-.programacao-table-principal .col-data { width: 12%; }
-.programacao-table-principal .col-op { width: 9%; }
+/* Layout legível: campos curtos ocupam o mínimo, Cor mostra o texto inteiro.
+   Os dois blocos ficam um abaixo do outro para não comprimir os dados. */
+#programacaoSgqScreen .programacao-page {
+  width: 100%;
+  max-width: 1500px;
+}
+#programacaoSgqScreen .programacao-dual-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+#programacaoSgqScreen .programacao-bloco + .programacao-bloco {
+  border-left: 0;
+  border-top: 1px dashed #94a3b8;
+  padding-left: 0;
+  padding-top: 12px;
+}
+.programacao-table-principal .col-data { width: 9%; }
+.programacao-table-principal .col-op { width: 7%; }
 .programacao-table-principal .col-caixas { width: 6%; }
 .programacao-table-principal .col-conteiner { width: 6%; }
-.programacao-table-principal .col-cor { width: 20%; }
+.programacao-table-principal .col-cor { width: 30%; }
 .programacao-table-principal .col-peso { width: 7%; }
-.programacao-table-principal .col-processo { width: 17%; }
-.programacao-table-principal .col-status { width: 16%; }
-.programacao-table-principal .col-ok { width: 3.5%; }
-.programacao-table-principal .col-enc { width: 3.5%; }
+.programacao-table-principal .col-processo { width: 14%; }
+.programacao-table-principal .col-status { width: 15%; }
+.programacao-table-principal .col-ok { width: 3%; }
+.programacao-table-principal .col-enc { width: 3%; }
 
-.programacao-table-uma-caixa .col-data { width: 12%; }
-.programacao-table-uma-caixa .col-op { width: 10%; }
+.programacao-table-uma-caixa .col-data { width: 9%; }
+.programacao-table-uma-caixa .col-op { width: 8%; }
 .programacao-table-uma-caixa .col-caixas { width: 7%; }
-.programacao-table-uma-caixa .col-cor { width: 22%; }
+.programacao-table-uma-caixa .col-cor { width: 33%; }
 .programacao-table-uma-caixa .col-peso { width: 8%; }
-.programacao-table-uma-caixa .col-processo { width: 20%; }
-.programacao-table-uma-caixa .col-status { width: 14%; }
-.programacao-table-uma-caixa .col-ok { width: 3.5%; }
-.programacao-table-uma-caixa .col-enc { width: 3.5%; }
+.programacao-table-uma-caixa .col-processo { width: 16%; }
+.programacao-table-uma-caixa .col-status { width: 13%; }
+.programacao-table-uma-caixa .col-ok { width: 3%; }
+.programacao-table-uma-caixa .col-enc { width: 3%; }
 
-.programacao-table .col-processo { text-align: center; }
-.programacao-table .col-processo,
-.programacao-table .col-cor,
-.programacao-table .col-status,
 .programacao-table .col-data,
 .programacao-table .col-op,
-.programacao-table .col-peso {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.programacao-table .col-processo { font-size: 10px; letter-spacing: -0.2px; }
+.programacao-table .col-caixas,
+.programacao-table .col-conteiner,
+.programacao-table .col-peso,
 .programacao-table .col-ok,
 .programacao-table .col-enc {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
   white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: keep-all;
   text-align: center;
+}
+.programacao-table .col-cor {
+  text-align: left;
+  font-size: 11px;
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  hyphens: none;
+  text-overflow: clip;
+  line-height: 1.13;
+  padding-left: 5px;
+}
+.programacao-table .col-processo {
+  text-align: center;
+  font-size: 10px;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  white-space: normal;
+  overflow: visible;
+}
+.programacao-table .col-ok,
+.programacao-table .col-enc {
+  padding: 2px 0 !important;
+  font-size: 8px;
+  letter-spacing: -.3px;
 }
 .programacao-table .col-ok .programacao-check,
 .programacao-table .col-enc .programacao-check {
-  width: 13px;
-  height: 13px;
+  width: 12px;
+  height: 12px;
   margin: 0;
   vertical-align: middle;
 }
-.programacao-table .col-ok,
-.programacao-table .col-enc { font-size: 8px; letter-spacing: -.25px; }
-.programacao-table .col-status .programacao-status-input { min-width: 0; }
+.programacao-table .col-status .programacao-status-input {
+  min-width: 0;
+  font-size: 11px;
+}
+.programacao-table .col-data { font-size: 10px; }
+.programacao-table .col-op { font-size: 10px; }
+
+.programacao-status-input { min-width: 0; }
 
 
 .programacao-status-input {
@@ -547,8 +585,8 @@
 
   .programacao-dual-grid {
     display: grid !important;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
-    gap: 2.5mm !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 3mm !important;
     width: 100% !important;
     align-items: start !important;
   }
@@ -560,10 +598,10 @@
   }
 
   .programacao-bloco + .programacao-bloco {
-    border-left: 1px dashed #777 !important;
-    border-top: 0 !important;
-    padding-left: 2.5mm !important;
-    padding-top: 0 !important;
+    border-left: 0 !important;
+    border-top: 1px dashed #777 !important;
+    padding-left: 0 !important;
+    padding-top: 2mm !important;
   }
 
   .programacao-bloco-principal {
@@ -639,7 +677,8 @@
     text-overflow: ellipsis;
   }
 
-  .programacao-table .col-processo { font-size: 7.3pt; letter-spacing: -.2pt; }
+  .programacao-table .col-processo { font-size: 8pt; letter-spacing: 0; white-space: normal !important; overflow: visible; }
+  .programacao-table .col-cor { font-size: 8.3pt; white-space: normal !important; overflow: visible; text-overflow: clip; }
   .programacao-table .col-ok,
   .programacao-table .col-enc { padding: 0 !important; font-size: 6.5pt; }
   .programacao-table .col-ok .programacao-check,
