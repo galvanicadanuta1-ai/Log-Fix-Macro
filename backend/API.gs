@@ -272,6 +272,10 @@ function apiConsultarHistoricoPaginado_(pageKey, dataInicialIso, dataFinalIso, b
   };
 }
 
+// As confirmações de salvamento são emitidas somente após leitura da aba
+// operacional. A conciliação e o espelhamento D1 são etapas independentes.
+const API_V3_PENDENTE_SINCRONIZACAO = 'SGQ_FIXPAR_CONCILIACAO_PENDENTE';
+
 function apiV3SalvarLinha_(pageKey, isoDate, values, sheetRow, clientId) {
   const result = apiV3SalvarLinhasEmLote_(pageKey, isoDate, [{
     clientId: clientId || '',
@@ -279,32 +283,126 @@ function apiV3SalvarLinha_(pageKey, isoDate, values, sheetRow, clientId) {
     values: Array.isArray(values) ? values : []
   }]);
   const item = result.rows && result.rows[0];
-  if (!item) return { ok: true, sheetRow: Number(sheetRow || 0) || null, values: values || [] };
+  if (!item || item.persisted !== true) {
+    throw new Error('Registro não confirmado na aba operacional. Verifique antes de repetir.');
+  }
   return {
     ok: true,
+    persisted: true,
     sheetRow: item.sheetRow,
     values: item.values,
-    clientId: item.clientId || clientId || ''
+    clientId: item.clientId || clientId || '',
+    abaDestino: result.abaDestino,
+    conciliacaoAgendada: result.conciliacaoAgendada
   };
 }
 
 function apiV3SalvarLinhasEmLote_(pageKey, isoDate, registros) {
   const lock = LockService.getDocumentLock();
   let result;
-
+  let pendenteRegistrada = false;
   lock.waitLock(30000);
   try {
     result = apiV3PersistirLoteSobLock_(pageKey, isoDate, registros, {
       atualizarHistorico: true,
       registrarCores: true
     });
-    if (result.rows && result.rows.length) apiV3SincronizarConciliacaoCompleta_();
+
+    if (!result.rows || !result.rows.length) {
+      return { ok: true, persisted: false, rows: [], abaDestino: getConfig_(pageKey).sheetName };
+    }
+
+    // Sheets pode manter gravações pendentes em buffer até o flush.
+    SpreadsheetApp.flush();
+    apiV3ConfirmarPersistencia_(pageKey, result.rows);
+
+    // A reconstrução completa da conciliação é cara e não deve bloquear
+    // nem causar timeout depois de uma entrada/saída já gravada.
+    try {
+      PropertiesService.getScriptProperties().setProperty(
+        API_V3_PENDENTE_SINCRONIZACAO,
+        new Date().toISOString()
+      );
+      pendenteRegistrada = true;
+    } catch (error) {
+      console.error('Registro confirmado, mas falhou a marcação da conciliação pendente.', error);
+    }
   } finally {
     lock.releaseLock();
   }
 
-  apiV3TentarEspelharOperacionalD1_(pageKey, result && result.rows);
+  const conciliacaoAgendada = pendenteRegistrada && apiV3GarantirConciliacaoPeriodica_();
+  result.persisted = true;
+  result.conciliacaoAgendada = conciliacaoAgendada;
+  result.abaDestino = getConfig_(pageKey).sheetName;
+  result.rows.forEach(item => { item.persisted = true; });
   return result;
+}
+
+/**
+ * Confirma UID e OP de cada linha escrita, na aba de destino real.
+ * O UID persistido também impede duplicação por retry do cliente.
+ */
+function apiV3ConfirmarPersistencia_(pageKey, rows) {
+  const cfg = getConfig_(pageKey);
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(cfg.sheetName);
+  if (!sheet) throw new Error('Aba de destino não encontrada após o salvamento: ' + cfg.sheetName);
+  const opIndex = acharHeader_(cfg.headers, 'OP');
+  const uidCol = cfg.headers.length + 2;
+  const groups = apiV3AgruparLinhasContiguas_((rows || []).map(item => item.sheetRow));
+  const confirmadas = {};
+  groups.forEach(group => {
+    const data = sheet.getRange(group.start, 1, group.count, uidCol).getDisplayValues();
+    data.forEach((linha, i) => {
+      confirmadas[group.start + i] = {
+        op: opIndex >= 0 ? apiV3OpKey_(linha[opIndex]) : '',
+        uid: String(linha[uidCol - 1] || '').trim()
+      };
+    });
+  });
+  rows.forEach(item => {
+    const row = Number(item.sheetRow || 0);
+    const atual = confirmadas[row];
+    const expectedUid = apiV3UidTexto_(item.clientId);
+    const expectedOp = opIndex >= 0
+      ? apiV3OpKey_(Array.isArray(item.values) ? item.values[opIndex] : '') : '';
+    if (!atual || row < 3 || !atual.uid ||
+        (expectedUid && atual.uid !== expectedUid) ||
+        (expectedOp && atual.op !== expectedOp)) {
+      throw new Error('Falha ao confirmar a linha ' + row +
+        ' na aba ' + cfg.sheetName + '. Confira antes de reenviar.');
+    }
+  });
+}
+
+function apiV3GarantirConciliacaoPeriodica_() {
+  try {
+    const handler = 'apiV3ExecutarConciliacaoPendente_';
+    const triggers = ScriptApp.getProjectTriggers();
+    if (!triggers.some(t => t.getHandlerFunction() === handler)) {
+      ScriptApp.newTrigger(handler).timeBased().everyMinutes(5).create();
+    }
+    return true;
+  } catch (error) {
+    console.error('Gravação OK; não foi possível agendar reconciliação automática.', error);
+    return false;
+  }
+}
+
+function apiV3ExecutarConciliacaoPendente_() {
+  const props = PropertiesService.getScriptProperties();
+  if (!props.getProperty(API_V3_PENDENTE_SINCRONIZACAO)) return;
+  const lock = LockService.getDocumentLock();
+  if (!lock.tryLock(10000)) return;
+  try {
+    const pendencia = props.getProperty(API_V3_PENDENTE_SINCRONIZACAO);
+    if (!pendencia) return;
+    apiV3SincronizarConciliacaoCompleta_();
+    SpreadsheetApp.flush();
+    props.deleteProperty(API_V3_PENDENTE_SINCRONIZACAO);
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function apiV3PersistirLoteSobLock_(pageKey, isoDate, registros, options) {
