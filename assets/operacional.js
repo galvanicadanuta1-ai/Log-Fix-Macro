@@ -420,9 +420,17 @@ function colarMatriz(event, rowId, colIndex) {
 
   google.script.run
     .withSuccessHandler(result => {
-      const salvas = result && Array.isArray(result.rows)
-        ? result.rows
-        : [];
+      if (!result || result.persisted !== true || !Array.isArray(result.rows) ||
+          result.rows.length !== payload.length ||
+          result.rows.some(item => item.persisted !== true)) {
+        salvamentoEmLote = false;
+        setStatus('Gravação em lote não confirmada na planilha. Confira antes de reenviar.', 'error');
+        alert('Não foi possível confirmar todos os lançamentos no Google Sheets. Confira a planilha antes de tentar novamente.');
+        const botao = document.getElementById('reportButton');
+        if (botao) botao.disabled = false;
+        return;
+      }
+      const salvas = result.rows;
 
       salvas.forEach(item => {
         const row = rows.find(r => r.id === item.clientId);
@@ -452,9 +460,10 @@ function colarMatriz(event, rowId, colIndex) {
       }
 
       setStatus(
-        salvas.length + (salvas.length === 1 ? ' linha salva' : ' linhas salvas') +
-        ' • Histórico e Conciliação atualizados',
-        'saved'
+        salvas.length + (salvas.length === 1 ? ' linha confirmada' : ' linhas confirmadas') +
+        ' no Google Sheets' +
+        (result.conciliacaoAgendada ? ' • Conciliação programada' : ' • ATENÇÃO: agendamento da conciliação não confirmado'),
+        result.conciliacaoAgendada ? 'saved' : 'error'
       );
     })
     .withFailureHandler(error => {
@@ -833,7 +842,11 @@ function salvarAgora(rowId) {
         }
       }
 
-      setStatus('Gravação confirmada na planilha • Conciliação em atualização', 'saved');
+      setStatus(
+        'Registro confirmado na planilha' +
+        (result.conciliacaoAgendada ? ' • Conciliação programada' : ' • ATENÇÃO: conciliação não agendada'),
+        result.conciliacaoAgendada ? 'saved' : 'error'
+      );
       garantirDuasLinhasNaTela();
 
       if (currentPage === 'RECEBIMENTO') {
