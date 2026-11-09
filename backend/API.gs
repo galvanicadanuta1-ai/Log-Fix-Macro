@@ -784,38 +784,44 @@ function apiV3CriarPdf_(nomeArquivo, pdfBase64) {
 
 
 /**
- * Concilia cada recebimento com a primeira saída da mesma OP ocorrida
- * na sua data ou posteriormente. Uma saída antiga nunca encerra um
- * recebimento posterior. Vários recebimentos anteriores à mesma saída
- * podem integrar o mesmo lote/ciclo (não consome a saída por linha).
+ * Conciliação individual por OP: cada saída só pode encerrar UMA
+ * entrada anterior (FIFO). Entradas posteriores a uma saída antiga
+ * permanecem abertas, independentemente do Processo.
  *
- * Como as abas armazenam somente a DATA, entradas e saídas na mesma
- * data não possuem ordenação intradiária confiável.
+ * As planilhas têm datas sem horário: em um mesmo dia, assume-se
+ * entrada antes de saída; casos ambíguos precisam conferência.
  */
 function apiV3ConciliarCiclos_(entradas, saidas) {
-  const saidasPorOp = {};
-  (saidas || []).forEach(item => {
-    const key = apiV3OpKey_(item.op);
-    if (!key) return;
-    (saidasPorOp[key] = saidasPorOp[key] || []).push(item);
-  });
-  Object.keys(saidasPorOp).forEach(key =>
-    saidasPorOp[key].sort((a, b) => a.dataTime - b.dataTime || a.sheetRow - b.sheetRow)
-  );
-
-  return (entradas || []).slice()
+  const grupos = {};
+  const resultado = (entradas || []).slice()
     .sort((a, b) => a.dataTime - b.dataTime || a.sheetRow - b.sheetRow)
     .map(entrada => {
-      const candidatas = saidasPorOp[apiV3OpKey_(entrada.op)] || [];
-      // Busca binária: evita varrer todos os movimentos em cada recebimento.
-      let low = 0, high = candidatas.length;
-      while (low < high) {
-        const mid = (low + high) >> 1;
-        if (candidatas[mid].dataTime < entrada.dataTime) low = mid + 1;
-        else high = mid;
-      }
-      return { entrada: entrada, saida: candidatas[low] || null };
+      const item = { entrada: entrada, saida: null };
+      const chave = apiV3OpKey_(entrada.op);
+      if (chave) (grupos[chave] = grupos[chave] || { entradas: [], saidas: [] }).entradas.push(item);
+      return item;
     });
+
+  (saidas || []).forEach(saida => {
+    const chave = apiV3OpKey_(saida.op);
+    if (chave) (grupos[chave] = grupos[chave] || { entradas: [], saidas: [] }).saidas.push(saida);
+  });
+
+  Object.keys(grupos).forEach(chave => {
+    const grupo = grupos[chave];
+    grupo.saidas.sort((a, b) => a.dataTime - b.dataTime || a.sheetRow - b.sheetRow);
+    let proximaEntrada = 0;
+    grupo.saidas.forEach(saida => {
+      // A saída pertence à primeira entrada ainda aberta da mesma OP.
+      // Nunca consumir uma entrada registrada em data futura.
+      if (proximaEntrada < grupo.entradas.length &&
+          grupo.entradas[proximaEntrada].entrada.dataTime <= saida.dataTime) {
+        grupo.entradas[proximaEntrada].saida = saida;
+        proximaEntrada++;
+      }
+    });
+  });
+  return resultado;
 }
 
 function apiV3SincronizarConciliacaoCompleta_() {
@@ -892,9 +898,7 @@ function carregarProgramacaoSgq() {
   const pendentesPorLinha = new Set(
     ciclos.filter(item => !item.saida).map(item => item.entrada.sheetRow)
   );
-  const opsComSaida = new Set(
-    apiV3LerOperacaoConciliacao_('SAIDA').map(item => apiV3OpKey_(item.op))
-  );
+  const opsComEntrada = new Set(ciclos.map(item => apiProgChaveOp_(item.entrada.op)));
 
   const agrupado = {};
   if (entrada.getLastRow() >= 3) {
@@ -926,7 +930,7 @@ function carregarProgramacaoSgq() {
   const manualPorChave = {};
   manuais.forEach(item => {
     const chave = apiProgChaveOp_(item.op);
-    if (!chave || (opsComSaida.has(chave) && !agrupado[chave])) return;
+    if (!chave || opsComEntrada.has(chave)) return; // entradas reais prevalecem sobre programação manual antiga
     manualPorChave[chave] = item;
   });
 
@@ -968,7 +972,7 @@ function carregarProgramacaoSgq() {
     return String(a.op).localeCompare(String(b.op), 'pt-BR', { numeric: true, sensitivity: 'base' });
   });
   rows.forEach(item => delete item.primeiraData);
-  return { rows: rows, source: 'ABAS_OPERACIONAIS_V3' };
+  return { rows: rows, source: 'ABAS_OPERACIONAIS_CICLOS_V4' };
 }
 
 function salvarProgramacaoSgq(op, status, ok, encaminhado, manualData) {
