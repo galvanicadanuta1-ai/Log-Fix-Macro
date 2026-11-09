@@ -886,12 +886,13 @@ function apiV3CriarPdf_(nomeArquivo, pdfBase64) {
 
 
 /**
- * Conciliação individual por OP: cada saída só pode encerrar UMA
- * entrada anterior (FIFO). Entradas posteriores a uma saída antiga
- * permanecem abertas, independentemente do Processo.
+ * Conciliação por ciclos de OP, não por Processo e não por peso:
+ * uma saída encerra todos os recebimentos daquela OP até sua data.
+ * Uma nova entrada APÓS a saída inicia um ciclo aberto novo.
  *
- * As planilhas têm datas sem horário: em um mesmo dia, assume-se
- * entrada antes de saída; casos ambíguos precisam conferência.
+ * Esta regra também cobre recebimentos com várias linhas para a mesma OP
+ * antes de uma saída única. Datas iguais são ambíguas por falta de horário:
+ * assume-se, na mesma data, que a saída sucede os recebimentos.
  */
 function apiV3ConciliarCiclos_(entradas, saidas) {
   const grupos = {};
@@ -912,14 +913,16 @@ function apiV3ConciliarCiclos_(entradas, saidas) {
   Object.keys(grupos).forEach(chave => {
     const grupo = grupos[chave];
     grupo.saidas.sort((a, b) => a.dataTime - b.dataTime || a.sheetRow - b.sheetRow);
-    let proximaEntrada = 0;
-    grupo.saidas.forEach(saida => {
-      // A saída pertence à primeira entrada ainda aberta da mesma OP.
-      // Nunca consumir uma entrada registrada em data futura.
-      if (proximaEntrada < grupo.entradas.length &&
-          grupo.entradas[proximaEntrada].entrada.dataTime <= saida.dataTime) {
-        grupo.entradas[proximaEntrada].saida = saida;
-        proximaEntrada++;
+    let posicaoSaida = 0;
+    grupo.entradas.forEach(item => {
+      // Cada recebimento é associado à primeira saída não anterior a ele;
+      // a mesma saída pode encerrar mais de uma linha do mesmo ciclo.
+      while (posicaoSaida < grupo.saidas.length &&
+             grupo.saidas[posicaoSaida].dataTime < item.entrada.dataTime) {
+        posicaoSaida++;
+      }
+      if (posicaoSaida < grupo.saidas.length) {
+        item.saida = grupo.saidas[posicaoSaida];
       }
     });
   });
