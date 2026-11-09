@@ -151,7 +151,11 @@ function garantirLayoutProgramacaoDividida_() {
   const wrap = document.querySelector('#programacaoSgqScreen .programacao-table-wrap');
   if (!wrap) return;
 
-  if (document.getElementById('programacaoSgqBodyUmaCaixa')) {
+  // Corrige tabelas antigas já montadas em sessões abertas.
+  const blocoDireito = document.getElementById('programacaoSgqBodyUmaCaixa');
+  const principalAtualizado = wrap.querySelector('.programacao-table-principal thead .col-processo');
+  const direitaAtualizada = wrap.querySelector('.programacao-table-uma-caixa thead .col-processo');
+  if (blocoDireito && principalAtualizado && direitaAtualizada) {
     atualizarCabecalhosBlocosProgramacao_();
     return;
   }
