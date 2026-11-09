@@ -341,13 +341,19 @@ async function garantirBackendV3_() {
 
   apiBackendV3Promise_ = executarFetchApi_('healthCheck', [])
     .then(result => {
-      if (!result || result.api !== 'SGQ_FIXPAR_V3') {
-        throw new Error('Backend diferente da versão SGQ_FIXPAR_V3.');
+      if (!result || result.api !== 'SGQ_FIXPAR_V3' ||
+          result.writeProtocol !== 'SGQ_FIXPAR_VERIFIED_WRITE_20261109') {
+        throw new Error(
+          'A URL do Apps Script configurada no site está atendendo por uma implantação antiga. ' +
+          'Não é seguro gravar até apontar a implantação /exec correta. ' +
+          'Verifique se você editou a MESMA implantação, em vez de criar uma nova.'
+        );
       }
       // O espelhamento D1 é independente: nunca bloquear um lançamento
       // operacional no Google Sheets por falta de configuração do D1.
-      if (result.saida !== true || result.recebimento !== true) {
-        throw new Error('A API não localizou as abas operacionais de entrada e saída.');
+      if (result.saida !== true || result.recebimento !== true ||
+          !result.saidaAba || !result.recebimentoAba) {
+        throw new Error('A implantação atual não encontrou as abas operacionais configuradas.');
       }
       return result;
     })
