@@ -14,7 +14,7 @@ let historyNextOffset = null;
 let historyTotal = 0;
 let historyHeadersCache = [];
 let historyPageSize = window.matchMedia('(max-width: 800px)').matches ? 25 : 60;
-const GLOBAL_ASSET_VERSION = '20261028-d1-gerado-speed-1';
+const GLOBAL_ASSET_VERSION = '20261109-processo-final-v11';
 
 /*
  * Impede qualquer clique durante os poucos instantes em que as camadas
@@ -62,7 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
     'assets/programacao-retrato.js',
     'assets/tema.js',
     'assets/menu-programacao-clientes.js',
-    'assets/programacao-mobile.js'
+    'assets/programacao-mobile.js',
+    'assets/programacao-processo-final.js'
   ], () => {
     document.documentElement.classList.remove('sgq-booting');
   });
