@@ -237,8 +237,9 @@ function apiV3EditarHistoricoPorSourceRow_(pageKey, sourceRow, novosValores) {
   return apiV3EditarHistorico_(pageKey, historyRow, novosValores);
 }
 
-function apiV3SalvarProgramacaoComD1_(op, status, ok, encaminhado) {
-  const result = salvarProgramacaoSgq(op, status, ok, encaminhado);
+function apiV3SalvarProgramacaoComD1_(op, status, ok, encaminhado, manualData) {
+  // O cadastro manual deve chegar à persistência: não descartar o quinto argumento.
+  const result = salvarProgramacaoSgq(op, status, ok, encaminhado, manualData);
 
   try {
     if (typeof d1SyncEnviarEmLotes_ === 'function') {
@@ -1005,7 +1006,11 @@ function carregarProgramacaoSgq() {
     apiV3LerOperacaoConciliacao_('RECEBIMENTO'),
     apiV3LerOperacaoConciliacao_('SAIDA')
   );
-  const opsComEntrada = new Set(ciclos.map(item => apiProgChaveOp_(item.entrada.op)));
+  // Só uma entrada REAL ainda aberta prevalece sobre a programação manual.
+  // Uma OP com entrada antiga já encerrada pode ser lançada manualmente de novo.
+  const opsComEntradaAberta = new Set(
+    ciclos.filter(item => !item.saida).map(item => apiProgChaveOp_(item.entrada.op))
+  );
 
   const agrupado = {};
   // Usar somente as entradas que não foram encerradas por uma saída.
@@ -1056,7 +1061,7 @@ function carregarProgramacaoSgq() {
   const manualPorChave = {};
   manuais.forEach(item => {
     const chave = apiProgChaveOp_(item.op);
-    if (!chave || opsComEntrada.has(chave)) return; // entradas reais prevalecem sobre programação manual antiga
+    if (!chave || opsComEntradaAberta.has(chave)) return; // não duplicar OP real ainda aberta
     manualPorChave[chave] = item;
   });
 
