@@ -323,6 +323,13 @@ async function executarFetchApi_(method, args) {
     );
   }
 
+  if (method === 'carregarProgramacaoSgq') {
+    const dados = payload.result;
+    if (!dados || dados.source !== 'ABAS_OPERACIONAIS_CICLOS_V4') {
+      throw new Error('A programação foi bloqueada: servidor sem a conciliação por ciclos atualizada. Publique a versão atual do API.gs no Apps Script antes de consultar a programação.');
+    }
+  }
+
   return payload.result;
 }
 
