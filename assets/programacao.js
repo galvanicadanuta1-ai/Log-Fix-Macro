@@ -104,6 +104,7 @@ function colunasProgramacaoPrincipal_() {
     { label: 'Qtd.<br>Cont.', classe: 'col-conteiner' },
     { label: 'Cor', classe: 'col-cor' },
     { label: 'Kgs', classe: 'col-peso' },
+    { label: 'Processo', classe: 'col-processo' },
     { label: 'Status', classe: 'col-status' },
     { label: 'OK', classe: 'col-ok' },
     { label: 'Enc.', classe: 'col-enc' }
@@ -117,6 +118,7 @@ function colunasProgramacaoUmaCaixa_() {
     { label: 'Qtd.<br>Caixas', classe: 'col-caixas' },
     { label: 'Cor', classe: 'col-cor' },
     { label: 'Kgs', classe: 'col-peso' },
+    { label: 'Processo', classe: 'col-processo' },
     { label: 'Status', classe: 'col-status' },
     { label: 'OK', classe: 'col-ok' },
     { label: 'Enc.', classe: 'col-enc' }
@@ -424,6 +426,7 @@ function criarLinhaProgramacaoSgq_(item, umaCaixa) {
 
   appendProgramacaoTextCell(tr, item.cor, 'col-cor');
   appendProgramacaoTextCell(tr, item.pesoDanuta, 'col-peso');
+  appendProgramacaoTextCell(tr, item.processo, 'col-processo');
 
   const statusTd = document.createElement('td');
   statusTd.className = 'col-status';
