@@ -29,7 +29,10 @@ let apiBackendV3Promise_ = null;
 const d1HistorySourceMap_ = new Map();
 
 function apiTimeoutMs_(method) {
-  return API_MUTATION_METHODS.has(String(method || '')) ? 90000 : 45000;
+  const nome = String(method || '');
+  // Uma leitura da programação ainda pode consultar grandes históricos no Sheets.
+  if (nome === 'carregarProgramacaoSgq') return 120000;
+  return API_MUTATION_METHODS.has(nome) ? 90000 : 45000;
 }
 
 function d1ApiConfigurada_() {
