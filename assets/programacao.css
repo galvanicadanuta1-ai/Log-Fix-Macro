@@ -354,26 +354,59 @@
 /* ============================================================
    LARGURAS OTIMIZADAS
    ============================================================ */
-/* Esquerda: Data | OP | Caixas | Cont. | Cor | Kgs | Status | OK | Enc. */
+/* Porcentagens somam 100% em cada bloco.
+   Processo após Kgs; OK e Enc. ocupam somente o necessário. */
 .programacao-table-principal .col-data { width: 12%; }
-.programacao-table-principal .col-op { width: 10%; }
-.programacao-table-principal .col-caixas { width: 7%; }
-.programacao-table-principal .col-conteiner { width: 7%; }
-.programacao-table-principal .col-cor { width: 28%; }
-.programacao-table-principal .col-peso { width: 8%; }
-.programacao-table-principal .col-status { width: 14%; }
-.programacao-table-principal .col-ok { width: 7%; }
-.programacao-table-principal .col-enc { width: 7%; }
+.programacao-table-principal .col-op { width: 9%; }
+.programacao-table-principal .col-caixas { width: 6%; }
+.programacao-table-principal .col-conteiner { width: 6%; }
+.programacao-table-principal .col-cor { width: 20%; }
+.programacao-table-principal .col-peso { width: 7%; }
+.programacao-table-principal .col-processo { width: 17%; }
+.programacao-table-principal .col-status { width: 16%; }
+.programacao-table-principal .col-ok { width: 3.5%; }
+.programacao-table-principal .col-enc { width: 3.5%; }
 
-/* Direita: sem Contêiner. O espaço ganho vai principalmente para Cor. */
-.programacao-table-uma-caixa .col-data { width: 13%; }
-.programacao-table-uma-caixa .col-op { width: 11%; }
-.programacao-table-uma-caixa .col-caixas { width: 8%; }
-.programacao-table-uma-caixa .col-cor { width: 31%; }
-.programacao-table-uma-caixa .col-peso { width: 9%; }
+.programacao-table-uma-caixa .col-data { width: 12%; }
+.programacao-table-uma-caixa .col-op { width: 10%; }
+.programacao-table-uma-caixa .col-caixas { width: 7%; }
+.programacao-table-uma-caixa .col-cor { width: 22%; }
+.programacao-table-uma-caixa .col-peso { width: 8%; }
+.programacao-table-uma-caixa .col-processo { width: 20%; }
 .programacao-table-uma-caixa .col-status { width: 14%; }
-.programacao-table-uma-caixa .col-ok { width: 7%; }
-.programacao-table-uma-caixa .col-enc { width: 7%; }
+.programacao-table-uma-caixa .col-ok { width: 3.5%; }
+.programacao-table-uma-caixa .col-enc { width: 3.5%; }
+
+.programacao-table .col-processo { text-align: center; }
+.programacao-table .col-processo,
+.programacao-table .col-cor,
+.programacao-table .col-status,
+.programacao-table .col-data,
+.programacao-table .col-op,
+.programacao-table .col-peso {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.programacao-table .col-processo { font-size: 10px; letter-spacing: -0.2px; }
+.programacao-table .col-ok,
+.programacao-table .col-enc {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  white-space: nowrap;
+  text-align: center;
+}
+.programacao-table .col-ok .programacao-check,
+.programacao-table .col-enc .programacao-check {
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  vertical-align: middle;
+}
+.programacao-table .col-ok,
+.programacao-table .col-enc { font-size: 8px; letter-spacing: -.25px; }
+.programacao-table .col-status .programacao-status-input { min-width: 0; }
+
 
 .programacao-status-input {
   width: 100%;
@@ -596,12 +629,21 @@
   }
 
   .programacao-table td {
-    font-size: 10pt;
+    font-size: 8pt;
     line-height: 1.0;
-    padding: 1.15mm .45mm;
+    padding: 1.05mm .25mm;
     height: 6.2mm;
     font-weight: 700;
+    white-space: nowrap !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
+
+  .programacao-table .col-processo { font-size: 7.3pt; letter-spacing: -.2pt; }
+  .programacao-table .col-ok,
+  .programacao-table .col-enc { padding: 0 !important; font-size: 6.5pt; }
+  .programacao-table .col-ok .programacao-check,
+  .programacao-table .col-enc .programacao-check { width: 2.8mm; height: 2.8mm; }
 
   .programacao-table tr.programacao-urgente td {
     background: #fff4f4 !important;
