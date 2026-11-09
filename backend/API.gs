@@ -1122,7 +1122,17 @@ function salvarProgramacaoSgq(op, status, ok, encaminhado, manualData) {
   if (!targetRow) targetRow = Math.max(lastRow + 1, 2);
   sheet.getRange(targetRow, 1, 1, 5).setValues([[String(op), String(status || ''), Boolean(ok), Boolean(encaminhado), new Date()]]);
   sheet.getRange(targetRow, 5).setNumberFormat('dd/MM/yyyy HH:mm:ss');
-  if (manualData && manualData.manual === true) apiProgSalvarManual_(op, status, manualData);
+  if (manualData && manualData.manual === true) {
+    apiProgSalvarManual_(op, status, manualData);
+    SpreadsheetApp.flush();
+    const confirmado = apiProgLerManuais_().find(item =>
+      apiProgChaveOp_(item.op) === chave
+    );
+    if (!confirmado) {
+      throw new Error('Não foi possível confirmar o cadastro manual na planilha. Confira antes de repetir.');
+    }
+    return { ok: true, manualSaved: true, op: confirmado.op, manual: confirmado };
+  }
   return { ok: true };
 }
 
