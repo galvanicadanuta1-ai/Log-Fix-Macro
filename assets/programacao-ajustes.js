@@ -209,14 +209,18 @@
     };
 
     google.script.run
-      .withSuccessHandler(() => {
+      .withSuccessHandler(result => {
         if (botao) {
           botao.disabled = false;
           botao.textContent = 'ADICIONAR OP';
         }
-
+        if (!result || result.manualSaved !== true ||
+            String(result.op || '').trim() !== op) {
+          if (erro) erro.textContent =
+            'Cadastro não confirmado na planilha. Atualize o API.gs e publique uma nova versão antes de tentar novamente.';
+          return;
+        }
         fecharModalOsManual_();
-
         if (typeof carregarProgramacaoSgq === 'function') {
           carregarProgramacaoSgq();
         }
