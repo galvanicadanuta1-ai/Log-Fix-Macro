@@ -913,7 +913,7 @@ function carregarProgramacaoSgq() {
       const dataTime = apiProgDataTime_(row[0]);
       const dataTexto = apiProgTexto_(shown[0]);
       if (!agrupado[chave]) {
-        agrupado[chave] = { op: op, qtdCaixas: 0, qtdConteiner: 0, pesoDanuta: 0, temQtdCaixas: false, temQtdConteiner: false, temPesoDanuta: false, cores: {}, primeiraData: dataTime || Number.MAX_SAFE_INTEGER, primeiraDataTexto: dataTexto };
+        agrupado[chave] = { op: op, qtdCaixas: 0, qtdConteiner: 0, pesoDanuta: 0, temQtdCaixas: false, temQtdConteiner: false, temPesoDanuta: false, cores: {}, processos: {}, primeiraData: dataTime || Number.MAX_SAFE_INTEGER, primeiraDataTexto: dataTexto };
       }
       const item = agrupado[chave];
       if (apiProgTexto_(shown[2]) !== '') { item.temQtdCaixas = true; item.qtdCaixas += apiProgNumero_(row[2]); }
@@ -921,6 +921,8 @@ function carregarProgramacaoSgq() {
       if (apiProgTexto_(shown[5]) !== '') { item.temPesoDanuta = true; item.pesoDanuta += apiProgNumero_(row[5]); }
       const cor = apiProgTexto_(shown[8]);
       if (cor) item.cores[cor.toLocaleLowerCase('pt-BR')] = cor;
+      const processo = apiProgTexto_(shown[11]);
+      if (processo) item.processos[processo.toLocaleLowerCase('pt-BR')] = processo;
       if (dataTime && dataTime < item.primeiraData) { item.primeiraData = dataTime; item.primeiraDataTexto = dataTexto; }
     });
   }
@@ -951,13 +953,14 @@ function carregarProgramacaoSgq() {
         qtdConteiner: automatico.temQtdConteiner ? apiProgFormatarNumero_(automatico.qtdConteiner) : (manual ? manual.qtdConteiner : ''),
         cor: coresAuto || (manual ? manual.cor : ''),
         pesoDanuta: automatico.temPesoDanuta ? apiProgFormatarNumero_(automatico.pesoDanuta) : (manual ? manual.pesoDanuta : ''),
+        processo: Object.keys(automatico.processos).map(key => automatico.processos[key]).join(' / '),
         status: estado.status || (manual ? manual.status : ''),
         ok: Boolean(estado.ok), encaminhado: Boolean(estado.encaminhado), manual: false,
         primeiraData: automatico.primeiraData || apiProgDataTime_(manual ? manual.dataEntrada : '')
       });
     } else if (manual) {
       rows.push({
-        dataEntrada: manual.dataEntrada || '', op: manual.op || '', qtdCaixas: manual.qtdCaixas || '', qtdConteiner: manual.qtdConteiner || '', cor: manual.cor || '', pesoDanuta: manual.pesoDanuta || '', status: estado.status || manual.status || '', ok: Boolean(estado.ok), encaminhado: Boolean(estado.encaminhado), manual: true, primeiraData: apiProgDataTime_(manual.dataEntrada)
+        dataEntrada: manual.dataEntrada || '', op: manual.op || '', qtdCaixas: manual.qtdCaixas || '', qtdConteiner: manual.qtdConteiner || '', cor: manual.cor || '', pesoDanuta: manual.pesoDanuta || '', processo: '', status: estado.status || manual.status || '', ok: Boolean(estado.ok), encaminhado: Boolean(estado.encaminhado), manual: true, primeiraData: apiProgDataTime_(manual.dataEntrada)
       });
     }
   });
