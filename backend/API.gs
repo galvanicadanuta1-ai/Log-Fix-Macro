@@ -873,7 +873,12 @@ function apiV3LerOperacaoConciliacao_(pageKey) {
       op: op,
       nf: nfIndex >= 0 ? normalizarSaida_(row[nfIndex]) : '',
       nfCaixa: nfCaixaIndex >= 0 ? normalizarSaida_(row[nfCaixaIndex]) : '',
-      processo: processoIndex >= 0 ? normalizarSaida_(row[processoIndex]) : ''
+      processo: processoIndex >= 0 ? normalizarSaida_(row[processoIndex]) : '',
+      // Dados para a programação; evita reler o recebimento inteiro.
+      qtdCaixas: pageKey === 'RECEBIMENTO' ? row[2] : '',
+      qtdConteiner: pageKey === 'RECEBIMENTO' ? row[3] : '',
+      pesoDanuta: pageKey === 'RECEBIMENTO' ? row[5] : '',
+      cor: pageKey === 'RECEBIMENTO' ? normalizarSaida_(row[8]) : ''
     };
   }).filter(Boolean);
 }
@@ -895,37 +900,51 @@ function carregarProgramacaoSgq() {
     apiV3LerOperacaoConciliacao_('RECEBIMENTO'),
     apiV3LerOperacaoConciliacao_('SAIDA')
   );
-  const pendentesPorLinha = new Set(
-    ciclos.filter(item => !item.saida).map(item => item.entrada.sheetRow)
-  );
   const opsComEntrada = new Set(ciclos.map(item => apiProgChaveOp_(item.entrada.op)));
 
   const agrupado = {};
-  if (entrada.getLastRow() >= 3) {
-    const qtd = entrada.getLastRow() - 2;
-    const raw = entrada.getRange(3, 1, qtd, cfgEntrada.headers.length).getValues();
-    const display = entrada.getRange(3, 1, qtd, cfgEntrada.headers.length).getDisplayValues();
-    raw.forEach((row, index) => {
-      const shown = display[index] || [];
-      const op = apiProgTexto_(shown[1]);
-      const chave = apiProgChaveOp_(op);
-      if (!chave || !pendentesPorLinha.has(index + 3)) return;
-      const dataTime = apiProgDataTime_(row[0]);
-      const dataTexto = apiProgTexto_(shown[0]);
-      if (!agrupado[chave]) {
-        agrupado[chave] = { op: op, qtdCaixas: 0, qtdConteiner: 0, pesoDanuta: 0, temQtdCaixas: false, temQtdConteiner: false, temPesoDanuta: false, cores: {}, processos: {}, primeiraData: dataTime || Number.MAX_SAFE_INTEGER, primeiraDataTexto: dataTexto };
-      }
-      const item = agrupado[chave];
-      if (apiProgTexto_(shown[2]) !== '') { item.temQtdCaixas = true; item.qtdCaixas += apiProgNumero_(row[2]); }
-      if (apiProgTexto_(shown[3]) !== '') { item.temQtdConteiner = true; item.qtdConteiner += apiProgNumero_(row[3]); }
-      if (apiProgTexto_(shown[5]) !== '') { item.temPesoDanuta = true; item.pesoDanuta += apiProgNumero_(row[5]); }
-      const cor = apiProgTexto_(shown[8]);
-      if (cor) item.cores[cor.toLocaleLowerCase('pt-BR')] = cor;
-      const processo = apiProgTexto_(shown[11]);
-      if (processo) item.processos[processo.toLocaleLowerCase('pt-BR')] = processo;
-      if (dataTime && dataTime < item.primeiraData) { item.primeiraData = dataTime; item.primeiraDataTexto = dataTexto; }
-    });
-  }
+  // Usar somente as entradas que não foram encerradas por uma saída.
+  // Os dados vêm da mesma leitura feita para conciliar os ciclos,
+  // evitando leituras duplicadas de milhares de linhas no Sheets.
+  ciclos.forEach(ciclo => {
+    if (ciclo.saida) return;
+    const recebimento = ciclo.entrada;
+    const op = apiProgTexto_(recebimento.op);
+    const chave = apiProgChaveOp_(op);
+    if (!chave) return;
+    const dataTime = recebimento.dataTime;
+    const dataTexto = recebimento.dataBR;
+    if (!agrupado[chave]) {
+      agrupado[chave] = {
+        op: op, qtdCaixas: 0, qtdConteiner: 0, pesoDanuta: 0,
+        temQtdCaixas: false, temQtdConteiner: false, temPesoDanuta: false,
+        cores: {}, processos: {},
+        primeiraData: dataTime || Number.MAX_SAFE_INTEGER,
+        primeiraDataTexto: dataTexto
+      };
+    }
+    const item = agrupado[chave];
+    if (recebimento.qtdCaixas !== '' && recebimento.qtdCaixas != null) {
+      item.temQtdCaixas = true;
+      item.qtdCaixas += apiProgNumero_(recebimento.qtdCaixas);
+    }
+    if (recebimento.qtdConteiner !== '' && recebimento.qtdConteiner != null) {
+      item.temQtdConteiner = true;
+      item.qtdConteiner += apiProgNumero_(recebimento.qtdConteiner);
+    }
+    if (recebimento.pesoDanuta !== '' && recebimento.pesoDanuta != null) {
+      item.temPesoDanuta = true;
+      item.pesoDanuta += apiProgNumero_(recebimento.pesoDanuta);
+    }
+    const cor = apiProgTexto_(recebimento.cor);
+    if (cor) item.cores[cor.toLocaleLowerCase('pt-BR')] = cor;
+    const processo = apiProgTexto_(recebimento.processo);
+    if (processo) item.processos[processo.toLocaleLowerCase('pt-BR')] = processo;
+    if (dataTime && dataTime < item.primeiraData) {
+      item.primeiraData = dataTime;
+      item.primeiraDataTexto = dataTexto;
+    }
+  });
 
   const estados = apiProgLerEstados_();
   const manuais = apiProgLerManuais_();
