@@ -71,7 +71,9 @@ function carregar() {
         id: item && item.clientId ? String(item.clientId) : criarId(),
         sheetRow: item.sheetRow,
         values: normalizeValues(item.values),
-        saving: false
+        saving: false,
+        revision: 0,
+        needsResave: false
       }));
 
       garantirDuasLinhasVazias();
@@ -118,7 +120,9 @@ function criarLinhaVazia() {
     id: criarId(),
     sheetRow: null,
     values: values,
-    saving: false
+    saving: false,
+    revision: 0,
+    needsResave: false
   };
 }
 
@@ -280,6 +284,8 @@ function onCellInput(rowId, colIndex, value, tr) {
   if (!row) return;
 
   row.values[colIndex] = value;
+  row.revision = (row.revision || 0) + 1;
+  if (row.saving) row.needsResave = true;
 
   if (currentPage === 'RECEBIMENTO') {
     const cfg = getPageConfig();
@@ -781,7 +787,8 @@ function salvarAgora(rowId) {
 
   const row = rows.find(item => item.id === rowId);
 
-  if (!row || row.saving) return;
+  if (!row) return;
+  if (row.saving) { row.needsResave = true; return; }
 
   const empty = linhaSemDados(row);
 
@@ -812,6 +819,9 @@ function salvarAgora(rowId) {
 
   const date = document.getElementById('selectedDate').value || hojeISO();
   row.values[0] = date;
+  const revisionSent = row.revision || 0;
+  const valuesSent = row.values.slice();
+  row.needsResave = false;
 
   google.script.run
     .withSuccessHandler(result => {
@@ -822,9 +832,18 @@ function salvarAgora(rowId) {
         return;
       }
       row.sheetRow = result.sheetRow;
-      if (result.clientId) row.id = String(result.clientId);
+      const editedDuringSave = row.needsResave || (row.revision || 0) !== revisionSent;
+      if (result.clientId && result.clientId !== row.id) {
+        const antigaId = row.id;
+        row.id = String(result.clientId);
+        const trId = document.querySelector('tr[data-row-id="' + antigaId + '"]');
+        if (trId) {
+          trId.dataset.rowId = row.id;
+          trId.querySelectorAll('.cell-input').forEach(input => { input.dataset.rowId = row.id; });
+        }
+      }
 
-      if (result.values && Array.isArray(result.values)) {
+      if (!editedDuringSave && result.values && Array.isArray(result.values)) {
         row.values = result.values.slice();
 
         const trAtual = document.querySelector(
@@ -848,6 +867,10 @@ function salvarAgora(rowId) {
         result.conciliacaoAgendada ? 'saved' : 'error'
       );
       garantirDuasLinhasNaTela();
+      if (editedDuringSave) {
+        row.needsResave = false;
+        agendarSalvamento(row.id);
+      }
 
       if (currentPage === 'RECEBIMENTO') {
         const cfg = getPageConfig();
@@ -865,7 +888,7 @@ function salvarAgora(rowId) {
     .salvarLinha(
       currentPage,
       date,
-      row.values,
+      valuesSent,
       row.sheetRow,
       row.id
     );
