@@ -467,7 +467,7 @@ function colarMatriz(event, rowId, colIndex) {
 
       setStatus(
         salvas.length + (salvas.length === 1 ? ' linha confirmada' : ' linhas confirmadas') +
-        ' no Google Sheets' +
+        ' em ' + (result.abaDestino || 'Google Sheets') +
         (result.conciliacaoAgendada ? ' • Conciliação programada' : ' • ATENÇÃO: agendamento da conciliação não confirmado'),
         result.conciliacaoAgendada ? 'saved' : 'error'
       );
@@ -862,7 +862,7 @@ function salvarAgora(rowId) {
       }
 
       setStatus(
-        'Registro confirmado na planilha' +
+        'Registro confirmado em ' + (result.abaDestino || 'Google Sheets') +
         (result.conciliacaoAgendada ? ' • Conciliação programada' : ' • ATENÇÃO: conciliação não agendada'),
         result.conciliacaoAgendada ? 'saved' : 'error'
       );
