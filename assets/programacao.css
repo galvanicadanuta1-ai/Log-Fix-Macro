@@ -354,94 +354,102 @@
 /* ============================================================
    LARGURAS OTIMIZADAS
    ============================================================ */
-/* Layout legível: campos curtos ocupam o mínimo, Cor mostra o texto inteiro.
-   Os dois blocos ficam um abaixo do outro para não comprimir os dados. */
-#programacaoSgqScreen .programacao-page {
-  width: 100%;
-  max-width: 1500px;
-}
+/* LARGURAS DA PROGRAMAÇÃO: dados sempre legíveis, Cor sem corte.
+   Este layout só afeta a Programação Fixpar, não os demais módulos. */
+#programacaoSgqScreen .programacao-page { max-width: 1600px; width: 100%; }
 #programacaoSgqScreen .programacao-dual-grid {
-  grid-template-columns: minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 12px;
 }
 #programacaoSgqScreen .programacao-bloco + .programacao-bloco {
   border-left: 0;
   border-top: 1px dashed #94a3b8;
-  padding-left: 0;
-  padding-top: 12px;
+  padding: 12px 0 0;
 }
-.programacao-table-principal .col-data { width: 9%; }
-.programacao-table-principal .col-op { width: 7%; }
-.programacao-table-principal .col-caixas { width: 6%; }
-.programacao-table-principal .col-conteiner { width: 6%; }
-.programacao-table-principal .col-cor { width: 30%; }
-.programacao-table-principal .col-peso { width: 7%; }
-.programacao-table-principal .col-processo { width: 14%; }
-.programacao-table-principal .col-status { width: 15%; }
-.programacao-table-principal .col-ok { width: 3%; }
-.programacao-table-principal .col-enc { width: 3%; }
-
-.programacao-table-uma-caixa .col-data { width: 9%; }
-.programacao-table-uma-caixa .col-op { width: 8%; }
-.programacao-table-uma-caixa .col-caixas { width: 7%; }
-.programacao-table-uma-caixa .col-cor { width: 33%; }
-.programacao-table-uma-caixa .col-peso { width: 8%; }
-.programacao-table-uma-caixa .col-processo { width: 16%; }
-.programacao-table-uma-caixa .col-status { width: 13%; }
-.programacao-table-uma-caixa .col-ok { width: 3%; }
-.programacao-table-uma-caixa .col-enc { width: 3%; }
-
-.programacao-table .col-data,
-.programacao-table .col-op,
-.programacao-table .col-caixas,
-.programacao-table .col-conteiner,
-.programacao-table .col-peso,
-.programacao-table .col-ok,
-.programacao-table .col-enc {
-  white-space: nowrap;
-  overflow-wrap: normal;
-  word-break: keep-all;
-  text-align: center;
+#programacaoSgqScreen .programacao-table {
+  width: 100%;
+  table-layout: fixed;
+  min-width: 780px;
 }
-.programacao-table .col-cor {
-  text-align: left;
-  font-size: 11px;
-  white-space: normal;
-  overflow: visible;
-  overflow-wrap: anywhere;
-  word-break: normal;
+#programacaoSgqScreen .programacao-table-wrap { overflow-x: auto; }
+#programacaoSgqScreen .programacao-bloco { overflow-x: auto; }
+
+/* Principal: Data | OP | Caixas | Cont. | Cor | Kgs | Processo | Status | OK | Enc. */
+#programacaoSgqScreen .programacao-table-principal .col-data { width: 8%; }
+#programacaoSgqScreen .programacao-table-principal .col-op { width: 7%; }
+#programacaoSgqScreen .programacao-table-principal .col-caixas { width: 6%; }
+#programacaoSgqScreen .programacao-table-principal .col-conteiner { width: 6%; }
+#programacaoSgqScreen .programacao-table-principal .col-cor { width: 33%; }
+#programacaoSgqScreen .programacao-table-principal .col-peso { width: 7%; }
+#programacaoSgqScreen .programacao-table-principal .col-processo { width: 14%; }
+#programacaoSgqScreen .programacao-table-principal .col-status { width: 13%; }
+#programacaoSgqScreen .programacao-table-principal .col-ok { width: 3%; }
+#programacaoSgqScreen .programacao-table-principal .col-enc { width: 3%; }
+
+/* OPs de uma caixa: sem Contêiner; mais espaço para Cor. */
+#programacaoSgqScreen .programacao-table-uma-caixa .col-data { width: 8%; }
+#programacaoSgqScreen .programacao-table-uma-caixa .col-op { width: 7%; }
+#programacaoSgqScreen .programacao-table-uma-caixa .col-caixas { width: 6%; }
+#programacaoSgqScreen .programacao-table-uma-caixa .col-cor { width: 36%; }
+#programacaoSgqScreen .programacao-table-uma-caixa .col-peso { width: 8%; }
+#programacaoSgqScreen .programacao-table-uma-caixa .col-processo { width: 15%; }
+#programacaoSgqScreen .programacao-table-uma-caixa .col-status { width: 14%; }
+#programacaoSgqScreen .programacao-table-uma-caixa .col-ok { width: 3%; }
+#programacaoSgqScreen .programacao-table-uma-caixa .col-enc { width: 3%; }
+
+#programacaoSgqScreen .programacao-table th,
+#programacaoSgqScreen .programacao-table td {
+  box-sizing: border-box;
+  padding: 3px 2px;
   hyphens: none;
-  text-overflow: clip;
-  line-height: 1.13;
-  padding-left: 5px;
-}
-.programacao-table .col-processo {
-  text-align: center;
-  font-size: 10px;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
   word-break: normal;
-  white-space: normal;
-  overflow: visible;
 }
-.programacao-table .col-ok,
-.programacao-table .col-enc {
-  padding: 2px 0 !important;
+#programacaoSgqScreen .programacao-table td:not(.col-cor) {
+  white-space: nowrap;
+  text-overflow: clip;
+  text-align: center;
+}
+#programacaoSgqScreen .programacao-table .col-data,
+#programacaoSgqScreen .programacao-table .col-op,
+#programacaoSgqScreen .programacao-table .col-caixas,
+#programacaoSgqScreen .programacao-table .col-conteiner,
+#programacaoSgqScreen .programacao-table .col-peso { font-size: 10px; }
+#programacaoSgqScreen .programacao-table .col-cor {
+  text-align: left;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  line-height: 1.2;
+  padding: 3px 5px;
+}
+#programacaoSgqScreen .programacao-table .col-processo {
+  font-size: 10px;
+  white-space: nowrap;
+  text-align: center;
+}
+#programacaoSgqScreen .programacao-table .col-status .programacao-status-input {
+  width: 100%;
+  min-width: 0;
+  padding: 2px;
+  font-size: 11px;
+}
+#programacaoSgqScreen .programacao-table .col-ok,
+#programacaoSgqScreen .programacao-table .col-enc {
+  padding: 1px 0 !important;
   font-size: 8px;
-  letter-spacing: -.3px;
+  white-space: nowrap;
+  text-align: center;
 }
-.programacao-table .col-ok .programacao-check,
-.programacao-table .col-enc .programacao-check {
+#programacaoSgqScreen .programacao-table .col-ok .programacao-check,
+#programacaoSgqScreen .programacao-table .col-enc .programacao-check {
   width: 12px;
   height: 12px;
   margin: 0;
   vertical-align: middle;
 }
-.programacao-table .col-status .programacao-status-input {
-  min-width: 0;
-  font-size: 11px;
-}
-.programacao-table .col-data { font-size: 10px; }
-.programacao-table .col-op { font-size: 10px; }
 
 .programacao-status-input { min-width: 0; }
 
@@ -673,12 +681,13 @@
     height: 6.2mm;
     font-weight: 700;
     white-space: nowrap !important;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow: visible;
+    text-overflow: clip;
   }
 
   .programacao-table .col-processo { font-size: 8pt; letter-spacing: 0; white-space: normal !important; overflow: visible; }
-  .programacao-table .col-cor { font-size: 8.3pt; white-space: normal !important; overflow: visible; text-overflow: clip; }
+  #programacaoSgqScreen .programacao-table .col-cor { font-size: 8.3pt; white-space: normal !important; overflow: visible !important; overflow-wrap: anywhere; text-overflow: clip; }
+  #programacaoSgqScreen .programacao-table { min-width: 0 !important; }
   .programacao-table .col-ok,
   .programacao-table .col-enc { padding: 0 !important; font-size: 6.5pt; }
   .programacao-table .col-ok .programacao-check,
